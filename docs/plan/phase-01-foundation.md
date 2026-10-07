@@ -45,8 +45,8 @@ Rules: read only this file + PROGRESS.md at session start; open refs only when a
 - **Done when:** `composer test && composer analyse` green.
 
 ## Phase checklist
-- [ ] /ar and /en work with RTL/LTR
-- [ ] Design CSS and fonts load
-- [ ] Components kitchen sink matches design
-- [ ] Guards configured
-- [ ] Tooling green
+- [x] /ar and /en work with RTL/LTR
+- [x] Design CSS and fonts load
+- [x] Components kitchen sink matches design
+- [x] Guards configured
+- [x] Tooling green
