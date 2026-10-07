@@ -1,25 +1,46 @@
 # Dependencies
 /vendor/
 /node_modules/
+/auth.json
 
 # Environment
 .env
 .env.backup
+.env.production
 .env.*.local
 
 # Build output
 /public/build/
 /public/hot
+/public/storage
+/public/fonts-manifest.dev.json
 
-# Storage (logs & cache); Laravel's own .gitignore merged in Phase 1
+# Storage (logs & cache)
 /storage/*.key
+/storage/pail
 /storage/logs/*
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/views/*
 
+# Tooling caches
+.phpunit.result.cache
+/.phpunit.cache
+.phpactor.json
+_ide_helper.php
+
 # OS / editor
 .DS_Store
-.phpunit.result.cache
+Thumbs.db
 .idea/
 .vscode/
+/.nova
+/.zed
+/.cursor/
+/.codex
+
+# Homestead
+Homestead.json
+Homestead.yaml
+
+*.log

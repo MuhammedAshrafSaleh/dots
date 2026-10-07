@@ -1,8 +1,8 @@
 # PROGRESS
 
-**Git:** branch `main` · last pushed commit `2c3181c` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+**Git:** branch `phase-1` · last pushed commit `201a99d` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
 
-Current phase: **0 — Review DONE** — awaiting owner `start phase 1` (owner says `start phase N` to move on)
+Current phase: **1 — Foundation** (in progress)
 
 Legend: [ ] todo · [x] done
 
@@ -12,7 +12,7 @@ Legend: [ ] todo · [x] done
 - [x] T0.2 Write the review report
 
 ## Phase 1 — Foundation  (`phase-01-foundation.md`)
-- [ ] T1.1 Create the project
+- [x] T1.1 Create the project
 - [ ] T1.2 Locales and routing
 - [ ] T1.3 Front-end build and design CSS
 - [ ] T1.4 Base layouts and Blade components
@@ -98,6 +98,7 @@ Legend: [ ] todo · [x] done
 
 ## Decisions log
 - **2026-10-07 — Versions:** do not assume from memory. At install time (Phase 1) use the latest stable majors `composer`/`npm` resolve for Laravel, Livewire, Pest and Vite, provided all required Spatie packages (translatable, medialibrary, permission, backup, sitemap) support them. Record the exact resolved versions here once installed. Local toolchain: PHP 8.4.23, Composer 2.10, Node 22, npm 10.
+  - **Resolved at install (T1.1, 2026-10-07):** `laravel/framework` v13.35.0 (latest stable; all Spatie packages support L13), `livewire/livewire` v4.4.7, `spatie/laravel-translatable` 6.14.1, `spatie/laravel-medialibrary` 11.23.9, `spatie/laravel-permission` 8.3.0, `spatie/laravel-backup` 10.3.3, `spatie/laravel-sitemap` 8.2.0, `mews/purifier` 3.4.4 (HTML sanitizer per REVIEW), `pestphp/pest` v4.7.8, `vite` ^8, `@vitejs` via `laravel-vite-plugin` ^3.1. Composer `php` constraint `^8.3`. Local `.env`: MySQL `dots` db, `QUEUE_CONNECTION=sync`, `CACHE_STORE=database` (no local Redis daemon running); `.env.example` keeps `redis` for prod. Tests run on sqlite `:memory:` (phpunit.xml). NOTE: Laravel 13's scaffolding ships a Tailwind `@tailwindcss/vite` entry + default CLAUDE.md/AGENTS.md — restored the project CLAUDE.md, removed AGENTS.md; Tailwind to be stripped in T1.3 (project is no-Tailwind).
 - **2026-10-07 — DB target (Q9):** production MySQL **8.0**. Migrations/SQL must stay 8.0-compatible (no 9.x-only syntax). Local MySQL 9.6 is fine.
 - **2026-10-07 — Paymob (Q1):** Intention / Unified Checkout API (not legacy Accept). Credentials from `.env` only; card method hidden when unconfigured.
 - **2026-10-07 — Order number (Q2):** `number` = `settings.commerce.order_prefix` (default `DT-`) + `orders.id`; table AUTO_INCREMENT starts at 10001; generated & stored once at creation in the same transaction; unique index; also the tracking number. Prefix change affects new orders only. Applied to PRD + ERD.
