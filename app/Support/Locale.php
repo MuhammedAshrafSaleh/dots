@@ -58,7 +58,7 @@ class Locale
         [$pathOnly, $query] = array_pad(explode('?', $path, 2), 2, null);
 
         $segments = explode('/', trim($pathOnly, '/'));
-        if (isset($segments[0]) && self::isSupported($segments[0])) {
+        if (self::isSupported($segments[0])) {
             $segments[0] = $target;
         } else {
             array_unshift($segments, $target);

@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Schema;
+
 it('configures the admin and customer guards on the session driver', function () {
     expect(config('auth.guards.admin'))->toMatchArray(['driver' => 'session', 'provider' => 'users']);
     expect(config('auth.guards.customer'))->toMatchArray(['driver' => 'session', 'provider' => 'customers']);
@@ -16,5 +18,5 @@ it('uses the database session driver by default so sessions can be revoked', fun
     expect(file_get_contents(config_path('session.php')))
         ->toContain("env('SESSION_DRIVER', 'database')");
 
-    expect(Illuminate\Support\Facades\Schema::hasTable('sessions'))->toBeTrue();
+    expect(Schema::hasTable('sessions'))->toBeTrue();
 });

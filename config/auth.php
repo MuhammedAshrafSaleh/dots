@@ -80,11 +80,11 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        // Customer model is added in Phase 2. ::class is a compile-time string,
-        // so this is safe to declare before the model exists.
+        // Customer model is added in Phase 2. Declared as a string (not ::class)
+        // so it resolves before the model exists and static analysis stays clean.
         'customers' => [
             'driver' => 'eloquent',
-            'model' => \App\Models\Customer::class,
+            'model' => 'App\Models\Customer',
         ],
     ],
 
