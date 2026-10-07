@@ -5,6 +5,7 @@
 # Environment
 .env
 .env.backup
+.env.*.local
 
 # Build output
 /public/build/
@@ -20,3 +21,5 @@
 # OS / editor
 .DS_Store
 .phpunit.result.cache
+.idea/
+.vscode/

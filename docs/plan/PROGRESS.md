@@ -1,5 +1,7 @@
 # PROGRESS
 
+**Git:** branch `main` · last pushed commit `2c3181c` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+
 Current phase: **0 — Review DONE** — awaiting owner `start phase 1` (owner says `start phase N` to move on)
 
 Legend: [ ] todo · [x] done
