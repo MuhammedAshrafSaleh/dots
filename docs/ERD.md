@@ -4,6 +4,8 @@ Approved by the client owner. Source of truth for migrations. Notes are partly A
 
 Conventions: every `json · translatable` column uses spatie/laravel-translatable with keys `ar` and `en`. Money is `decimal(12,2)`, VAT (14%) is included in prices. `media collection` = spatie/laravel-medialibrary, no column. Add `foreignId()->constrained()` with sensible `onDelete` (restrict for catalog refs from orders; cascade for pivots/children). `slug` translatable = one slug per locale, unique per locale.
 
+Slug enforcement & routing: per-locale uniqueness and route-model binding use MySQL **generated STORED** columns `slug_ar` / `slug_en` extracted from the translatable `slug` JSON, each with a `UNIQUE` index, backed by app-level validation. Slugs stay editable in the admin. The Arabic slugger preserves Arabic script (Unicode-preserving) and appends `-2` / `-3` … on collision. (MySQL 8.0-compatible: no 9.x-only syntax.)
+
 ## Relations overview
 
 **Catalog**
@@ -552,7 +554,7 @@ Indexes: `(cart_id, product_variant_id) unique`
 | column | type | notes |
 |---|---|---|
 | `id` | bigint PK |  |
-| `number` | string | DT-10482، بيتولد تلقائي، وهو رقم التتبع |
+| `number` | string | `settings.commerce.order_prefix` (افتراضي `DT-`) + `orders.id`؛ الـ AUTO_INCREMENT يبدأ من 10001؛ يتولد ويُخزن مرة واحدة وقت الإنشاء داخل نفس الـ transaction، unique، وهو رقم التتبع. تغيير البادئة يؤثر على الطلبات الجديدة فقط |
 | `customer_id` | FK → customers | null = Guest |
 | `contact_name` | string |  |
 | `contact_mobile` | string |  |
@@ -828,7 +830,7 @@ Each row = one section of one page. `content` holds the fields below (text field
 | `home.services_head` | eyebrow · title · button_label |
 | `home.smart_banner` | eyebrow · title · text · button1_label · button1_link · button2_label · button2_link · image |
 | `home.brands_head` | eyebrow · title · button_label |
-| `about.hero` | eyebrow · title · text · image · video · button1_label · button2_label |
+| `about.hero` | eyebrow · title · text · image · video · button1_label · button1_link · button2_label · button2_link |
 | `about.story` | eyebrow · title · text · images ×3 |
 | `about.stats` | items[value, suffix, label] ×4 |
 | `about.mission_vision` | mission_text · mission_image · vision_text · vision_image |
@@ -844,7 +846,7 @@ Each row = one section of one page. `content` holds the fields below (text field
 | `projects.previous_head` | eyebrow · title · lede |
 | `blog.head` | eyebrow · title · lede |
 | `global.quote_band` | eyebrow · title · bullets ×4 · hours_text · button_label |
-| `global.mega_promo` | image · title · button_label |
+| `global.mega_promo` | image · title · button_label · button_link |
 | `global.newsletter` | eyebrow · title |
 
 ## `settings` keys

@@ -8,7 +8,7 @@ Related docs: `docs/ERD.md` (database), `docs/CONTENT_MAP.md` (every visible fie
 1. Build every page and element that exists in the design, nothing that does not. Exceptions listed in §14.
 2. **No hardcoded content.** Every heading, text, image, number and link listed in CONTENT_MAP.md is read from the database and editable in the admin. Only UI labels (buttons, form labels, validation and error messages, empty states) live in `lang/ar/*.php` and `lang/en/*.php`.
 3. **No file uploads from customers**, anywhere. Only admins upload files.
-4. **No SMS anywhere.** Order confirmation and follow-up happen on WhatsApp (manually by staff). Password reset is by email.
+4. **No SMS anywhere, and no automatic messages to customers.** There is no order-confirmation SMS or email. The customer's record of the order is the on-site order-confirmation page (keep the order number to track it). Follow-up happens on WhatsApp manually by staff. The only customer email is password reset (customer-initiated). Admin-facing email (e.g. new-order notice) is allowed.
 5. All money in EGP, VAT 14% included in displayed prices.
 
 ## 2. Stack
@@ -72,14 +72,14 @@ Shared on every page: utility strip, header (search with scopes, language switch
   2. Card via Paymob: hidden automatically when credentials are missing from `.env`. Credentials are **never** stored in the DB or editable in the admin.
   3. InstaPay via WhatsApp: order created with payment `awaiting_transfer`, items reserved until `reserved_until` (hours from settings), customer sent to WhatsApp with order number, items, delivery and total. Staff confirms payment in the admin. A scheduled job releases expired reservations (cancels the order and restores stock).
 - Stock is decremented when the order is placed (and restored on cancel/expiry).
-- Order number `DT-` + sequence (start 10001). Snapshot product name, variant label, SKU, unit price, image, governorate and delivery method name on the order.
+- Order number = `settings.commerce.order_prefix` (default `DT-`) + `orders.id`, with the table AUTO_INCREMENT starting at 10001 (no counter table). The number is generated and stored once at creation inside the same transaction, with a unique index. Changing the prefix affects new orders only. This number is also the tracking number. Snapshot product name, variant label, SKU, unit price, image, governorate and delivery method name on the order.
 
 ## 7. Orders, tracking, notifications
 - Two independent statuses: order `new → confirmed → preparing → shipped → delivered` or `cancelled`; payment `pending | awaiting_transfer | paid | failed | refunded`. Every change writes `order_status_histories` (time + optional customer-visible note + admin user).
 - **Tracking**: the order number is the tracking number. Track page = order number + mobile → status badges, progress, timeline with times and notes, optional expected delivery date, items, total. No couriers, no AWB.
 - Order confirmation page: three variants by payment (COD, card paid, InstaPay "one step left" + Continue on WhatsApp). Guests see "Save your details for next time" (single password field; name, mobile, email from the order) — the only place an account is created from an order.
 - Payment failed page: reason (Paymob code/message), retry card, switch to COD, switch to InstaPay via WhatsApp.
-- New order → email to admin (address in settings). Order detail in admin has "Send update on WhatsApp" (opens a prefilled `wa.me` chat from the `tpl_order_update` template). No automatic WhatsApp/SMS to customers.
+- New order → email to admin (address in settings). Order detail in admin has "Send update on WhatsApp" (opens a prefilled `wa.me` chat from the `tpl_order_update` template). No automatic WhatsApp, SMS or email to customers.
 
 ## 8. Paymob
 - `PaymentGateway` interface + `PaymobGateway` driver. Config from `.env` only (empty placeholders in `.env.example`). Default flow: **Intention API (Unified Checkout)**; ask the owner to confirm before implementing (legacy Accept flow = Auth → Order → Payment key → iframe is the alternative).

@@ -1,13 +1,13 @@
 # PROGRESS
 
-Current phase: **0 — Review** (owner says `start phase N` to move on)
+Current phase: **0 — Review DONE** — awaiting owner `start phase 1` (owner says `start phase N` to move on)
 
 Legend: [ ] todo · [x] done
 
 
 ## Phase 0 — Review (no code)  (`phase-00-review.md`)
-- [ ] T0.1 Read and cross-check
-- [ ] T0.2 Write the review report
+- [x] T0.1 Read and cross-check
+- [x] T0.2 Write the review report
 
 ## Phase 1 — Foundation  (`phase-01-foundation.md`)
 - [ ] T1.1 Create the project
@@ -95,8 +95,23 @@ Legend: [ ] todo · [x] done
 - [ ] T11.2 Google Drive backups
 
 ## Decisions log
-- (technical decisions go here with date)
+- **2026-10-07 — Versions:** do not assume from memory. At install time (Phase 1) use the latest stable majors `composer`/`npm` resolve for Laravel, Livewire, Pest and Vite, provided all required Spatie packages (translatable, medialibrary, permission, backup, sitemap) support them. Record the exact resolved versions here once installed. Local toolchain: PHP 8.4.23, Composer 2.10, Node 22, npm 10.
+- **2026-10-07 — DB target (Q9):** production MySQL **8.0**. Migrations/SQL must stay 8.0-compatible (no 9.x-only syntax). Local MySQL 9.6 is fine.
+- **2026-10-07 — Paymob (Q1):** Intention / Unified Checkout API (not legacy Accept). Credentials from `.env` only; card method hidden when unconfigured.
+- **2026-10-07 — Order number (Q2):** `number` = `settings.commerce.order_prefix` (default `DT-`) + `orders.id`; table AUTO_INCREMENT starts at 10001; generated & stored once at creation in the same transaction; unique index; also the tracking number. Prefix change affects new orders only. Applied to PRD + ERD.
+- **2026-10-07 — Slugs (Q3/Q4):** translatable `slug` JSON + generated STORED columns `slug_ar`/`slug_en` with UNIQUE indexes; route binding against them + app-level validation. Arabic-script slugs kept in AR URLs via a Unicode-preserving slugger (`-2`/`-3` on collision); editable in admin. Applied to ERD.
+- **2026-10-07 — page_sections links (Q5):** added `global.mega_promo.button_link` and `about.hero.button1_link`/`button2_link`. Applied to ERD + CONTENT_MAP.
+- **2026-10-07 — Rich text (Q6):** TipTap in an Alpine wrapper (`wire:ignore` with Livewire); allowed blocks only: h2, h3, p, bold, italic, link, ul/ol, blockquote, image+caption, callout. Sanitize on save with `mews/purifier` using a per-field allowlist.
+- **2026-10-07 — Services process (Q7):** the 4 "how we work" steps are one global `page_sections` row shared by all services; only `duration_text` is per service.
+- **2026-10-07 — No SMS / no automatic customer messages (Q8):** no SMS and no automatic customer email (no order-confirmation email). Password reset email only (customer-initiated); admin new-order email allowed. BOQ button = logged WhatsApp link (`quote_requests.source = boq`), no upload control anywhere. Copy strings for Phase 1 lang files + Phase 5/7 views:
+  - Track lede — AR: "أدخل رقم الطلب الظاهر في صفحة تأكيد الطلب لمتابعة حالته." · EN: "Enter the order number shown on your order confirmation page to follow its status."
+  - InstaPay option — AR: "التحويل وإرسال الإيصال عبر واتساب" · EN: "Transfer and send the receipt via WhatsApp".
+  - Confirmation page — AR: "احتفظ برقم الطلب لمتابعة حالته" · EN: "Keep your order number to track your order". Remove any line promising an SMS or email.
+- **2026-10-07 — Account linking (Q10):** never merge accounts. Link a guest order only when BOTH mobile and email match the SAME customer; otherwise leave it a guest order silently (visible in admin). Reusing another account's mobile/email at registration = normal unique validation error.
+- **2026-10-07 — VAT:** prices entered VAT-inclusive. Round each line total to 2 dp; order total = Σ line totals − coupon discount + delivery fee. VAT is display-only = total × 14 / 114, rounded to 2 dp. Snapshot all of it on the order.
+- **2026-10-07 — Queue:** `sync` locally; database/redis in production (`QUEUE_CONNECTION` switchable in `.env`).
+- **2026-10-07 — Search (decision to confirm in Phase 2/6):** FULLTEXT on `products.search_text` using the InnoDB **ngram** parser (handles short Arabic/SKU tokens that the default parser drops), with a `LIKE` fallback for exact SKU fragments. Validate on the ≥10k-product seeder with `EXPLAIN`; revise here if ngram underperforms.
 
 ## Phase reports
-- (one short report per finished phase)
+- **Phase 0 — Review (2026-10-07).** Reviewed CLAUDE.md, PRD, ERD, CONTENT_MAP, design/README + spot-checked 10+ design JSX strings against the `page_sections`/CONTENT_MAP schemas (all matched). Confirmed all 48 ERD tables are covered by phase tasks. Wrote `docs/plan/REVIEW.md` (gaps, risks, package proposals, 11 questions). Owner answered all questions; approved edits applied to PRD, ERD, CONTENT_MAP and this Decisions log. Found and fixed a setup blocker: the project was not its own git repo (git root was the home dir) — ran `git init` in `Herd/dots` with a basic `.gitignore`, home `~/.git` left untouched. Phase 0 complete; awaiting `start phase 1`.
 

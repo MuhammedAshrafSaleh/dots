@@ -15,7 +15,7 @@ Every visible piece of content on every page → where it is stored → which ad
 | Mega Menu | الأقسام الرئيسية + الأيقونة | `categories.name`<br>`categories.icon`<br>`categories.level` | الأقسام |
 | Mega Menu | المجموعات والأقسام النهائية | `categories.parent_id`<br>`categories.sort_order` | الأقسام |
 | Mega Menu | عدد المنتجات والبراندات | derived: عدد المنتجات والبراندات النشطة | — |
-| Mega Menu | بانر الترويج (صورة، عنوان، زرار) | page_sections `global.mega_promo.image`<br>page_sections `global.mega_promo.title`<br>page_sections `global.mega_promo.button_label` | محتوى الصفحات › عام |
+| Mega Menu | بانر الترويج (صورة، عنوان، زرار + رابط) | page_sections `global.mega_promo.image`<br>page_sections `global.mega_promo.title`<br>page_sections `global.mega_promo.button_label`<br>page_sections `global.mega_promo.button_link` | محتوى الصفحات › عام |
 | شريط عرض السعر | العنوان، 4 نقاط، المواعيد | page_sections `global.quote_band.title`<br>page_sections `global.quote_band.bullets ×4`<br>page_sections `global.quote_band.hours_text` | محتوى الصفحات › عام |
 | شريط عرض السعر | زرار واتساب + زرار المقايسة | `quote_requests.source`<br>settings `whatsapp.tpl_boq` | ضغطات واتساب |
 | الفوتر | نص التعريف | settings `footer.about_text` | الإعدادات › الفوتر |
@@ -175,7 +175,7 @@ Every visible piece of content on every page → where it is stored → which ad
 
 | part | field | stored in | edited in admin |
 |---|---|---|---|
-| Hero | صورة/فيديو، eyebrow، عنوان، نص، زرارين | page_sections `about.hero.image`<br>page_sections `about.hero.video`<br>page_sections `about.hero.title`<br>page_sections `about.hero.text` | محتوى الصفحات › من نحن |
+| Hero | صورة/فيديو، eyebrow، عنوان، نص، زرارين + رابطيهما | page_sections `about.hero.image`<br>page_sections `about.hero.video`<br>page_sections `about.hero.title`<br>page_sections `about.hero.text`<br>page_sections `about.hero.button1_link`<br>page_sections `about.hero.button2_link` | محتوى الصفحات › من نحن |
 | قصتنا | عنوان، نص، 3 صور | page_sections `about.story.title`<br>page_sections `about.story.text`<br>page_sections `about.story.images ×3` | محتوى الصفحات › من نحن |
 | الأرقام | 4 أرقام | page_sections `about.stats.items[value, suffix, label] ×4` | محتوى الصفحات › من نحن |
 | المهمة والرؤية | نص + صورة لكل واحدة | page_sections `about.mission_vision.mission_text`<br>page_sections `about.mission_vision.mission_image`<br>page_sections `about.mission_vision.vision_text`<br>page_sections `about.mission_vision.vision_image` | محتوى الصفحات › من نحن |
