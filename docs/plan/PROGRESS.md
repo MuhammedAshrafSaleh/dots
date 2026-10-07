@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Git:** branch `phase-1` · last pushed commit `201a99d` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+**Git:** branch `phase-1` · last pushed commit `6c01296` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
 
 Current phase: **1 — Foundation** (in progress)
 
@@ -13,7 +13,7 @@ Legend: [ ] todo · [x] done
 
 ## Phase 1 — Foundation  (`phase-01-foundation.md`)
 - [x] T1.1 Create the project
-- [ ] T1.2 Locales and routing
+- [x] T1.2 Locales and routing
 - [ ] T1.3 Front-end build and design CSS
 - [ ] T1.4 Base layouts and Blade components
 - [ ] T1.5 Auth guards
