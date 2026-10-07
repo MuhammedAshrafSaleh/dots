@@ -42,6 +42,19 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Admin area (/admin). Admins live in the `users` table; the single
+        // "Admin" role holds every permission (spatie/laravel-permission).
+        'admin' => [
+            'driver' => 'session',
+            'provider' => 'users',
+        ],
+
+        // Public-site customers (separate `customers` table, built in Phase 2).
+        'customer' => [
+            'driver' => 'session',
+            'provider' => 'customers',
+        ],
     ],
 
     /*
@@ -67,10 +80,12 @@ return [
             'model' => env('AUTH_MODEL', User::class),
         ],
 
-        // 'users' => [
-        //     'driver' => 'database',
-        //     'table' => 'users',
-        // ],
+        // Customer model is added in Phase 2. ::class is a compile-time string,
+        // so this is safe to declare before the model exists.
+        'customers' => [
+            'driver' => 'eloquent',
+            'model' => \App\Models\Customer::class,
+        ],
     ],
 
     /*

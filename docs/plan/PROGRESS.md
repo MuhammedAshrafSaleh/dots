@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Git:** branch `phase-1` · last pushed commit `8efba59` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+**Git:** branch `phase-1` · last pushed commit `8e4578d` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
 
 Current phase: **1 — Foundation** (in progress)
 
@@ -16,7 +16,7 @@ Legend: [ ] todo · [x] done
 - [x] T1.2 Locales and routing
 - [x] T1.3 Front-end build and design CSS
 - [x] T1.4 Base layouts and Blade components
-- [ ] T1.5 Auth guards
+- [x] T1.5 Auth guards
 - [ ] T1.6 Quality tooling
 
 ## Phase 2 — Database, models, seeders  (`phase-02-database.md`)
