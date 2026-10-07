@@ -3,3 +3,10 @@
    design/website/styles/styles.css (see design-site.css). */
 @import './fonts.css';
 @import './design-site.css';
+
+/* Alpine: hide elements until Alpine initialises (x-cloak). */
+[x-cloak] { display: none !important; }
+
+/* Skip-to-content link (accessibility; not part of the design export). */
+.d-skip { position: absolute; inset-inline-start: 8px; top: -48px; z-index: var(--z-toast, 9999); padding: 8px 14px; border-radius: var(--radius-md); background: var(--ink-900); color: var(--white); font: 700 14px/1 var(--font-body); transition: top var(--dur-fast); }
+.d-skip:focus { top: 8px; }

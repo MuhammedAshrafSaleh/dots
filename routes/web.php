@@ -12,8 +12,9 @@ Route::prefix('{locale}')
     ->group(function (): void {
         Route::get('/', fn () => view('welcome'))->name('home');
 
-        // Design styleguide — never in production (T1.3; superseded by the T1.4 kitchen sink).
+        // Design styleguide + component kitchen sink — never in production.
         if (! app()->isProduction()) {
             Route::get('/_styleguide', fn () => view('styleguide'))->name('styleguide');
+            Route::get('/_kitchen-sink', fn () => view('kitchen-sink'))->name('kitchen-sink');
         }
     });
