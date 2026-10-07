@@ -1,0 +1,22 @@
+# Dependencies
+/vendor/
+/node_modules/
+
+# Environment
+.env
+.env.backup
+
+# Build output
+/public/build/
+/public/hot
+
+# Storage (logs & cache); Laravel's own .gitignore merged in Phase 1
+/storage/*.key
+/storage/logs/*
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+
+# OS / editor
+.DS_Store
+.phpunit.result.cache
