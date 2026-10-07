@@ -1,0 +1,31 @@
+/* Self-hosted fonts via @fontsource (bundled by Vite). Family names match the
+   design tokens in design-site.css / design-admin.css:
+   Sora (display) · Manrope (body/UI) · IBM Plex Sans Arabic (Arabic) · IBM Plex Mono (SKU/spec). */
+
+/* Sora — display, 400–800 */
+@import '@fontsource/sora/400.css';
+@import '@fontsource/sora/500.css';
+@import '@fontsource/sora/600.css';
+@import '@fontsource/sora/700.css';
+@import '@fontsource/sora/800.css';
+
+/* Manrope — body/UI, 400–800 */
+@import '@fontsource/manrope/400.css';
+@import '@fontsource/manrope/500.css';
+@import '@fontsource/manrope/600.css';
+@import '@fontsource/manrope/700.css';
+@import '@fontsource/manrope/800.css';
+
+/* IBM Plex Sans Arabic — Arabic + Latin, 400–700 (max weight available) */
+@import '@fontsource/ibm-plex-sans-arabic/400.css';
+@import '@fontsource/ibm-plex-sans-arabic/500.css';
+@import '@fontsource/ibm-plex-sans-arabic/600.css';
+@import '@fontsource/ibm-plex-sans-arabic/700.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-700.css';
+
+/* IBM Plex Mono — SKU/spec codes, 400 & 500 */
+@import '@fontsource/ibm-plex-mono/400.css';
+@import '@fontsource/ibm-plex-mono/500.css';

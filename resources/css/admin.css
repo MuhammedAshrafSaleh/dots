@@ -1,0 +1,5 @@
+/* Admin stylesheet entry.
+   Fonts first, then the admin design system CSS ported verbatim from
+   design/admin/styles/styles.css (see design-admin.css). */
+@import './fonts.css';
+@import './design-admin.css';

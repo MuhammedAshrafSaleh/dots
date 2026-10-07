@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Git:** branch `phase-1` · last pushed commit `6c01296` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+**Git:** branch `phase-1` · last pushed commit `1e3d1e5` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
 
 Current phase: **1 — Foundation** (in progress)
 
@@ -14,7 +14,7 @@ Legend: [ ] todo · [x] done
 ## Phase 1 — Foundation  (`phase-01-foundation.md`)
 - [x] T1.1 Create the project
 - [x] T1.2 Locales and routing
-- [ ] T1.3 Front-end build and design CSS
+- [x] T1.3 Front-end build and design CSS
 - [ ] T1.4 Base layouts and Blade components
 - [ ] T1.5 Auth guards
 - [ ] T1.6 Quality tooling
@@ -114,6 +114,8 @@ Legend: [ ] todo · [x] done
 - **2026-10-07 — VAT:** prices entered VAT-inclusive. Round each line total to 2 dp; order total = Σ line totals − coupon discount + delivery fee. VAT is display-only = total × 14 / 114, rounded to 2 dp. Snapshot all of it on the order.
 - **2026-10-07 — Queue:** `sync` locally; database/redis in production (`QUEUE_CONNECTION` switchable in `.env`).
 - **2026-10-07 — Search (decision to confirm in Phase 2/6):** FULLTEXT on `products.search_text` using the InnoDB **ngram** parser (handles short Arabic/SKU tokens that the default parser drops), with a `LIKE` fallback for exact SKU fragments. Validate on the ≥10k-product seeder with `EXPLAIN`; revise here if ngram underperforms.
+
+- **2026-10-07 — Front-end (T1.3):** Removed the Laravel-default Tailwind (`@tailwindcss/vite`, `tailwindcss`) — project is no-Tailwind. Two Vite entries: site (`resources/css/site.css` + `resources/js/app.js`) and admin (`resources/css/admin.css` + `resources/js/admin.js`). Design CSS ported verbatim to `resources/css/design-site.css` / `design-admin.css`, each wrapped by its entry which first `@import`s `resources/css/fonts.css`. Fonts self-hosted via `@fontsource` (sora, manrope, ibm-plex-sans-arabic [Arabic+Latin], ibm-plex-mono). Alpine 3 started in both JS entries. Icons: `mallardduck/blade-lucide-icons` (set prefix `lucide`); our own `resources/views/components/icon.blade.php` owns `<x-icon name=".."/>` (disabled the package's default `icon` component via `config/blade-icons.php` `components.default=''`, `disabled=true`) and reproduces Icon.jsx (1.5 stroke, aliases, RTL-flip directional set). Styleguide at `/{locale}/_styleguide` (non-production only). Fixed: untracked `bootstrap/cache/*.php` (added `bootstrap/cache/.gitignore`).
 
 ## Phase reports
 - **Phase 0 — Review (2026-10-07).** Reviewed CLAUDE.md, PRD, ERD, CONTENT_MAP, design/README + spot-checked 10+ design JSX strings against the `page_sections`/CONTENT_MAP schemas (all matched). Confirmed all 48 ERD tables are covered by phase tasks. Wrote `docs/plan/REVIEW.md` (gaps, risks, package proposals, 11 questions). Owner answered all questions; approved edits applied to PRD, ERD, CONTENT_MAP and this Decisions log. Found and fixed a setup blocker: the project was not its own git repo (git root was the home dir) — ran `git init` in `Herd/dots` with a basic `.gitignore`, home `~/.git` left untouched. Phase 0 complete; awaiting `start phase 1`.
