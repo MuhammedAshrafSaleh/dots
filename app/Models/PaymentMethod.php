@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property PaymentMethodCode $code
+ */
 class PaymentMethod extends Model
 {
     use HasTranslations;

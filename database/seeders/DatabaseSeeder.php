@@ -22,5 +22,10 @@ class DatabaseSeeder extends Seeder
             CommerceSeeder::class,
             SiteSeeder::class,
         ]);
+
+        // Demo customers/orders/leads only on local/staging — never in production.
+        if (app()->environment(['local', 'staging'])) {
+            $this->call(DemoSeeder::class);
+        }
     }
 }

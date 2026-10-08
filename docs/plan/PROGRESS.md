@@ -1,12 +1,13 @@
 # PROGRESS
 
-**Git:** branch `phase-2` · last local commit `e5264e4` (T2.5) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
+**Git:** branch `phase-2` · last local commit `dbefde5` (T2.6) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
 
 Current phase: **2 — Database, models, seeders** (in progress)
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
-- **T2.6** (hash recorded with next commit) Design seeders: Governorates (27), Attributes (4 + 19 values w/ swatches), Catalog (65-node category tree from MegaMenu, 8 brands, 12 products + 20 variants + specs/relations/featured + gallery media w/ captions), Content (4 services + items + general FAQ, 14 projects w/ cover+gallery, 9 posts + cats/tags, 6 content pages), Commerce (3 payment + 4 delivery methods), Site (25 page_sections + 29 settings). Media from local design photos. `LargeCatalogSeeder` (10k) + `Slug` helper + `SeedsDesignMedia` trait. 72 tests · pint · phpstan clean.
+- **T2.7** (hash recorded with next commit) DemoSeeder (local/staging only, or `--class=DemoSeeder`): 4 demo customers (Account.jsx) with addresses + wishlists; 8 orders spanning every status + payment status, guest & customer, with items/address/status-history timelines (notes+times) and Paymob payment logs (paid/failed/refunded); 3 coupons (DOTS10 + 2) redeemed; a WhatsApp lead for every QuoteSource; 4 consultations; 3 newsletter subs; dates spread over 60 days; prints demo + admin logins. 77 tests · pint · phpstan clean.
+- **T2.6** (`dbefde5`) Design seeders: Governorates (27), Attributes (4 + 19 values w/ swatches), Catalog (65-node category tree from MegaMenu, 8 brands, 12 products + 20 variants + specs/relations/featured + gallery media w/ captions), Content (4 services + items + general FAQ, 14 projects w/ cover+gallery, 9 posts + cats/tags, 6 content pages), Commerce (3 payment + 4 delivery methods), Site (25 page_sections + 29 settings). Media from local design photos. `LargeCatalogSeeder` (10k) + `Slug` helper + `SeedsDesignMedia` trait. 72 tests · pint · phpstan clean.
 - **T2.5** (`e5264e4`) Roles + admin user: spatie/permission published; `config/permissions.php` (56 named permissions, one per admin area+action); `User` gets `HasRoles` + `is_active`/`last_login_at`; idempotent `RolesAndAdminSeeder` (all permissions → Admin role → admin user from `config/dots.php` ← ADMIN_EMAIL/ADMIN_PASSWORD). 68 tests · pint · phpstan clean.
 - **T2.4** (`2dc0bf6`) Cache columns + observers: `UpdateProductCacheColumns` action recomputes min_price / max_compare_at / stock_status / search_text from variants (fresh queries, saveQuietly). Observers on Product, ProductVariant, Category, Brand, PageSection, Setting flush tagged caches via a driver-safe `CacheTags` helper (whole-store flush on non-taggable fallback). 65 tests · pint · phpstan clean.
 - **T2.3** (`20517a0`) Commerce/customers/leads schema + models: 21 tables (governorates, delivery_methods + pivot, payment_methods, coupons + redemptions, carts/cart_items, orders + items/addresses/status_histories, payments, webhook_events, customers + addresses/wishlists/password_reset_tokens, quote/consultation requests, newsletter_subscribers). 12 backed enums. Race-safe order number (`created` hook: prefix+id, AUTO_INCREMENT 10001, unique index backstop). Customer auth model (soft deletes). 59 tests · pint · phpstan clean.
@@ -34,7 +35,7 @@ Legend: [ ] todo · [x] done
 - [x] T2.4 Cache columns and observers
 - [x] T2.5 Roles and admin user
 - [x] T2.6 Seeders from the design
-- [ ] T2.7 Demo data for the admin (DemoSeeder)
+- [x] T2.7 Demo data for the admin (DemoSeeder)
 
 ## Phase 3 — Admin: shell, shared widgets, catalog  (`phase-03-admin-catalog.md`)
 - [ ] T3.1 Admin auth and shell
