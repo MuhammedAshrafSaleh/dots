@@ -77,6 +77,13 @@ it('seeds all 25 page sections and settings defaults', function () {
     $settings = app(Settings::class);
     expect($settings->get('commerce.order_prefix'))->toBe('DT-')
         ->and($settings->translated('contact.showroom_label', 'ar'))->toBe('المعرض');
+
+    // Every ERD whatsapp template is seeded (admin-editable) and non-empty.
+    foreach (['product', 'cart', 'instapay_order', 'boq', 'general', 'order_confirm_admin', 'order_update'] as $tpl) {
+        expect($settings->translated("whatsapp.tpl_{$tpl}", 'en'))->not->toBe('')
+            ->and($settings->translated("whatsapp.tpl_{$tpl}", 'ar'))->not->toBe('');
+    }
+    expect($settings->translated('whatsapp.tpl_product', 'en'))->toContain('{product_name}');
 });
 
 it('seeds payment and delivery methods, express limited to Cairo & Giza', function () {

@@ -300,13 +300,16 @@ class SiteSeeder extends Seeder
             'commerce.order_prefix' => 'DT-',
             'commerce.currency' => 'EGP',
 
-            // whatsapp message templates — built in code in the design, no copy
-            // to lift (placeholders).
-            'whatsapp.tpl_product' => $this->m('Hi Dots, I’m interested in: {product}', 'مرحباً دوتس، مهتم بـ: {product}'),
-            'whatsapp.tpl_cart' => $this->m('Hi Dots, I’d like to order my cart.', 'مرحباً دوتس، أريد طلب السلة.'),
-            'whatsapp.tpl_instapay_order' => $this->m('Order {number}: sending my InstaPay receipt.', 'طلب {number}: أرسل إيصال إنستاباي.'),
-            'whatsapp.tpl_boq' => $this->m('Hi Dots, here is my BOQ for a project.', 'مرحباً دوتس، هذه مقايسة مشروعي.'),
+            // whatsapp message templates — admin-editable (ERD). The design
+            // builds these in code, so the default wording is ours; messages are
+            // rendered via App\Services\WhatsApp by replacing {placeholders}.
+            'whatsapp.tpl_product' => $this->m('Hi Dots, I’m interested in {product_name} ({sku}). {url}', 'مرحباً دوتس، مهتم بـ {product_name} ({sku}). {url}'),
+            'whatsapp.tpl_cart' => $this->m("Hi Dots, I’d like to order my cart:\n{items}\nTotal: {total}", "مرحباً دوتس، أريد طلب السلة:\n{items}\nالإجمالي: {total}"),
+            'whatsapp.tpl_instapay_order' => $this->m('Order {order_number}: I’ve transferred {total} via InstaPay and I’m sending the receipt.', 'طلب {order_number}: حوّلت {total} عبر إنستاباي وأرسل الإيصال.'),
+            'whatsapp.tpl_boq' => $this->m('Hi Dots, I have a project BOQ to price. My name is {customer_name}.', 'مرحباً دوتس، عندي مقايسة مشروع لتسعيرها. اسمي {customer_name}.'),
             'whatsapp.tpl_general' => $this->m('Hi Dots, I have a question.', 'مرحباً دوتس، عندي سؤال.'),
+            'whatsapp.tpl_order_confirm_admin' => $this->m('New order {order_number} from {customer_name} — total {total}.', 'طلب جديد {order_number} من {customer_name} — الإجمالي {total}.'),
+            'whatsapp.tpl_order_update' => $this->m('Update on order {order_number}: {status}. Track it: {url}', 'تحديث على طلبك {order_number}: {status}. تتبعه: {url}'),
 
             // footer — Footer.jsx (verbatim).
             'footer.about_text' => $this->m('Lighting, smart home and electrical supply — with design, installation and after-sales support across Egypt.', 'إضاءة ومنزل ذكي ومستلزمات كهربائية — مع التصميم والتركيب وخدمة ما بعد البيع في كل مصر.'),
