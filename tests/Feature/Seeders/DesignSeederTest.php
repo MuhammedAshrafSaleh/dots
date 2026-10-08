@@ -76,7 +76,7 @@ it('seeds all 25 page sections and settings defaults', function () {
 
     $settings = app(Settings::class);
     expect($settings->get('commerce.order_prefix'))->toBe('DT-')
-        ->and($settings->translated('contact.showroom_label', 'ar'))->toBe('معرض الشيخ زايد');
+        ->and($settings->translated('contact.showroom_label', 'ar'))->toBe('المعرض');
 });
 
 it('seeds payment and delivery methods, express limited to Cairo & Giza', function () {
