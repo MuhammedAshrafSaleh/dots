@@ -1,12 +1,13 @@
 # PROGRESS
 
-**Git:** branch `phase-2` · last local commit `2ca0e02` (T2.2) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
+**Git:** branch `phase-2` · last local commit `20517a0` (T2.3) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
 
 Current phase: **2 — Database, models, seeders** (in progress)
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
-- **T2.3** (hash recorded with next commit) Commerce/customers/leads schema + models: 21 tables (governorates, delivery_methods + pivot, payment_methods, coupons + redemptions, carts/cart_items, orders + items/addresses/status_histories, payments, webhook_events, customers + addresses/wishlists/password_reset_tokens, quote/consultation requests, newsletter_subscribers). 12 backed enums. Race-safe order number (`created` hook: prefix+id, AUTO_INCREMENT 10001, unique index backstop). Customer auth model (soft deletes). 59 tests · pint · phpstan clean.
+- **T2.4** (hash recorded with next commit) Cache columns + observers: `UpdateProductCacheColumns` action recomputes min_price / max_compare_at / stock_status / search_text from variants (fresh queries, saveQuietly). Observers on Product, ProductVariant, Category, Brand, PageSection, Setting flush tagged caches via a driver-safe `CacheTags` helper (whole-store flush on non-taggable fallback). 65 tests · pint · phpstan clean.
+- **T2.3** (`20517a0`) Commerce/customers/leads schema + models: 21 tables (governorates, delivery_methods + pivot, payment_methods, coupons + redemptions, carts/cart_items, orders + items/addresses/status_histories, payments, webhook_events, customers + addresses/wishlists/password_reset_tokens, quote/consultation requests, newsletter_subscribers). 12 backed enums. Race-safe order number (`created` hook: prefix+id, AUTO_INCREMENT 10001, unique index backstop). Customer auth model (soft deletes). 59 tests · pint · phpstan clean.
 - **T2.2** (`2ca0e02`) Content schema + models: services/service_items, projects (+ pivots), post_categories/posts/tags (+ pivots), pages, page_sections, faqs (polymorphic), settings — 14 tables. `config/page_sections.php` (25 section schemas) + `PageSection` typed-field accessor & `validateContent`. Cached `Settings` repo (get/set/translated, per-key bust). Added CLAUDE.md "run straight through the phase" rule. 49 tests · pint · phpstan clean.
 
 Legend: [ ] todo · [x] done
@@ -28,7 +29,7 @@ Legend: [ ] todo · [x] done
 - [x] T2.1 Catalog migrations + models
 - [x] T2.2 Content migrations + models
 - [x] T2.3 Commerce, customers, leads migrations + models
-- [ ] T2.4 Cache columns and observers
+- [x] T2.4 Cache columns and observers
 - [ ] T2.5 Roles and admin user
 - [ ] T2.6 Seeders from the design
 - [ ] T2.7 Demo data for the admin (DemoSeeder)

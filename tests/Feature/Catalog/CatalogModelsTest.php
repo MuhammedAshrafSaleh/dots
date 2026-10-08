@@ -120,14 +120,15 @@ it('attaches featured products to a category', function () {
 });
 
 it('casts enums and scopes published products', function () {
-    $draft = makeProduct(['status' => ProductStatus::Draft, 'stock_status' => StockStatus::In]);
+    $draft = makeProduct(['status' => ProductStatus::Draft]);
     $live = makeProductWithSku('LIVE-1');
     $live->update(['status' => ProductStatus::Active, 'published_at' => now()->subDay()]);
     $future = makeProductWithSku('FUT-1');
     $future->update(['status' => ProductStatus::Active, 'published_at' => now()->addDay()]);
 
     expect($draft->status)->toBe(ProductStatus::Draft)
-        ->and($draft->stock_status)->toBe(StockStatus::In)
+        // stock_status is a cached, observer-derived enum (no variants → Order).
+        ->and($draft->stock_status)->toBe(StockStatus::Order)
         ->and(Product::active()->pluck('id'))->toContain($live->id, $future->id)
         ->and(Product::published()->pluck('id')->all())->toBe([$live->id]);
 });
