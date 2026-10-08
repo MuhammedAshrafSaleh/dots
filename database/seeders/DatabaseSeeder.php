@@ -7,13 +7,20 @@ use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
     /**
-     * Seed the application's database.
+     * Seed the application's database with the admin account and the design
+     * content/images (so the site mirrors the design page by page).
+     * LargeCatalogSeeder and DemoSeeder are run explicitly, never here.
      */
     public function run(): void
     {
         $this->call([
             RolesAndAdminSeeder::class,
-            // Catalog/content/commerce data from the design is added in T2.6.
+            GovernoratesSeeder::class,
+            AttributesSeeder::class,
+            CatalogSeeder::class,
+            ContentSeeder::class,
+            CommerceSeeder::class,
+            SiteSeeder::class,
         ]);
     }
 }
