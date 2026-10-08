@@ -13,7 +13,3 @@ parameters:
     # Blade/compiled views and framework caches are not source.
     excludePaths:
         - bootstrap/cache
-        # InteractsWithAdminForms gains its first app consumer in T3.4 (brands
-        # slugs/chips). Larastan skips traits with no consumer (trait.unused);
-        # remove this exclude then. Covered by the T3.2 widget-harness test.
-        - app/Livewire/Admin/Concerns/InteractsWithAdminForms.php

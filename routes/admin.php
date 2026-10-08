@@ -6,6 +6,8 @@ use App\Livewire\Admin\Attributes\Index as AttributeIndex;
 use App\Livewire\Admin\Auth\ForgotPassword;
 use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Auth\ResetPassword;
+use App\Livewire\Admin\Brands\Edit as BrandEdit;
+use App\Livewire\Admin\Brands\Index as BrandIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
@@ -49,5 +51,10 @@ Route::prefix('admin')
             Route::get('attributes', AttributeIndex::class)->middleware('can:attributes.view')->name('attributes');
             Route::get('attributes/create', AttributeEdit::class)->middleware('can:attributes.create')->name('attributes.create');
             Route::get('attributes/{attribute}/edit', AttributeEdit::class)->middleware('can:attributes.update')->name('attributes.edit');
+
+            // Catalog — Brands (T3.4).
+            Route::get('brands', BrandIndex::class)->middleware('can:brands.view')->name('brands');
+            Route::get('brands/create', BrandEdit::class)->middleware('can:brands.create')->name('brands.create');
+            Route::get('brands/{brand}/edit', BrandEdit::class)->middleware('can:brands.update')->name('brands.edit');
         });
     });
