@@ -1,8 +1,8 @@
 # PROGRESS
 
-**Git:** branch `phase-2` · last local commit `585a112` (T2.7) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
+**Git:** branch `phase-2` · last local commit `0db5fdc` (T2.7c, review fixes) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
 
-Current phase: **2 — Database, models, seeders DONE** — awaiting owner review, then `approved, push phase 2`
+Current phase: **2 — Database, models, seeders DONE** (review round 1 applied) — awaiting owner re-review, then `approved, push phase 2`
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
@@ -151,6 +151,7 @@ Legend: [ ] todo · [x] done
   - **T2.5** (`e5264e4`) spatie/permission; `config/permissions.php` (56 permissions); `User` HasRoles + is_active/last_login_at; idempotent `RolesAndAdminSeeder` (admin from `config/dots.php`).
   - **T2.6** (`dbefde5`) Design seeders (governorates, attributes, catalog tree/brands/products, content, commerce, 25 page_sections + settings) with local design images via Media Library; `Slug` helper; `LargeCatalogSeeder` (10k).
   - **T2.7** (`585a112`) `DemoSeeder` (local/staging): customers, orders across every state, Paymob logs, coupons, leads for every source, consultations, newsletter.
-  - **Verification:** `php artisan test` **77 passed / 294 assertions** (MySQL `dots_testing`) · `composer analyse` 0 errors (level 6) · `pint --test` clean · `migrate:fresh --seed` populates the design site (12 products, 65 categories, 103 media, 25 sections, 29 settings) and is idempotent · `LargeCatalogSeeder` 10k in ~6.5s. No secrets committed; `.env.testing` gitignored.
-  - **Carried to later phases:** FULLTEXT ngram EXPLAIN/validation on the 10k seeder (Phase 6/9); `page_sections`/`settings` long-form copy fine-tuned against the design while building Phase 5 views; customer password-reset broker (Phase 8).
+  - **Review round 1 (2026-10-08):** **T2.6b** (`8cf089b`) page_sections + settings copy replaced with verbatim design AR/EN strings; placeholder keys documented (Decisions); README local-setup steps incl. `php artisan storage:link`. **T2.7b** (`f4b89f4`) all demo emails → `@example.com`. **T2.7c** (`0db5fdc`) DemoSeeder/LargeCatalogSeeder no-op in production; admin password required from `ADMIN_PASSWORD` in production (no default), seeding throws if empty; `ProductionSeedGuardsTest` added.
+  - **Verification:** `php artisan test` **82 passed / 304 assertions** (MySQL `dots_testing`) · `composer analyse` 0 errors (level 6) · `pint --test` clean · `migrate:fresh --seed` populates the design site (12 products, 65 categories, 103 media, 25 sections, 29 settings) and is idempotent · `LargeCatalogSeeder` 10k in ~6.5s. No secrets committed; `.env.testing` gitignored.
+  - **Carried to later phases:** FULLTEXT ngram EXPLAIN/validation on the 10k seeder (Phase 6/9); customer password-reset broker (Phase 8).
 
