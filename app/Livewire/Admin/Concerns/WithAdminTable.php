@@ -17,6 +17,12 @@ trait WithAdminTable
     #[Url(except: '', history: false)]
     public string $search = '';
 
+    /** Render pagination in the admin design (.d-pages). */
+    public function paginationView(): string
+    {
+        return 'livewire.admin-pagination';
+    }
+
     public ?string $sortCol = null;
 
     public string $sortDir = 'asc';

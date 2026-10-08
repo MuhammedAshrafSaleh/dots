@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Admin\SessionController;
+use App\Livewire\Admin\Attributes\Edit as AttributeEdit;
+use App\Livewire\Admin\Attributes\Index as AttributeIndex;
 use App\Livewire\Admin\Auth\ForgotPassword;
 use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Auth\ResetPassword;
@@ -42,5 +44,10 @@ Route::prefix('admin')
             Route::get('/', Dashboard::class)
                 ->middleware('can:dashboard.view')
                 ->name('dashboard');
+
+            // Catalog — Attributes (T3.3).
+            Route::get('attributes', AttributeIndex::class)->middleware('can:attributes.view')->name('attributes');
+            Route::get('attributes/create', AttributeEdit::class)->middleware('can:attributes.create')->name('attributes.create');
+            Route::get('attributes/{attribute}/edit', AttributeEdit::class)->middleware('can:attributes.update')->name('attributes.edit');
         });
     });
