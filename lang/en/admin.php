@@ -1,0 +1,91 @@
+<?php
+
+// Admin-area UI labels only (chrome, nav, auth screens, shared widgets).
+// Business content comes from the DB; this is interface text.
+return [
+    'nav' => [
+        'dashboard' => 'Dashboard',
+        'catalog' => 'Catalog',
+        'products' => 'Products',
+        'categories' => 'Categories',
+        'brands' => 'Brands',
+        'attributes' => 'Attributes',
+        'content' => 'Content',
+        'page_content' => 'Page content',
+        'services' => 'Services',
+        'projects' => 'Projects',
+        'blog' => 'Blog',
+        'content_pages' => 'Content pages',
+        'sales' => 'Sales',
+        'orders' => 'Orders',
+        'customers' => 'Customers',
+        'coupons' => 'Coupons',
+        'leads_group' => 'Leads',
+        'whatsapp_leads' => 'WhatsApp leads',
+        'consultations' => 'Consultations',
+        'newsletter' => 'Newsletter',
+        'settings_group' => 'Settings',
+        'delivery' => 'Delivery methods',
+        'payments' => 'Payment methods',
+        'settings' => 'Settings',
+        'users' => 'Users',
+    ],
+
+    'shell' => [
+        'admin' => 'Admin',
+        'view_store' => 'View store',
+        'version' => 'Dots Admin · v1.0',
+        'close_menu' => 'Close menu',
+        'open_menu' => 'Open menu',
+        'search' => 'Search',
+        'search_placeholder' => 'Search orders, SKUs, customers…',
+        'search_hint' => 'Type an order number, SKU or phone',
+        'no_results' => 'No matches',
+        'results_orders' => 'Orders',
+        'results_products' => 'Products',
+        'results_customers' => 'Customers',
+        'my_profile' => 'My profile',
+        'settings' => 'Settings',
+        'log_out' => 'Log out',
+        'soon' => 'Soon',
+    ],
+
+    'login' => [
+        'title' => 'Sign in',
+        'subtitle' => 'Admin access for the Dots team.',
+        'email' => 'Email',
+        'password' => 'Password',
+        'remember' => 'Remember me for 30 days',
+        'forgot' => 'Forgot password?',
+        'submit' => 'Sign in',
+        'show_password' => 'Show password',
+        'hide_password' => 'Hide password',
+        'error_title' => 'Email or password is incorrect',
+        'attempts_left' => ':count attempts left before a 15-minute lock.|:count attempt left before a 15-minute lock.',
+    ],
+
+    'forgot' => [
+        'title' => 'Forgot password',
+        'subtitle' => 'Enter your email and we will send a reset link.',
+        'email' => 'Email',
+        'submit' => 'Send reset link',
+        'back' => 'Back to sign in',
+        'sent' => 'If that email belongs to an admin, a reset link is on its way.',
+    ],
+
+    'reset' => [
+        'title' => 'Set a new password',
+        'subtitle' => 'Choose a new password for your admin account.',
+        'email' => 'Email',
+        'password' => 'New password',
+        'password_confirmation' => 'Confirm password',
+        'submit' => 'Save new password',
+        'done' => 'Your password has been reset. You can sign in now.',
+    ],
+
+    'dashboard' => [
+        'welcome' => 'Welcome, :name',
+        'lede' => 'Your catalog and store at a glance. Full metrics arrive with orders.',
+        'quick' => 'Quick links',
+    ],
+];

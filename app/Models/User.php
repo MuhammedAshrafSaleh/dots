@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Notifications\AdminResetPasswordNotification;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -24,6 +25,14 @@ class User extends Authenticatable
     use HasFactory, HasRoles, Notifiable;
 
     /**
+     * Permissions live on the `web` guard. The admin area authenticates on
+     * the `admin` guard and makes it the default (AdminAuth), which would
+     * otherwise lead spatie to look permissions up under `admin`. Pinning the
+     * permission guard here keeps roles/permissions resolving against `web`.
+     */
+    protected string $guard_name = 'web';
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -36,5 +45,11 @@ class User extends Authenticatable
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /** Send the reset link to the admin reset screen, not the public site. */
+    public function sendPasswordResetNotification(#[\SensitiveParameter] $token): void
+    {
+        $this->notify(new AdminResetPasswordNotification($token));
     }
 }

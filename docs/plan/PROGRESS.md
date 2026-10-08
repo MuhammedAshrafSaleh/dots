@@ -1,8 +1,11 @@
 # PROGRESS
 
-**Git:** branch `main` · last commit `b6c1cba` (Phase 2 complete) · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-2 merged to main & pushed _(updated after every commit)_
+**Git:** branch `phase-3` (local, not pushed) · last commit `T3.1` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — do not push until owner approves _(updated after every commit)_
 
-Current phase: **2 — Database, models, seeders DONE, merged & pushed** — awaiting owner `start phase 3`
+Current phase: **3 — Admin: shell, shared widgets, catalog** — in progress on local `phase-3`
+
+### Phase 3 task log
+- **T3.1** Admin auth and shell: `/admin` area (not locale-prefixed; locale in session via `SetAdminLocale` + `/admin/lang/{locale}`). Livewire (class-based) Login/ForgotPassword/ResetPassword + minimal Dashboard; `AdminAuth` middleware (active admin, makes `admin` the default guard, prepended before `Authorize` in the priority list) + `can:` per route. Data-driven sidebar/topbar from `config/admin_nav.php` (links light up as routes are built; disabled "soon" otherwise), global search (orders/SKUs/customers), language switch, logout. Admin password reset via `users` broker + `AdminResetPasswordNotification`. 14 tests (guest redirect, customer blocked, login/lockout/inactive, logout, lang, forgot/reset).
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
@@ -38,7 +41,7 @@ Legend: [ ] todo · [x] done
 - [x] T2.7 Demo data for the admin (DemoSeeder)
 
 ## Phase 3 — Admin: shell, shared widgets, catalog  (`phase-03-admin-catalog.md`)
-- [ ] T3.1 Admin auth and shell
+- [x] T3.1 Admin auth and shell
 - [ ] T3.2 Shared admin widgets (Livewire/Blade)
 - [ ] T3.3 Attributes
 - [ ] T3.4 Brands
@@ -131,6 +134,14 @@ Legend: [ ] todo · [x] done
 - **2026-10-08 — Test DB (owner):** Phase 2 needs MySQL-8-only features (FULLTEXT ngram, JSON→generated-STORED slug columns, race-safe sequences), so the Pest suite runs against a **dedicated MySQL database `dots_testing`** from Phase 2 on — NOT SQLite (supersedes the Phase 1 sqlite decision), and NEVER the dev `dots` DB (RefreshDatabase would wipe seeded data). Configured in `phpunit.xml` (explicit mysql/dots_testing env — enough on its own to connect) and a local `.env.testing` (gitignored because it carries `APP_KEY`; copy from `.env` and set `DB_DATABASE=dots_testing` if missing). Local MySQL is 9.6; prod target 8.0 — keep migrations 8.0-compatible. Create the DB with `mysql -u root -e "CREATE DATABASE IF NOT EXISTS dots_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"`.
 
 - **2026-10-08 — Seed copy & dev DB (T2.6, verbatim in T2.6b):** all records, attributes, media **and** `page_sections`/`settings` marketing copy are **verbatim** from the design (data.jsx, data2.jsx, MegaMenu.jsx, Home/About/Services/Brands/Projects/Blog.jsx, Shared.jsx KQuoteBand, Footer.jsx, Navbar.jsx, OrderSummary.jsx, Products.jsx, Content.jsx). Images attach from local `design/website/assets/images/ph*.jpg` via Media Library (`preservingOriginal`); `php artisan storage:link` is required to serve them (in README setup). Keys the **design has no copy for — placeholders:** `global.newsletter.eyebrow` (footer form has only an input placeholder, used as the title); `seo.default_title` / `seo.default_description`; and operational config with no design value — `contact.whatsapp_number`, `contact.hotline` (design literally shows "19XXX"), `contact.email`, `contact.maps_url`, `contact.social_*`, `commerce.instapay_address`. The `whatsapp.tpl_*` templates (all 7 ERD keys) are seeded as **admin-editable defaults** (the design builds these messages in code) and are rendered by `App\Services\WhatsApp` via `{placeholder}` substitution — not placeholders in the "no copy" sense. The suite proves all seeders against `dots_testing` (disk faked); populating the **dev `dots`** DB is owner-run — `php artisan migrate:fresh --seed` (wipes dev data, expected) — the harness correctly blocks me from refreshing it. `LargeCatalogSeeder` (10k) is manual-only: `php artisan db:seed --class=LargeCatalogSeeder` (~6.5s locally).
+
+- **2026-10-08 — Admin shell & auth (T3.1):**
+  - **Livewire components are class-based** (`php artisan make:livewire --class`) under `app/Livewire/{Admin,…}` with views in `resources/views/livewire/…`, per CLAUDE.md — NOT Livewire 4's default single-file (`⚡`-prefixed) components.
+  - **Admin area is not locale-prefixed.** The admin locale lives in the session (`admin_locale`), applied by `SetAdminLocale`; the language switch is `GET /admin/lang/{locale}`. (The public site keeps its `{locale}` prefix.)
+  - **Guard vs permission guard.** Admins authenticate on the `admin` guard; `AdminAuth` middleware requires an active admin and calls `Auth::shouldUse('admin')` so the Gate/`can:` resolve the admin user. Because `shouldUse` also rewrites `config('auth.defaults.guard')`, spatie would otherwise look permissions up under `admin` (they are seeded under `web`). Fixed by pinning `User::$guard_name = 'web'`. `AdminAuth` is prepended before `Illuminate\Auth\Middleware\Authorize` in the middleware priority list so it runs before `can:`.
+  - **Every admin route carries a named `can:` permission** (e.g. dashboard → `can:dashboard.view`). Spatie `permission`/`role` middleware aliases registered for later use.
+  - **Sidebar/topbar are data-driven** from `config/admin_nav.php` (mirrors ASidebar A_NAV). An item links only when its route exists AND the admin holds its view permission; otherwise it renders a disabled "soon" placeholder, so links light up as later tasks build the screens.
+  - **Admin password reset** uses the default `users` broker (shares the admin's `users` provider) with a custom `AdminResetPasswordNotification` linking to `admin.password.reset`. Forgot-password never reveals whether an email is registered.
 
 ## Phase reports
 - **Phase 0 — Review (2026-10-07).** Reviewed CLAUDE.md, PRD, ERD, CONTENT_MAP, design/README + spot-checked 10+ design JSX strings against the `page_sections`/CONTENT_MAP schemas (all matched). Confirmed all 48 ERD tables are covered by phase tasks. Wrote `docs/plan/REVIEW.md` (gaps, risks, package proposals, 11 questions). Owner answered all questions; approved edits applied to PRD, ERD, CONTENT_MAP and this Decisions log. Found and fixed a setup blocker: the project was not its own git repo (git root was the home dir) — ran `git init` in `Herd/dots` with a basic `.gitignore`, home `~/.git` left untouched. Phase 0 complete; awaiting `start phase 1`.
