@@ -43,7 +43,9 @@ document.addEventListener('alpine:init', () => {
             if (from === null || from === i) {
                 return;
             }
-            const nodes = Array.from(this.$el.querySelectorAll('[data-sortable-key]'));
+            // Only this container's direct items, so nested sortables (the
+            // category tree) don't leak child keys into a parent's order.
+            const nodes = Array.from(this.$el.querySelectorAll(':scope > [data-sortable-key]'));
             const keys = nodes.map((n) => n.dataset.sortableKey);
             const [moved] = keys.splice(from, 1);
             keys.splice(i, 0, moved);

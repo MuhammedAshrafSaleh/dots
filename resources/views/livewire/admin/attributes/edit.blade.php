@@ -45,7 +45,7 @@
                 @if (count($values) === 0)
                     <x-admin.empty icon="list-plus" :title="__('admin.attributes.no_values_title')" :body="__('admin.attributes.no_values_body')" />
                 @else
-                    <div class="a-scroll" x-data="sortable({ wire: $wire, method: 'reorderValues' })">
+                    <div class="a-scroll">
                         <table class="a-table" style="min-width: {{ $display === 'swatch' ? 760 : 560 }}px;">
                             <thead><tr>
                                 <th class="is-shrink"></th>
@@ -55,7 +55,7 @@
                                 @if ($display === 'swatch')<th>{{ __('admin.attributes.swatch') }}</th>@endif
                                 <th class="is-shrink"></th>
                             </tr></thead>
-                            <tbody>
+                            <tbody x-data="sortable({ wire: $wire, method: 'reorderValues' })">
                                 @foreach ($values as $key => $row)
                                     <tr wire:key="val-{{ $key }}" data-sortable-key="{{ $key }}" draggable="true"
                                         @dragstart="start($event, {{ $loop->index }})" @dragover="over($event)" @drop="drop($event, {{ $loop->index }})">
