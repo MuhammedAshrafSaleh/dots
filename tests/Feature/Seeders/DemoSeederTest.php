@@ -28,9 +28,9 @@ beforeEach(function () {
 
 it('seeds demo customers with addresses and wishlists', function () {
     expect(Customer::count())->toBe(4)
-        ->and(Customer::where('email', 'ahmed.samir@gmail.com')->exists())->toBeTrue();
+        ->and(Customer::where('email', 'ahmed.samir@example.com')->exists())->toBeTrue();
 
-    $ahmed = Customer::where('email', 'ahmed.samir@gmail.com')->firstOrFail();
+    $ahmed = Customer::where('email', 'ahmed.samir@example.com')->firstOrFail();
     expect($ahmed->addresses()->count())->toBe(1)
         ->and($ahmed->wishlist()->count())->toBeGreaterThan(0)
         ->and(Customer::where('status', 'disabled')->count())->toBe(1);

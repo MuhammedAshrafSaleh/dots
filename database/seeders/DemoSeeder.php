@@ -58,11 +58,12 @@ class DemoSeeder extends Seeder
     private function seedCustomers(): array
     {
         $cairo = Governorate::where('name->en', 'Cairo')->first();
+        // Emails use @example.com so demo data never resembles a real inbox.
         $data = [
-            ['Ahmed Samir', 'ahmed.samir@gmail.com', '01001234567'],
-            ['Mona Khaled', 'mona.khaled@gmail.com', '01122334455'],
-            ['Youssef Adel', 'youssef.adel@outlook.com', '01234567890'],
-            ['Sara Mostafa', 'sara.mostafa@gmail.com', '01555667788'],
+            ['Ahmed Samir', 'ahmed.samir@example.com', '01001234567'],
+            ['Mona Khaled', 'mona.khaled@example.com', '01122334455'],
+            ['Youssef Adel', 'youssef.adel@example.com', '01234567890'],
+            ['Sara Mostafa', 'sara.mostafa@example.com', '01555667788'],
         ];
 
         $customers = [];
