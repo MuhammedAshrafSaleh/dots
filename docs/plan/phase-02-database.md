@@ -55,8 +55,8 @@ Rules: read only this file + PROGRESS.md at session start; open refs only when a
 - **Done when:** After `migrate:fresh --seed && db:seed --class=DemoSeeder` every admin screen and the account area show realistic data; nothing looks empty.
 
 ## Phase checklist
-- [ ] All ERD tables exist with indexes
-- [ ] Seeded content and images mirror the design page by page
-- [ ] DemoSeeder fills admin + account screens
-- [ ] Cache columns stay correct
-- [ ] Tests green
+- [x] All ERD tables exist with indexes
+- [x] Seeded content and images mirror the design page by page
+- [x] DemoSeeder fills admin + account screens
+- [x] Cache columns stay correct
+- [x] Tests green

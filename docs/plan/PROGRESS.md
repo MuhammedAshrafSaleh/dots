@@ -1,12 +1,12 @@
 # PROGRESS
 
-**Git:** branch `phase-2` · last local commit `dbefde5` (T2.6) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
+**Git:** branch `phase-2` · last local commit `585a112` (T2.7) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
 
-Current phase: **2 — Database, models, seeders** (in progress)
+Current phase: **2 — Database, models, seeders DONE** — awaiting owner review, then `approved, push phase 2`
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
-- **T2.7** (hash recorded with next commit) DemoSeeder (local/staging only, or `--class=DemoSeeder`): 4 demo customers (Account.jsx) with addresses + wishlists; 8 orders spanning every status + payment status, guest & customer, with items/address/status-history timelines (notes+times) and Paymob payment logs (paid/failed/refunded); 3 coupons (DOTS10 + 2) redeemed; a WhatsApp lead for every QuoteSource; 4 consultations; 3 newsletter subs; dates spread over 60 days; prints demo + admin logins. 77 tests · pint · phpstan clean.
+- **T2.7** (`585a112`) DemoSeeder (local/staging only, or `--class=DemoSeeder`): 4 demo customers (Account.jsx) with addresses + wishlists; 8 orders spanning every status + payment status, guest & customer, with items/address/status-history timelines (notes+times) and Paymob payment logs (paid/failed/refunded); 3 coupons (DOTS10 + 2) redeemed; a WhatsApp lead for every QuoteSource; 4 consultations; 3 newsletter subs; dates spread over 60 days; prints demo + admin logins. 77 tests · pint · phpstan clean.
 - **T2.6** (`dbefde5`) Design seeders: Governorates (27), Attributes (4 + 19 values w/ swatches), Catalog (65-node category tree from MegaMenu, 8 brands, 12 products + 20 variants + specs/relations/featured + gallery media w/ captions), Content (4 services + items + general FAQ, 14 projects w/ cover+gallery, 9 posts + cats/tags, 6 content pages), Commerce (3 payment + 4 delivery methods), Site (25 page_sections + 29 settings). Media from local design photos. `LargeCatalogSeeder` (10k) + `Slug` helper + `SeedsDesignMedia` trait. 72 tests · pint · phpstan clean.
 - **T2.5** (`e5264e4`) Roles + admin user: spatie/permission published; `config/permissions.php` (56 named permissions, one per admin area+action); `User` gets `HasRoles` + `is_active`/`last_login_at`; idempotent `RolesAndAdminSeeder` (all permissions → Admin role → admin user from `config/dots.php` ← ADMIN_EMAIL/ADMIN_PASSWORD). 68 tests · pint · phpstan clean.
 - **T2.4** (`2dc0bf6`) Cache columns + observers: `UpdateProductCacheColumns` action recomputes min_price / max_compare_at / stock_status / search_text from variants (fresh queries, saveQuietly). Observers on Product, ProductVariant, Category, Brand, PageSection, Setting flush tagged caches via a driver-safe `CacheTags` helper (whole-store flush on non-taggable fallback). 65 tests · pint · phpstan clean.
@@ -143,4 +143,14 @@ Legend: [ ] todo · [x] done
   - **T1.6** Larastan level 6, Pint, strict models outside prod, composer `test`/`lint`/`analyse`.
   - **Verification:** `composer test` 25 passed · `composer analyse` 0 errors · `pint --test` clean · `npm run build` ok · app serves `/ar`, `/en`, kitchen sink (HTTP 200) via Herd. No secrets committed; `vendor/`, `node_modules/`, `public/build/`, `bootstrap/cache/*` ignored.
   - **Carried to later phases:** customer password-reset broker (Phase 8); confirm FULLTEXT ngram search (Phase 2/6); remove the HasTranslatableSlug phpstan exclude once a Phase 2 model consumes it.
+- **Phase 2 — Database, models, seeders (2026-10-08).** All 48 ERD tables (60 incl. framework), their models, relations, casts, cache columns, observers and design-faithful seed data. Checklist all green.
+  - **T2.1** (`deab30b`) Catalog: 10 tables, per-locale generated STORED slug columns, FULLTEXT(ngram) search_text, media collections, translatable + enum casts, relations. Test suite moved to MySQL `dots_testing`.
+  - **T2.2** (`2ca0e02`) Content: 14 tables (services, projects, blog, pages, page_sections, faqs, settings); `config/page_sections.php` (25 schemas) + `PageSection` typed-field accessor/validation; cached `Settings` repository.
+  - **T2.3** (`20517a0`) Commerce/customers/leads: 21 tables; 12 backed enums; race-safe order number (prefix + id, AUTO_INCREMENT 10001); Customer auth model (soft deletes); order snapshots.
+  - **T2.4** (`2dc0bf6`) `UpdateProductCacheColumns` (min_price/max_compare_at/stock_status/search_text from variants) + observers invalidating tagged cache via a driver-safe `CacheTags` helper.
+  - **T2.5** (`e5264e4`) spatie/permission; `config/permissions.php` (56 permissions); `User` HasRoles + is_active/last_login_at; idempotent `RolesAndAdminSeeder` (admin from `config/dots.php`).
+  - **T2.6** (`dbefde5`) Design seeders (governorates, attributes, catalog tree/brands/products, content, commerce, 25 page_sections + settings) with local design images via Media Library; `Slug` helper; `LargeCatalogSeeder` (10k).
+  - **T2.7** (`585a112`) `DemoSeeder` (local/staging): customers, orders across every state, Paymob logs, coupons, leads for every source, consultations, newsletter.
+  - **Verification:** `php artisan test` **77 passed / 294 assertions** (MySQL `dots_testing`) · `composer analyse` 0 errors (level 6) · `pint --test` clean · `migrate:fresh --seed` populates the design site (12 products, 65 categories, 103 media, 25 sections, 29 settings) and is idempotent · `LargeCatalogSeeder` 10k in ~6.5s. No secrets committed; `.env.testing` gitignored.
+  - **Carried to later phases:** FULLTEXT ngram EXPLAIN/validation on the 10k seeder (Phase 6/9); `page_sections`/`settings` long-form copy fine-tuned against the design while building Phase 5 views; customer password-reset broker (Phase 8).
 
