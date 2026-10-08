@@ -39,6 +39,12 @@ class DemoSeeder extends Seeder
 {
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command->warn('DemoSeeder does not run in production.');
+
+            return;
+        }
+
         if (ProductVariant::whereNotNull('price')->doesntExist()) {
             $this->command->warn('Run the design seeders first (products with priced variants).');
 

@@ -23,6 +23,12 @@ class LargeCatalogSeeder extends Seeder
 
     public function run(): void
     {
+        if (app()->isProduction()) {
+            $this->command->warn('LargeCatalogSeeder does not run in production.');
+
+            return;
+        }
+
         $leaves = Category::where('level', 3)->pluck('id')->all();
         $brands = Brand::pluck('id', 'name')->all();
         $cctValues = Attribute::where('code', 'cct')->first()?->values()->pluck('id')->all() ?? [];
