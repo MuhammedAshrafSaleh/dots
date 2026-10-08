@@ -1,8 +1,8 @@
 # PROGRESS
 
-**Git:** branch `phase-2` · last local commit `9632272` (T2.6c, review fixes) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
+**Git:** branch `main` · last commit `b6c1cba` (Phase 2 complete) · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-2 merged to main & pushed _(updated after every commit)_
 
-Current phase: **2 — Database, models, seeders DONE** (review round 1 applied) — awaiting owner re-review, then `approved, push phase 2`
+Current phase: **2 — Database, models, seeders DONE, merged & pushed** — awaiting owner `start phase 3`
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
