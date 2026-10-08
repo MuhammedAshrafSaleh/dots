@@ -104,8 +104,6 @@
         </div>
     </div>
 
-    <div class="d-toasts" aria-live="polite" aria-atomic="false">
-        {{ $toasts ?? '' }}
-    </div>
+    <x-admin.toasts />
 </body>
 </html>

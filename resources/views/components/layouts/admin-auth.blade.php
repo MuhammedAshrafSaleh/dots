@@ -26,6 +26,6 @@
         </div>
     </div>
 
-    <div class="d-toasts" aria-live="polite" aria-atomic="false"></div>
+    <x-admin.toasts />
 </body>
 </html>

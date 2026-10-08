@@ -1,11 +1,12 @@
 # PROGRESS
 
-**Git:** branch `phase-3` (local, not pushed) · last commit `T3.1` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — do not push until owner approves _(updated after every commit)_
+**Git:** branch `phase-3` (local, not pushed) · last commit `T3.2` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — do not push until owner approves _(updated after every commit)_
 
 Current phase: **3 — Admin: shell, shared widgets, catalog** — in progress on local `phase-3`
 
 ### Phase 3 task log
-- **T3.1** Admin auth and shell: `/admin` area (not locale-prefixed; locale in session via `SetAdminLocale` + `/admin/lang/{locale}`). Livewire (class-based) Login/ForgotPassword/ResetPassword + minimal Dashboard; `AdminAuth` middleware (active admin, makes `admin` the default guard, prepended before `Authorize` in the priority list) + `can:` per route. Data-driven sidebar/topbar from `config/admin_nav.php` (links light up as routes are built; disabled "soon" otherwise), global search (orders/SKUs/customers), language switch, logout. Admin password reset via `users` broker + `AdminResetPasswordNotification`. 14 tests (guest redirect, customer blocked, login/lockout/inactive, logout, lang, forgot/reset).
+- **T3.2** (`<local>`) Shared admin widgets: Blade components under `resources/views/components/admin/` — field-bilingual, slugs (+auto-generate), seo, switch, chips, icon-pick, collapse, drawer, confirm, menu, empty, alert, card, head, table (+sort-th, bulk-bar), image/file/gallery upload shells, rich-text editor (Alpine contenteditable → sanitised on save). Traits `InteractsWithAdminForms` (toggleChip, fillSlugsFrom) + `WithAdminTable` (search/sort/select/paginate). `ProductPicker` Livewire widget (`#[Modelable]`). Toast store + drag `sortable` in `admin.js` (now uses Livewire's bundled Alpine, no double-start). `App\Support\Html::clean` + `dots_rich` purifier profile. 13 tests (sanitizer, widget harness render + traits, product picker).
+- **T3.1** (`1528ccd`) Admin auth and shell: `/admin` area (not locale-prefixed; locale in session via `SetAdminLocale` + `/admin/lang/{locale}`). Livewire (class-based) Login/ForgotPassword/ResetPassword + minimal Dashboard; `AdminAuth` middleware (active admin, makes `admin` the default guard, prepended before `Authorize` in the priority list) + `can:` per route. Data-driven sidebar/topbar from `config/admin_nav.php` (links light up as routes are built; disabled "soon" otherwise), global search (orders/SKUs/customers), language switch, logout. Admin password reset via `users` broker + `AdminResetPasswordNotification`. 14 tests (guest redirect, customer blocked, login/lockout/inactive, logout, lang, forgot/reset).
 
 ### Phase 2 task log
 - **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
@@ -42,7 +43,7 @@ Legend: [ ] todo · [x] done
 
 ## Phase 3 — Admin: shell, shared widgets, catalog  (`phase-03-admin-catalog.md`)
 - [x] T3.1 Admin auth and shell
-- [ ] T3.2 Shared admin widgets (Livewire/Blade)
+- [x] T3.2 Shared admin widgets (Livewire/Blade)
 - [ ] T3.3 Attributes
 - [ ] T3.4 Brands
 - [ ] T3.5 Categories
@@ -142,6 +143,11 @@ Legend: [ ] todo · [x] done
   - **Every admin route carries a named `can:` permission** (e.g. dashboard → `can:dashboard.view`). Spatie `permission`/`role` middleware aliases registered for later use.
   - **Sidebar/topbar are data-driven** from `config/admin_nav.php` (mirrors ASidebar A_NAV). An item links only when its route exists AND the admin holds its view permission; otherwise it renders a disabled "soon" placeholder, so links light up as later tasks build the screens.
   - **Admin password reset** uses the default `users` broker (shares the admin's `users` provider) with a custom `AdminResetPasswordNotification` linking to `admin.password.reset`. Forgot-password never reveals whether an email is registered.
+- **2026-10-09 — Shared widgets & Livewire/Alpine (T3.2):**
+  - **One Alpine, from Livewire.** Livewire 4 auto-injects its assets and starts its own Alpine, so `resources/js/admin.js` must NOT import/start a second Alpine (that threw "multiple instances"). It now registers the admin helpers via `alpine:init`/`livewire:init` against `window.Alpine`/`window.Livewire`: a `toasts` store (fed by `$this->dispatch('toast', …)`) and a `sortable` Alpine data factory (HTML5 drag → emits the new key order to a Livewire method). `resources/js/app.js` (public) still bundles its own Alpine for now (revisit if the public site adopts Livewire in Phase 6).
+  - **Widget architecture:** presentational Blade components under `resources/views/components/admin/` bind to the parent Livewire component via `wire:model`/method names passed as props (so state stays server-authoritative); stateful search is a real Livewire widget (`ProductPicker`, `#[Modelable]`). Conditional attributes via `@if … @endif` inside an `<x-…>` tag break the Blade component compiler — always-render the attribute or branch in plain markup instead.
+  - **Rich text (updates Q6):** the editor is an Alpine `contenteditable` wrapper with the design toolbar (`execCommand`), synced to Livewire via `$wire.entangle`. Full TipTap is deferred to the Phase 4 content editors; the security guarantee is server-side: `App\Support\Html::clean()` runs every rich field through the `dots_rich` HTMLPurifier profile (h2/h3/p/strong/em/a/ul/ol/li/blockquote/figure+figcaption/img/div.d-callout only) on save.
+  - **phpstan:** `InteractsWithAdminForms` + `WithAdminTable` are temporarily in `excludePaths` (larastan `trait.unused` until a screen consumes them in T3.3/T3.6 — remove then; both are covered by the T3.2 widget-harness test).
 
 ## Phase reports
 - **Phase 0 — Review (2026-10-07).** Reviewed CLAUDE.md, PRD, ERD, CONTENT_MAP, design/README + spot-checked 10+ design JSX strings against the `page_sections`/CONTENT_MAP schemas (all matched). Confirmed all 48 ERD tables are covered by phase tasks. Wrote `docs/plan/REVIEW.md` (gaps, risks, package proposals, 11 questions). Owner answered all questions; approved edits applied to PRD, ERD, CONTENT_MAP and this Decisions log. Found and fixed a setup blocker: the project was not its own git repo (git root was the home dir) — ran `git init` in `Herd/dots` with a basic `.gitignore`, home `~/.git` left untouched. Phase 0 complete; awaiting `start phase 1`.

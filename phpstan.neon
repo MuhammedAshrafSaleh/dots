@@ -13,3 +13,9 @@ parameters:
     # Blade/compiled views and framework caches are not source.
     excludePaths:
         - bootstrap/cache
+        # Admin form/table traits land in T3.2 but gain their first app consumer
+        # in T3.3/T3.6 (list + CRUD screens). Larastan skips traits with no
+        # consumer (trait.unused); remove these two excludes once a screen uses
+        # them. They are already covered by the T3.2 widget-harness test.
+        - app/Livewire/Admin/Concerns/InteractsWithAdminForms.php
+        - app/Livewire/Admin/Concerns/WithAdminTable.php
