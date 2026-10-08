@@ -11,6 +11,7 @@ Bilingual (AR RTL default / EN) lighting & electrical catalog + e-commerce. Lara
 ## Workflow (review-gated; effective from Phase 2)
 - **Start of phase N:** from an up-to-date main, create the phase branch **locally** — `git checkout main && git pull && git checkout -b phase-N`. **Do not push it.**
 - Work one task at a time, in order. **After each task:** tests pass (`php artisan test`, and `npm run build` when front-end changed) → tick the task in PROGRESS.md → **commit locally** `T<N>.<n>: <title>`. **Do not push after tasks.** One local commit per task.
+- **Run straight through the phase, task by task, without pausing for owner review between tasks.** Stop mid-phase only for a real blocker or a product decision — and then ask it as a question. Otherwise the only stop is the phase-end review.
 - Never commit failing tests, `.env`, or any secret. Never force-push. Never rewrite history (no amend, no rebase) on any branch.
 - If something in the docs is unclear, contradictory, or needs a product decision: ask, do not guess. Technical choices (package versions, class names) you decide, and log them under "Decisions" in PROGRESS.md.
 - Never change the ERD silently. If a column is needed, propose it, then update `docs/ERD.md` after approval.

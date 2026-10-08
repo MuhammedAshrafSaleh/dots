@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
@@ -66,6 +67,12 @@ class Category extends Model implements HasMedia
         return $this->belongsToMany(Product::class, 'category_featured_products')
             ->withPivot('sort_order')
             ->orderBy('category_featured_products.sort_order');
+    }
+
+    /** @return MorphMany<Faq, $this> */
+    public function faqs(): MorphMany
+    {
+        return $this->morphMany(Faq::class, 'faqable')->orderBy('sort_order');
     }
 
     /** @param  Builder<Category>  $query */
