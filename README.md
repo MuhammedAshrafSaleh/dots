@@ -7,6 +7,24 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## DOTS — local setup
+
+Bilingual (AR RTL / EN) lighting & electrical catalog + e-commerce. Laravel + Blade + Livewire + Alpine.
+
+```bash
+composer install
+npm install
+cp .env.example .env            # then set DB creds + ADMIN_EMAIL / ADMIN_PASSWORD
+php artisan key:generate
+php artisan storage:link        # serve Media Library images from storage/app/public
+php artisan migrate:fresh --seed
+npm run build                   # or: npm run dev
+```
+
+`php artisan migrate:fresh --seed` seeds the design content + images and the admin user; on local/staging it also runs `DemoSeeder` (demo customers, orders, leads). `storage:link` is required so seeded images resolve. The seeder prints the demo customer and admin logins.
+
+Tests run against a dedicated MySQL database `dots_testing` (create it once), configured in `phpunit.xml` / `.env.testing` — never the dev `dots` DB.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

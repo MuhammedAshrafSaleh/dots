@@ -2,6 +2,11 @@
 
 // UI labels only (buttons, aria, generic words). No business content — that lives in the DB.
 return [
+    // Temporary placeholder home (replaced by the real home in Phase 5).
+    'under_construction' => 'DOTS — under construction',
+    'under_construction_lead' => 'Our bilingual lighting & electrical store is coming soon.',
+    'all_rights_reserved' => 'All rights reserved.',
+
     'optional' => 'optional',
     'remove_filter' => 'Remove filter',
 

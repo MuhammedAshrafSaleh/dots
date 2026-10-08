@@ -1,8 +1,17 @@
 # PROGRESS
 
-**Git:** branch `phase-1` · last pushed commit `57db449` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+**Git:** branch `phase-2` · last local commit `9632272` (T2.6c, review fixes) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
 
-Current phase: **1 — Foundation DONE** — awaiting owner `start phase 2` (owner says `start phase N` to move on)
+Current phase: **2 — Database, models, seeders DONE** (review round 1 applied) — awaiting owner re-review, then `approved, push phase 2`
+
+### Phase 2 task log
+- **T2.1** (`deab30b`) Catalog schema + models: 10 tables with per-locale generated slug columns, FULLTEXT ngram `search_text`, media collections, translatable + enum casts, relations. Suite moved to MySQL `dots_testing`. 34 tests green · pint · phpstan L6 clean.
+- **T2.7** (`585a112`) DemoSeeder (local/staging only, or `--class=DemoSeeder`): 4 demo customers (Account.jsx) with addresses + wishlists; 8 orders spanning every status + payment status, guest & customer, with items/address/status-history timelines (notes+times) and Paymob payment logs (paid/failed/refunded); 3 coupons (DOTS10 + 2) redeemed; a WhatsApp lead for every QuoteSource; 4 consultations; 3 newsletter subs; dates spread over 60 days; prints demo + admin logins. 77 tests · pint · phpstan clean.
+- **T2.6** (`dbefde5`) Design seeders: Governorates (27), Attributes (4 + 19 values w/ swatches), Catalog (65-node category tree from MegaMenu, 8 brands, 12 products + 20 variants + specs/relations/featured + gallery media w/ captions), Content (4 services + items + general FAQ, 14 projects w/ cover+gallery, 9 posts + cats/tags, 6 content pages), Commerce (3 payment + 4 delivery methods), Site (25 page_sections + 29 settings). Media from local design photos. `LargeCatalogSeeder` (10k) + `Slug` helper + `SeedsDesignMedia` trait. 72 tests · pint · phpstan clean.
+- **T2.5** (`e5264e4`) Roles + admin user: spatie/permission published; `config/permissions.php` (56 named permissions, one per admin area+action); `User` gets `HasRoles` + `is_active`/`last_login_at`; idempotent `RolesAndAdminSeeder` (all permissions → Admin role → admin user from `config/dots.php` ← ADMIN_EMAIL/ADMIN_PASSWORD). 68 tests · pint · phpstan clean.
+- **T2.4** (`2dc0bf6`) Cache columns + observers: `UpdateProductCacheColumns` action recomputes min_price / max_compare_at / stock_status / search_text from variants (fresh queries, saveQuietly). Observers on Product, ProductVariant, Category, Brand, PageSection, Setting flush tagged caches via a driver-safe `CacheTags` helper (whole-store flush on non-taggable fallback). 65 tests · pint · phpstan clean.
+- **T2.3** (`20517a0`) Commerce/customers/leads schema + models: 21 tables (governorates, delivery_methods + pivot, payment_methods, coupons + redemptions, carts/cart_items, orders + items/addresses/status_histories, payments, webhook_events, customers + addresses/wishlists/password_reset_tokens, quote/consultation requests, newsletter_subscribers). 12 backed enums. Race-safe order number (`created` hook: prefix+id, AUTO_INCREMENT 10001, unique index backstop). Customer auth model (soft deletes). 59 tests · pint · phpstan clean.
+- **T2.2** (`2ca0e02`) Content schema + models: services/service_items, projects (+ pivots), post_categories/posts/tags (+ pivots), pages, page_sections, faqs (polymorphic), settings — 14 tables. `config/page_sections.php` (25 section schemas) + `PageSection` typed-field accessor & `validateContent`. Cached `Settings` repo (get/set/translated, per-key bust). Added CLAUDE.md "run straight through the phase" rule. 49 tests · pint · phpstan clean.
 
 Legend: [ ] todo · [x] done
 
@@ -20,13 +29,13 @@ Legend: [ ] todo · [x] done
 - [x] T1.6 Quality tooling
 
 ## Phase 2 — Database, models, seeders  (`phase-02-database.md`)
-- [ ] T2.1 Catalog migrations + models
-- [ ] T2.2 Content migrations + models
-- [ ] T2.3 Commerce, customers, leads migrations + models
-- [ ] T2.4 Cache columns and observers
-- [ ] T2.5 Roles and admin user
-- [ ] T2.6 Seeders from the design
-- [ ] T2.7 Demo data for the admin (DemoSeeder)
+- [x] T2.1 Catalog migrations + models
+- [x] T2.2 Content migrations + models
+- [x] T2.3 Commerce, customers, leads migrations + models
+- [x] T2.4 Cache columns and observers
+- [x] T2.5 Roles and admin user
+- [x] T2.6 Seeders from the design
+- [x] T2.7 Demo data for the admin (DemoSeeder)
 
 ## Phase 3 — Admin: shell, shared widgets, catalog  (`phase-03-admin-catalog.md`)
 - [ ] T3.1 Admin auth and shell
@@ -119,6 +128,10 @@ Legend: [ ] todo · [x] done
 
 - **2026-10-07 — Tooling (T1.6):** `larastan/larastan` ^3.13 at **level 6** (`phpstan.neon`, paths app/config/database/routes). One scoped exclude: `app/Models/Concerns/HasTranslatableSlug.php` (trait has no consumer until Phase 2 — remove the exclude then). Pint `laravel` preset (`pint.json`). `Model::shouldBeStrict(! production)` in `AppServiceProvider::boot` (lazy-loading/ missing-attribute/ discarded-attribute guards). Composer scripts: `test`, `lint` (pint), `analyse` (phpstan). `config/auth.php` customers provider declared as the string `'App\Models\Customer'` (not `::class`) so analyse stays clean before the model exists.
 
+- **2026-10-08 — Test DB (owner):** Phase 2 needs MySQL-8-only features (FULLTEXT ngram, JSON→generated-STORED slug columns, race-safe sequences), so the Pest suite runs against a **dedicated MySQL database `dots_testing`** from Phase 2 on — NOT SQLite (supersedes the Phase 1 sqlite decision), and NEVER the dev `dots` DB (RefreshDatabase would wipe seeded data). Configured in `phpunit.xml` (explicit mysql/dots_testing env — enough on its own to connect) and a local `.env.testing` (gitignored because it carries `APP_KEY`; copy from `.env` and set `DB_DATABASE=dots_testing` if missing). Local MySQL is 9.6; prod target 8.0 — keep migrations 8.0-compatible. Create the DB with `mysql -u root -e "CREATE DATABASE IF NOT EXISTS dots_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"`.
+
+- **2026-10-08 — Seed copy & dev DB (T2.6, verbatim in T2.6b):** all records, attributes, media **and** `page_sections`/`settings` marketing copy are **verbatim** from the design (data.jsx, data2.jsx, MegaMenu.jsx, Home/About/Services/Brands/Projects/Blog.jsx, Shared.jsx KQuoteBand, Footer.jsx, Navbar.jsx, OrderSummary.jsx, Products.jsx, Content.jsx). Images attach from local `design/website/assets/images/ph*.jpg` via Media Library (`preservingOriginal`); `php artisan storage:link` is required to serve them (in README setup). Keys the **design has no copy for — placeholders:** `global.newsletter.eyebrow` (footer form has only an input placeholder, used as the title); `seo.default_title` / `seo.default_description`; and operational config with no design value — `contact.whatsapp_number`, `contact.hotline` (design literally shows "19XXX"), `contact.email`, `contact.maps_url`, `contact.social_*`, `commerce.instapay_address`. The `whatsapp.tpl_*` templates (all 7 ERD keys) are seeded as **admin-editable defaults** (the design builds these messages in code) and are rendered by `App\Services\WhatsApp` via `{placeholder}` substitution — not placeholders in the "no copy" sense. The suite proves all seeders against `dots_testing` (disk faked); populating the **dev `dots`** DB is owner-run — `php artisan migrate:fresh --seed` (wipes dev data, expected) — the harness correctly blocks me from refreshing it. `LargeCatalogSeeder` (10k) is manual-only: `php artisan db:seed --class=LargeCatalogSeeder` (~6.5s locally).
+
 ## Phase reports
 - **Phase 0 — Review (2026-10-07).** Reviewed CLAUDE.md, PRD, ERD, CONTENT_MAP, design/README + spot-checked 10+ design JSX strings against the `page_sections`/CONTENT_MAP schemas (all matched). Confirmed all 48 ERD tables are covered by phase tasks. Wrote `docs/plan/REVIEW.md` (gaps, risks, package proposals, 11 questions). Owner answered all questions; approved edits applied to PRD, ERD, CONTENT_MAP and this Decisions log. Found and fixed a setup blocker: the project was not its own git repo (git root was the home dir) — ran `git init` in `Herd/dots` with a basic `.gitignore`, home `~/.git` left untouched. Phase 0 complete; awaiting `start phase 1`.
 - **Phase 1 — Foundation (2026-10-07).** Running Laravel 13 app with locales, design CSS, layouts, auth guards and tooling. Checklist all green.
@@ -130,4 +143,15 @@ Legend: [ ] todo · [x] done
   - **T1.6** Larastan level 6, Pint, strict models outside prod, composer `test`/`lint`/`analyse`.
   - **Verification:** `composer test` 25 passed · `composer analyse` 0 errors · `pint --test` clean · `npm run build` ok · app serves `/ar`, `/en`, kitchen sink (HTTP 200) via Herd. No secrets committed; `vendor/`, `node_modules/`, `public/build/`, `bootstrap/cache/*` ignored.
   - **Carried to later phases:** customer password-reset broker (Phase 8); confirm FULLTEXT ngram search (Phase 2/6); remove the HasTranslatableSlug phpstan exclude once a Phase 2 model consumes it.
+- **Phase 2 — Database, models, seeders (2026-10-08).** All 48 ERD tables (60 incl. framework), their models, relations, casts, cache columns, observers and design-faithful seed data. Checklist all green.
+  - **T2.1** (`deab30b`) Catalog: 10 tables, per-locale generated STORED slug columns, FULLTEXT(ngram) search_text, media collections, translatable + enum casts, relations. Test suite moved to MySQL `dots_testing`.
+  - **T2.2** (`2ca0e02`) Content: 14 tables (services, projects, blog, pages, page_sections, faqs, settings); `config/page_sections.php` (25 schemas) + `PageSection` typed-field accessor/validation; cached `Settings` repository.
+  - **T2.3** (`20517a0`) Commerce/customers/leads: 21 tables; 12 backed enums; race-safe order number (prefix + id, AUTO_INCREMENT 10001); Customer auth model (soft deletes); order snapshots.
+  - **T2.4** (`2dc0bf6`) `UpdateProductCacheColumns` (min_price/max_compare_at/stock_status/search_text from variants) + observers invalidating tagged cache via a driver-safe `CacheTags` helper.
+  - **T2.5** (`e5264e4`) spatie/permission; `config/permissions.php` (56 permissions); `User` HasRoles + is_active/last_login_at; idempotent `RolesAndAdminSeeder` (admin from `config/dots.php`).
+  - **T2.6** (`dbefde5`) Design seeders (governorates, attributes, catalog tree/brands/products, content, commerce, 25 page_sections + settings) with local design images via Media Library; `Slug` helper; `LargeCatalogSeeder` (10k).
+  - **T2.7** (`585a112`) `DemoSeeder` (local/staging): customers, orders across every state, Paymob logs, coupons, leads for every source, consultations, newsletter.
+  - **Review round 1 (2026-10-08):** **T2.6b** (`8cf089b`) page_sections + settings copy replaced with verbatim design AR/EN strings; placeholder keys documented (Decisions); README local-setup steps incl. `php artisan storage:link`. **T2.7b** (`f4b89f4`) all demo emails → `@example.com`. **T2.7c** (`0db5fdc`) DemoSeeder/LargeCatalogSeeder no-op in production; admin password required from `ADMIN_PASSWORD` in production (no default), seeding throws if empty; `ProductionSeedGuardsTest` added. **T2.6c** (`9632272`) all 7 `whatsapp.tpl_*` seeded as admin-editable AR/EN defaults with `{placeholder}` tokens; new `App\Services\WhatsApp` renders messages + wa.me links from the settings (never hardcoded); test proves editing a template changes the generated text.
+  - **Verification:** `php artisan test` **85 passed / 327 assertions** (MySQL `dots_testing`) · `composer analyse` 0 errors (level 6) · `pint --test` clean · `migrate:fresh --seed` populates the design site (12 products, 65 categories, 103 media, 25 sections, 29 settings) and is idempotent · `LargeCatalogSeeder` 10k in ~6.5s. No secrets committed; `.env.testing` gitignored.
+  - **Carried to later phases:** FULLTEXT ngram EXPLAIN/validation on the 10k seeder (Phase 6/9); customer password-reset broker (Phase 8).
 

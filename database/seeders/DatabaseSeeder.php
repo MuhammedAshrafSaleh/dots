@@ -2,24 +2,30 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * Seed the application's database with the admin account and the design
+     * content/images (so the site mirrors the design page by page).
+     * LargeCatalogSeeder and DemoSeeder are run explicitly, never here.
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        $this->call([
+            RolesAndAdminSeeder::class,
+            GovernoratesSeeder::class,
+            AttributesSeeder::class,
+            CatalogSeeder::class,
+            ContentSeeder::class,
+            CommerceSeeder::class,
+            SiteSeeder::class,
         ]);
+
+        // Demo customers/orders/leads only on local/staging — never in production.
+        if (app()->environment(['local', 'staging'])) {
+            $this->call(DemoSeeder::class);
+        }
     }
 }
