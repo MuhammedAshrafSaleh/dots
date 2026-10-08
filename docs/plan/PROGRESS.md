@@ -1,8 +1,8 @@
 # PROGRESS
 
-**Git:** branch `phase-1` · last pushed commit `57db449` · last tag `phase-0-done` _(updated after every push — reflects the last confirmed push; advances on the next commit)_
+**Git:** branch `phase-2` · last local commit `c60445f` (T2.0b) · last pushed `2effb22` (main, Phase 1) · last tag `phase-1-done` · push state: phase-2 NOT pushed _(updated after every commit)_
 
-Current phase: **1 — Foundation DONE** — awaiting owner `start phase 2` (owner says `start phase N` to move on)
+Current phase: **2 — Database, models, seeders** (in progress)
 
 Legend: [ ] todo · [x] done
 
@@ -20,7 +20,7 @@ Legend: [ ] todo · [x] done
 - [x] T1.6 Quality tooling
 
 ## Phase 2 — Database, models, seeders  (`phase-02-database.md`)
-- [ ] T2.1 Catalog migrations + models
+- [x] T2.1 Catalog migrations + models
 - [ ] T2.2 Content migrations + models
 - [ ] T2.3 Commerce, customers, leads migrations + models
 - [ ] T2.4 Cache columns and observers
@@ -118,6 +118,8 @@ Legend: [ ] todo · [x] done
 - **2026-10-07 — Front-end (T1.3):** Removed the Laravel-default Tailwind (`@tailwindcss/vite`, `tailwindcss`) — project is no-Tailwind. Two Vite entries: site (`resources/css/site.css` + `resources/js/app.js`) and admin (`resources/css/admin.css` + `resources/js/admin.js`). Design CSS ported verbatim to `resources/css/design-site.css` / `design-admin.css`, each wrapped by its entry which first `@import`s `resources/css/fonts.css`. Fonts self-hosted via `@fontsource` (sora, manrope, ibm-plex-sans-arabic [Arabic+Latin], ibm-plex-mono). Alpine 3 started in both JS entries. Icons: `mallardduck/blade-lucide-icons` (set prefix `lucide`); our own `resources/views/components/icon.blade.php` owns `<x-icon name=".."/>` (disabled the package's default `icon` component via `config/blade-icons.php` `components.default=''`, `disabled=true`) and reproduces Icon.jsx (1.5 stroke, aliases, RTL-flip directional set). Styleguide at `/{locale}/_styleguide` (non-production only). Fixed: untracked `bootstrap/cache/*.php` (added `bootstrap/cache/.gitignore`).
 
 - **2026-10-07 — Tooling (T1.6):** `larastan/larastan` ^3.13 at **level 6** (`phpstan.neon`, paths app/config/database/routes). One scoped exclude: `app/Models/Concerns/HasTranslatableSlug.php` (trait has no consumer until Phase 2 — remove the exclude then). Pint `laravel` preset (`pint.json`). `Model::shouldBeStrict(! production)` in `AppServiceProvider::boot` (lazy-loading/ missing-attribute/ discarded-attribute guards). Composer scripts: `test`, `lint` (pint), `analyse` (phpstan). `config/auth.php` customers provider declared as the string `'App\Models\Customer'` (not `::class`) so analyse stays clean before the model exists.
+
+- **2026-10-08 — Test DB (owner):** Phase 2 needs MySQL-8-only features (FULLTEXT ngram, JSON→generated-STORED slug columns, race-safe sequences), so the Pest suite runs against a **dedicated MySQL database `dots_testing`** from Phase 2 on — NOT SQLite (supersedes the Phase 1 sqlite decision), and NEVER the dev `dots` DB (RefreshDatabase would wipe seeded data). Configured in `phpunit.xml` (explicit mysql/dots_testing env — enough on its own to connect) and a local `.env.testing` (gitignored because it carries `APP_KEY`; copy from `.env` and set `DB_DATABASE=dots_testing` if missing). Local MySQL is 9.6; prod target 8.0 — keep migrations 8.0-compatible. Create the DB with `mysql -u root -e "CREATE DATABASE IF NOT EXISTS dots_testing CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"`.
 
 ## Phase reports
 - **Phase 0 — Review (2026-10-07).** Reviewed CLAUDE.md, PRD, ERD, CONTENT_MAP, design/README + spot-checked 10+ design JSX strings against the `page_sections`/CONTENT_MAP schemas (all matched). Confirmed all 48 ERD tables are covered by phase tasks. Wrote `docs/plan/REVIEW.md` (gaps, risks, package proposals, 11 questions). Owner answered all questions; approved edits applied to PRD, ERD, CONTENT_MAP and this Decisions log. Found and fixed a setup blocker: the project was not its own git repo (git root was the home dir) — ran `git init` in `Herd/dots` with a basic `.gitignore`, home `~/.git` left untouched. Phase 0 complete; awaiting `start phase 1`.

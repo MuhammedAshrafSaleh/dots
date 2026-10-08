@@ -13,6 +13,3 @@ parameters:
     # Blade/compiled views and framework caches are not source.
     excludePaths:
         - bootstrap/cache
-        # Route-binding trait with no consumer yet; PHPStan cannot analyse a
-        # trait used zero times. Remove this once a Phase 2 model uses it.
-        - app/Models/Concerns/HasTranslatableSlug.php
