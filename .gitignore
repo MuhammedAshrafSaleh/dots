@@ -23,10 +23,16 @@
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/views/*
+/storage/framework/testing
+/storage/app/purifier
+/storage/app/public/*
 
 # Tooling caches
 .phpunit.result.cache
 /.phpunit.cache
+/tests/Browser/Screenshots
+/tests/Browser/Console
+/test-results
 .phpactor.json
 _ide_helper.php
 

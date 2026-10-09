@@ -83,7 +83,20 @@ it('refuses to delete a top-level category that still has products', function ()
     $root = makeCategory(['level' => 1]);
     categoryProduct($root, 'R-1');
 
-    Livewire::test(Index::class)->call('delete', $root->id);
+    Livewire::test(Index::class)
+        ->call('delete', $root->id)
+        ->assertDispatched('toast', tone: 'error');
+
+    expect(Category::find($root->id))->not->toBeNull();
+});
+
+it('refuses to delete a top-level category that still has children', function () {
+    $root = makeCategory(['level' => 1]);
+    makeCategory(['level' => 2, 'parent_id' => $root->id]);
+
+    Livewire::test(Index::class)
+        ->call('delete', $root->id)
+        ->assertDispatched('toast', tone: 'error');
 
     expect(Category::find($root->id))->not->toBeNull();
 });

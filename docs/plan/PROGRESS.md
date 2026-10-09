@@ -1,6 +1,6 @@
 # PROGRESS
 
-**Git:** branch `phase-3` (local, not pushed) · last commit `Phase 3 report` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — **awaiting owner review** _(updated after every commit)_
+**Git:** branch `phase-3` (local, not pushed) · last commit `Phase 3 review round 1` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — **awaiting owner re-review** _(updated after every commit)_
 
 Current phase: **3 — Admin: shell, shared widgets, catalog DONE (local)** — awaiting owner review
 
@@ -62,6 +62,8 @@ Legend: [ ] todo · [x] done
 - [ ] T4.4 Blog
 - [ ] T4.5 Content pages
 - [ ] T4.6 Settings and users
+- [ ] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
+- [ ] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
 
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)
 - [ ] T5.1 Global layout
@@ -186,5 +188,11 @@ Legend: [ ] todo · [x] done
   - **T3.7** (`b3d90b6`) Product edit (9 tabs; variant generation from attribute axes; SKU uniqueness; specs/images/files/related; cache columns recomputed on save).
   - **Verification:** `php artisan test` **152 passed / 547 assertions** (MySQL `dots_testing`) · `composer analyse` 0 errors (level 6) · `pint --test` clean · `npm run build` ok.
   - **Decisions logged:** class-based Livewire; admin locale in session; guard vs permission-guard (`User::$guard_name`); one Alpine via Livewire; rich-text = Alpine contenteditable + server purifier (TipTap deferred to Phase 4).
-  - **Carried to later phases:** product Files tab is a simple multi-upload (the design's 4 named slots + titled extras can be refined in Phase 4/7); wire real sidebar/topbar badge counts + global-search detail links as those screens land (Phase 7/8).
+  - **Carried to later phases:** product Files tab is a simple multi-upload — refined to the 4 named slots + titled extras in **Phase 4 T4.8**; TipTap rich text everywhere in **Phase 4 T4.7**; wire real sidebar/topbar badge counts + global-search detail links as those screens land (Phase 7/8).
+  - **Review round 1 (2026-10-09):** owner manual review FAILED — 403 on every Livewire action + an Array-to-string crash on product edit; tests passed only because they bypassed the real request cycle. Fixes (new local commits):
+    - **403 on `/livewire-*/update`:** Livewire re-applies the component route's persistent middleware on every update, including `Authorize` (`can:*`), but not our `admin.auth` — so the admin guard wasn't resolved and every update (even tabs/filters) 403'd. Fix: `Livewire::addPersistentMiddleware([AdminAuth, SetAdminLocale])` in `AppServiceProvider`. **Verified against the real FPM app (dots.test)**: without the fix a products tab click → `/livewire-*/update` = 403; with it = 200. Regression guard: a test asserts `AdminAuth` is in Livewire's persistent list.
+    - **Array-to-string on product edit:** gallery captions are a `{ar,en}` array; the editor cast them to string. Captions are now bilingual end to end (component + gallery widget EN/AR inputs).
+    - **Testing gap closed:** added **Pest 4 + Playwright browser E2E** (`tests/Browser`, `DatabaseTruncation`) for login + each admin screen (create/save), and an HTTP render test (`AdminPagesRenderTest`) that opens **every** seeded product/brand/attribute edit + every list as a real authenticated admin GET (caught the caption crash across all products). Note: the in-process browser server keeps the auth guard between requests, so it can't reproduce the guard-reset 403 — hence the persistent-middleware assertion + the dots.test verification.
+    - **Category delete:** top-level category with products **or** children now refuses deletion with a clear message (test for both).
+    - **Workflow (CLAUDE.md):** stop after each task for owner review on dots.test + commit hash; a task isn't done until it works in a real browser (browser E2E + manual dots.test check).
 

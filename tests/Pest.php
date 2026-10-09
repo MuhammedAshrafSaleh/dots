@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
@@ -11,6 +12,13 @@ use Tests\TestCase;
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature');
+
+// Browser (Pest 4 + Playwright) tests drive the app over a real HTTP server
+// whose DB connection does not see the test's open transaction, so they need
+// committed data — truncate (not transaction-wrap) between tests.
+pest()->extend(TestCase::class)
+    ->use(DatabaseTruncation::class)
+    ->in('Browser');
 
 /**
  * Create an active admin holding the given permissions (defaults to every

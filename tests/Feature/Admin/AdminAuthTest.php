@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AdminAuth;
 use App\Livewire\Admin\Auth\ForgotPassword;
 use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Auth\ResetPassword;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
 use Livewire\Livewire;
+use Livewire\Mechanisms\PersistentMiddleware\PersistentMiddleware;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -33,6 +35,18 @@ function makeAdmin(array $permissions = ['dashboard.view'], array $attrs = []): 
 
     return $user;
 }
+
+it('registers AdminAuth as persistent Livewire middleware', function () {
+    // Livewire re-applies the component route's can:/auth middleware on every
+    // POST /livewire-*/update. AdminAuth must be persistent so it re-resolves
+    // the admin guard first; otherwise those updates 403. (Regression guard —
+    // the in-process browser test server cannot reproduce the per-request
+    // guard reset, so this asserts the mechanism is wired.)
+    $persistent = app(PersistentMiddleware::class)
+        ->getPersistentMiddleware();
+
+    expect($persistent)->toContain(AdminAuth::class);
+});
 
 it('renders the login screen for guests', function () {
     $this->get(route('admin.login'))

@@ -31,8 +31,9 @@
                     <x-badge :tone="$i === 0 ? 'accent' : 'outline'">{{ $i === 0 ? __('admin.widgets.cover') : $i + 1 }}</x-badge>
                 </span>
                 @if ($captionModel)
-                    <div style="padding: 6px;">
-                        <x-input size="sm" :placeholder="__('admin.widgets.caption')" wire:model.blur="{{ $captionModel }}.{{ $item['id'] }}" />
+                    <div style="display: grid; gap: 6px; padding: 6px;">
+                        <input class="d-input d-input--sm" dir="ltr" placeholder="{{ __('admin.widgets.caption') }} · EN" wire:model.blur="{{ $captionModel }}.{{ $item['id'] }}.en" aria-label="Caption EN">
+                        <input class="d-input d-input--sm" dir="rtl" placeholder="{{ __('admin.widgets.caption') }} · {{ __('admin.widgets.ar') }}" wire:model.blur="{{ $captionModel }}.{{ $item['id'] }}.ar" aria-label="Caption AR">
                     </div>
                 @endif
                 <div style="display: flex; align-items: center; padding: 2px 4px;">

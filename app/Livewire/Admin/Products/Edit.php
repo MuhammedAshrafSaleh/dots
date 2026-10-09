@@ -104,7 +104,7 @@ class Edit extends Component
     /** @var array<int, int> */
     public array $galleryOrder = [];
 
-    /** @var array<int, string> */
+    /** @var array<int, array<string, string>> */
     public array $captions = [];
 
     /** @var array<int, mixed> */
@@ -144,7 +144,10 @@ class Edit extends Component
             $this->loadVariants($product);
 
             foreach ($product->getMedia('gallery') as $media) {
-                $this->captions[$media->id] = (string) $media->getCustomProperty('caption', '');
+                $caption = $media->getCustomProperty('caption');
+                $this->captions[$media->id] = is_array($caption)
+                    ? ['ar' => (string) ($caption['ar'] ?? ''), 'en' => (string) ($caption['en'] ?? '')]
+                    : ['ar' => '', 'en' => (string) ($caption ?? '')];
             }
         } else {
             $this->variantRows = ['default' => $this->blankVariant([])];
@@ -502,10 +505,13 @@ class Edit extends Component
         }
         $this->galleryUploads = [];
 
-        // Persist captions onto the media custom properties.
+        // Persist captions ({ar, en}) onto the media custom properties.
         foreach ($product->getMedia('gallery') as $media) {
             if (array_key_exists($media->id, $this->captions)) {
-                $media->setCustomProperty('caption', $this->captions[$media->id]);
+                $media->setCustomProperty('caption', [
+                    'ar' => (string) ($this->captions[$media->id]['ar'] ?? ''),
+                    'en' => (string) ($this->captions[$media->id]['en'] ?? ''),
+                ]);
                 $media->save();
             }
         }
@@ -539,7 +545,7 @@ class Edit extends Component
             ->map(fn ($media) => ['id' => (int) $media->id, 'name' => $media->file_name])->all();
     }
 
-    /** @return array<int, array{id: int, url: string, caption: string}> */
+    /** @return array<int, array{id: int, url: string}> */
     public function galleryItems(): array
     {
         if (! $this->product) {
@@ -550,7 +556,6 @@ class Edit extends Component
             ->map(fn ($media) => [
                 'id' => (int) $media->id,
                 'url' => $media->getUrl(),
-                'caption' => (string) $media->getCustomProperty('caption', ''),
             ])->all();
     }
 
