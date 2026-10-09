@@ -3,6 +3,9 @@
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
 
+// Admin area (/admin) — not locale-prefixed; see routes/admin.php.
+require __DIR__.'/admin.php';
+
 // Bare "/" (and any locale-less visit) goes to the default locale.
 Route::get('/', fn () => redirect('/'.Locale::DEFAULT));
 

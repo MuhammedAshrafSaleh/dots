@@ -35,6 +35,16 @@ Rules: read only this file + PROGRESS.md at session start; open refs only when a
 - **Design/docs:** admin-kit.jsx: ASettings*, AUsers
 - **Done when:** Tests: settings cache bust; deactivated admin cannot log in.
 
+## T4.7 — Rich text editor: TipTap everywhere (carried from Phase 3)
+- Replace the Phase-3 interim `contenteditable` rich-text wrapper (`resources/views/components/admin/rich.blade.php`) with a real TipTap editor in an Alpine wrapper (`wire:ignore`), per Decisions Q6: allowed blocks only — h2, h3, p, bold, italic, link, ul/ol, blockquote, image+caption, callout. Bundle TipTap via the admin Vite entry; keep the server-side `App\Support\Html::clean` (`dots_rich` purifier profile) as the on-save guarantee. Swap it into every rich-text field (services, projects, blog, content pages, page_sections long-text).
+- **Done when:** Browser test: type formatted content, save, reload, formatting persists; disallowed HTML is stripped on save. Runs in a real browser (not only component tests).
+
+## T4.8 — Product Files tab: named slots + titled extras (carried from Phase 3)
+- Rebuild the product-edit **Files** tab (currently a simple multi-upload) to match the design/ERD: four named slots — Datasheet, IES, LDT, Installation guide — plus titled extra files (bilingual title). Store in the `files` media collection with custom properties `slot`/`type` + `title` per `docs/ERD.md`. Replace/remove per slot; extras are add/remove with a title.
+- **Design/docs:** admin-kit.jsx: APFiles, APFileRow; docs/ERD.md product files/media
+- **Done when:** CRUD + browser test: upload to each slot and an extra with a title; reload shows them; downloads list on the product page uses slot/title.
+
 ## Phase checklist
 - [ ] Every CONTENT_MAP admin column points to a working screen
-- [ ] Tests green
+- [ ] TipTap rich text live on every rich-text field; Files tab has the 4 named slots + titled extras
+- [ ] Tests green (including browser E2E)

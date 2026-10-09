@@ -7,6 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * @property bool $is_default
+ * @property bool $is_active
+ * @property int $stock_qty
+ * @property int|null $low_stock_threshold
+ */
 class ProductVariant extends Model
 {
     protected $guarded = ['id'];

@@ -16,6 +16,22 @@ class Brand extends Model implements HasMedia
 
     protected $guarded = ['id'];
 
+    /**
+     * Enforce a single featured brand: whenever one is saved as featured,
+     * clear the flag on every other brand (via a query, so no event recursion).
+     */
+    protected static function booted(): void
+    {
+        static::saved(function (Brand $brand): void {
+            if ($brand->is_featured) {
+                static::query()
+                    ->whereKeyNot($brand->getKey())
+                    ->where('is_featured', true)
+                    ->update(['is_featured' => false]);
+            }
+        });
+    }
+
     /** Slug is a single non-translated string for brands. */
     public function getRouteKeyName(): string
     {

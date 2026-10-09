@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property AttributeDisplay $display
+ * @property bool $is_filterable
+ * @property bool $is_variant_axis
+ */
 class Attribute extends Model
 {
     use HasTranslations;
