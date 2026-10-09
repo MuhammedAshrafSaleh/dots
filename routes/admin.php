@@ -10,6 +10,7 @@ use App\Livewire\Admin\Brands\Edit as BrandEdit;
 use App\Livewire\Admin\Brands\Index as BrandIndex;
 use App\Livewire\Admin\Categories\Index as CategoryIndex;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\Products\Index as ProductIndex;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
 
@@ -60,5 +61,8 @@ Route::prefix('admin')
 
             // Catalog — Categories (T3.5).
             Route::get('categories', CategoryIndex::class)->middleware('can:categories.view')->name('categories');
+
+            // Catalog — Products (T3.6).
+            Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');
         });
     });
