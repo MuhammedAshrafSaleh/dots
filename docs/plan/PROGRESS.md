@@ -2,10 +2,10 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.1 done. Next: T4.2 Services.
-- **Last commit:** T4.1: Page content editor (to be committed — see below).
+- **Current task:** T4.2 done. Next: T4.3 Projects.
+- **Last commit:** (pending commit) T4.2: Services admin.
 - **Open issues / left to fix:** none.
-- **What to review:** Open http://dots.test/admin/page-content/home — 7 page tabs, collapsible section cards, edit any field, Save → toast. Check About, Global tabs too.
+- **What to review:** Open http://dots.test/admin/services — list with search + active toggle. Click "Add service" → fill Title EN/AR → auto-generate slugs → add included items + FAQs → save. Reload confirms persistence. Check sidebar cover image upload and show_in_footer toggle.
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 
@@ -45,7 +45,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 
 ## Phase 4 — Admin: content and settings  (`phase-04-admin-content.md`)
 - [x] T4.1 Page content editor
-- [ ] T4.2 Services
+- [x] T4.2 Services
 - [ ] T4.3 Projects
 - [ ] T4.4 Blog
 - [ ] T4.5 Content pages
