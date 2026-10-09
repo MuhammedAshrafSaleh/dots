@@ -469,6 +469,7 @@ return [
         'featured_hint' => 'Shown first on /blog and on the homepage',
         'organise' => 'Organise',
         'category' => 'Category',
+        'category_placeholder' => '— Select category —',
         'tags' => 'Tags',
         'no_tags_yet' => 'No tags yet — add them in Categories & tags.',
         'read_minutes' => 'Read time (minutes)',

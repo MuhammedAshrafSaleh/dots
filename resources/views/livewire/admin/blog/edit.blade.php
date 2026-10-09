@@ -109,6 +109,17 @@
         {{-- Sidebar --}}
         <div style="display: grid; gap: 16px; align-content: start;">
 
+            @if ($errors->any())
+                <div role="alert" style="background: var(--error-50); border: 1px solid var(--error-300); border-radius: var(--radius-md); padding: 12px 14px; display: grid; gap: 4px;">
+                    <b style="font-size: 13px; color: var(--error-700);">{{ __('admin.blog.has_errors') }}</b>
+                    <ul style="margin: 4px 0 0; padding-inline-start: 16px; font-size: 12px; color: var(--error-700);">
+                        @foreach ($errors->all() as $msg)
+                            <li>{{ $msg }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             {{-- Publishing --}}
             <x-admin.card :title="__('admin.blog.publishing')">
                 <div style="display: grid; gap: 16px;">
@@ -123,8 +134,8 @@
             {{-- Organise --}}
             <x-admin.card :title="__('admin.blog.organise')">
                 <div style="display: grid; gap: 16px;">
-                    @php $catOptions = $categories->mapWithKeys(fn ($c) => [$c->id => $c->getTranslation('name', app()->getLocale(), false)])->all(); @endphp
-                    <x-select :label="__('admin.blog.category')" wire:model="post_category_id" :options="$catOptions" :selected="$post_category_id" :error="$errors->first('post_category_id')" />
+                    @php $catOptions = $categories->mapWithKeys(fn ($c) => [(string) $c->id => $c->getTranslation('name', app()->getLocale(), false)])->all(); @endphp
+                    <x-select :label="__('admin.blog.category')" wire:model="post_category_id" :options="$catOptions" :selected="(string) $post_category_id" placeholder="{{ __('admin.blog.category_placeholder') }}" :error="$errors->first('post_category_id')" />
 
                     <div class="d-field">
                         <span class="d-label">{{ __('admin.blog.tags') }}</span>
