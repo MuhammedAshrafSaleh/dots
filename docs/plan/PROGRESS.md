@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
 - **Current task:** T4.3 done. Next: T4.4 Blog.
-- **Last commit:** (see git log — T4.3: Projects admin)
+- **Last commit:** `fa08b10` T4.3: Projects admin
 - **Open issues / left to fix:** none.
 - **What to review:** Open http://dots.test/admin/projects — list with Current/Completed tabs, search, active toggle. Click "Add project" → fill Title EN/AR → auto-generate slugs → pick type/status/stage → save. Reload confirms persistence. Check gallery, cover image, products/services pickers (search + add/remove chips), SEO tab.
 
