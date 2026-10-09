@@ -1,6 +1,14 @@
 # PROGRESS
 
-**Git:** branch `phase-3` (local, not pushed) · last commit `Phase 3 review round 1` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — **awaiting owner re-review** _(updated after every commit)_
+## Current state _(read this first — a new session resumes from here)_
+- **Branch:** `phase-3` (local, **not pushed**).
+- **Current task:** Phase 3 is complete and in **owner re-review**. All review fixes applied. Nothing in progress.
+- **Last commit:** `6dae340` — Fix silent product save (validation on hidden tabs) + one-task-per-session workflow.
+- **Open issues / left to fix:** none blocking. Carried-forward work is scheduled as **Phase 4 T4.7** (TipTap rich text everywhere) and **T4.8** (product Files tab: 4 named slots + titled extras).
+- **What to click to review (dots.test, admin `admin@dots.test` / `password`):** `/admin/products` → **Add product** → fill only **Name (EN+AR)** + **Base SKU**, open **Category & brand**, pick a **brand** + **category**, **Save changes** → lands on the new product's edit page with a "Product saved" toast. Then try **Save** with the brand/category missing → the **Category & brand** tab opens with an error toast + "Choose a brand." Edit an existing product and Save the same way.
+- **Next:** owner says `approved, push phase 3` (then push/merge/tag) or requests more fixes (new local commits).
+
+**Git:** branch `phase-3` (local, not pushed) · last commit `6dae340` · last pushed `b6c1cba` · last tag `phase-2-done` · push state: phase-3 local only — **awaiting owner re-review** _(updated after every commit)_
 
 Current phase: **3 — Admin: shell, shared widgets, catalog DONE (local)** — awaiting owner review
 
@@ -195,4 +203,5 @@ Legend: [ ] todo · [x] done
     - **Testing gap closed:** added **Pest 4 + Playwright browser E2E** (`tests/Browser`, `DatabaseTruncation`) for login + each admin screen (create/save), and an HTTP render test (`AdminPagesRenderTest`) that opens **every** seeded product/brand/attribute edit + every list as a real authenticated admin GET (caught the caption crash across all products). Note: the in-process browser server keeps the auth guard between requests, so it can't reproduce the guard-reset 403 — hence the persistent-middleware assertion + the dots.test verification.
     - **Category delete:** top-level category with products **or** children now refuses deletion with a clear message (test for both).
     - **Workflow (CLAUDE.md):** stop after each task for owner review on dots.test + commit hash; a task isn't done until it works in a real browser (browser E2E + manual dots.test check).
+  - **Review round 2 (2026-10-09, `6dae340`):** owner found product **Save** did nothing — validation failed on required fields that live on hidden tabs (slug on SEO, brand/category on Category tab), with no visible error. Fixes: slug auto-generated from the name; the lone default variant inherits the base SKU; on failure the first-error **tab opens**, an **error toast** shows, error tabs get a marker, and each field shows its **AR/EN** message; on success a "Product saved" toast (session-flashed so it survives the redirect) + redirect to the new product's **edit** page. **Minimum required fields:** name (AR+EN), base SKU, brand, category. Two browser tests (create with only required fields; missing field → error + tab opens). Verified on dots.test. Also: **one task per session** + a **Current state** block at the top of this file (CLAUDE.md workflow).
 
