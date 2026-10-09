@@ -8,6 +8,7 @@ use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Auth\ResetPassword;
 use App\Livewire\Admin\Brands\Edit as BrandEdit;
 use App\Livewire\Admin\Brands\Index as BrandIndex;
+use App\Livewire\Admin\PageContent\Edit as PageContentEdit;
 use App\Livewire\Admin\Categories\Index as CategoryIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Products\Edit as ProductEdit;
@@ -62,6 +63,13 @@ Route::prefix('admin')
 
             // Catalog — Categories (T3.5).
             Route::get('categories', CategoryIndex::class)->middleware('can:categories.view')->name('categories');
+
+            // Content — Page sections (T4.1).
+            Route::get('page-content/{page?}', PageContentEdit::class)
+                ->middleware('can:page_content.view')
+                ->name('page-content')
+                ->defaults('page', 'home')
+                ->whereIn('page', ['home', 'about', 'services', 'brands', 'projects', 'blog', 'global']);
 
             // Catalog — Products (T3.6).
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');

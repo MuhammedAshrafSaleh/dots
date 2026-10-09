@@ -131,3 +131,25 @@ it('edits the selected category in the tree', function () {
         ->assertDontSee('Array to string')
         ->assertNoJavaScriptErrors();
 });
+
+it('opens the page content editor and saves the home hero section', function () {
+    signInAdmin()
+        ->navigate('/admin/page-content/home')
+        ->assertSee('Page content')
+        ->assertSee('Hero')
+        ->fill('[wire\\:model="form.hero.content.headline.en"]', 'E2E Headline EN')
+        ->press('Save changes')
+        ->assertSee('Page content saved')
+        ->assertNoJavaScriptErrors();
+});
+
+it('switches between page content tabs without JS errors', function () {
+    signInAdmin()
+        ->navigate('/admin/page-content/home')
+        ->assertSee('Features strip')
+        ->navigate('/admin/page-content/about')
+        ->assertSee('Our story')
+        ->navigate('/admin/page-content/global')
+        ->assertSee('Quote band')
+        ->assertNoJavaScriptErrors();
+});
