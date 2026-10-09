@@ -2,10 +2,10 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.2 done. Next: T4.3 Projects.
-- **Last commit:** (pending commit) T4.2: Services admin.
+- **Current task:** T4.3 done. Next: T4.4 Blog.
+- **Last commit:** (see git log — T4.3: Projects admin)
 - **Open issues / left to fix:** none.
-- **What to review:** Open http://dots.test/admin/services — list with search + active toggle. Click "Add service" → fill Title EN/AR → auto-generate slugs → add included items + FAQs → save. Reload confirms persistence. Check sidebar cover image upload and show_in_footer toggle.
+- **What to review:** Open http://dots.test/admin/projects — list with Current/Completed tabs, search, active toggle. Click "Add project" → fill Title EN/AR → auto-generate slugs → pick type/status/stage → save. Reload confirms persistence. Check gallery, cover image, products/services pickers (search + add/remove chips), SEO tab.
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 
@@ -46,7 +46,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 ## Phase 4 — Admin: content and settings  (`phase-04-admin-content.md`)
 - [x] T4.1 Page content editor
 - [x] T4.2 Services
-- [ ] T4.3 Projects
+- [x] T4.3 Projects
 - [ ] T4.4 Blog
 - [ ] T4.5 Content pages
 - [ ] T4.6 Settings and users

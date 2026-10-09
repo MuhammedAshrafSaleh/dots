@@ -13,6 +13,8 @@ use App\Livewire\Admin\Categories\Index as CategoryIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Products\Edit as ProductEdit;
 use App\Livewire\Admin\Products\Index as ProductIndex;
+use App\Livewire\Admin\Projects\Edit as ProjectEdit;
+use App\Livewire\Admin\Projects\Index as ProjectIndex;
 use App\Livewire\Admin\Services\Edit as ServiceEdit;
 use App\Livewire\Admin\Services\Index as ServiceIndex;
 use App\Support\Locale;
@@ -70,6 +72,11 @@ Route::prefix('admin')
             Route::get('services', ServiceIndex::class)->middleware('can:services.view')->name('services');
             Route::get('services/create', ServiceEdit::class)->middleware('can:services.create')->name('services.create');
             Route::get('services/{service}/edit', ServiceEdit::class)->middleware('can:services.update')->name('services.edit');
+
+            // Content — Projects (T4.3).
+            Route::get('projects', ProjectIndex::class)->middleware('can:projects.view')->name('projects');
+            Route::get('projects/create', ProjectEdit::class)->middleware('can:projects.create')->name('projects.create');
+            Route::get('projects/{project}/edit', ProjectEdit::class)->middleware('can:projects.update')->name('projects.edit');
 
             // Content — Page sections (T4.1).
             Route::get('page-content/{page?}', PageContentEdit::class)
