@@ -3,6 +3,7 @@
 use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Product;
 
 /**
  * Real-browser E2E (Pest 4 + Playwright). Logs in through the form and drives
@@ -84,6 +85,41 @@ it('opens the products list, filters, and opens the editor tabs', function () {
         ->assertSee('Default variant')
         ->assertDontSee('This action is unauthorized')
         ->assertNoJavaScriptErrors();
+});
+
+it('creates a product from scratch with only the required fields', function () {
+    [$brand, $main, $leaf] = seedCatalogBits();
+
+    signInAdmin()
+        ->navigate('/admin/products/create')
+        ->fill('[wire\\:model="name.en"]', 'Arc Pendant')
+        ->fill('[wire\\:model="name.ar"]', 'معلقة آرك')
+        ->fill('[wire\\:model="sku"]', 'ARC-BR-1')
+        ->press('Category & brand')
+        ->select('[wire\\:model="brand_id"]', (string) $brand->id)
+        ->select('[wire\\:model="category_id"]', (string) $leaf->id)
+        ->press('Save changes')
+        ->assertSee('Product saved')   // success toast after redirect to the edit page
+        ->assertDontSee('This action is unauthorized')
+        ->assertNoJavaScriptErrors();
+
+    expect(Product::where('sku', 'ARC-BR-1')->exists())->toBeTrue();
+});
+
+it('shows validation errors on the right tab when a required field is missing', function () {
+    seedCatalogBits();
+
+    signInAdmin()
+        ->navigate('/admin/products/create')
+        ->fill('[wire\\:model="name.en"]', 'No Brand')
+        ->fill('[wire\\:model="name.ar"]', 'بدون علامة')
+        ->fill('[wire\\:model="sku"]', 'NB-1')
+        ->press('Save changes')                            // brand + category missing (Category tab)
+        ->assertSee('Please fix the highlighted fields.')  // error toast
+        ->assertSee('Choose a brand.')                     // field message on the auto-opened tab
+        ->assertNoJavaScriptErrors();
+
+    expect(Product::where('sku', 'NB-1')->exists())->toBeFalse();
 });
 
 it('edits the selected category in the tree', function () {

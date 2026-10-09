@@ -1,6 +1,10 @@
 {{-- Toast stack driven by the Alpine `toasts` store (resources/js/admin.js).
-     Livewire raises them with $this->dispatch('toast', tone:…, title:…, message:…). --}}
-<div class="d-toasts" aria-live="polite" aria-atomic="false">
+     Livewire raises them with $this->dispatch('toast', tone:…, title:…, message:…).
+     A session-flashed `admin.toast` (set before a redirect) is pushed on load. --}}
+@php($flashToast = session('admin.toast'))
+<div class="d-toasts" aria-live="polite" aria-atomic="false"
+     @if ($flashToast) x-init="$store.toasts.push(@js($flashToast))" @endif
+>
     <template x-for="t in $store.toasts.items" :key="t.id">
         <div
             class="d-toast"

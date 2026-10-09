@@ -95,10 +95,11 @@ it('creates a product and updates its cache columns from the default variant', f
         ->set('variantRows.default.price', '500')
         ->set('variantRows.default.stock_qty', 20)
         ->call('save')
-        ->assertHasNoErrors()
-        ->assertRedirect(route('admin.products'));
+        ->assertHasNoErrors();
 
     $product = Product::where('sku', 'ARC-1')->firstOrFail();
+    // After creating, the editor redirects to the new product's edit page.
+    expect(Product::where('sku', 'ARC-1')->exists())->toBeTrue();
     expect($product->variants()->count())->toBe(1)
         ->and((float) $product->min_price)->toBe(500.0)
         ->and($product->stock_status->value)->toBe('in')

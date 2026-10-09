@@ -10,9 +10,11 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Slug;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -200,7 +202,9 @@ class Edit extends Component
     {
         return [
             'id' => null,
-            'sku' => $this->suggestSku($valueIds),
+            // The lone default variant (no axes) inherits the base SKU on save;
+            // axis variants get a suggested SKU from their value codes.
+            'sku' => $valueIds === [] ? '' : $this->suggestSku($valueIds),
             'price' => '',
             'compare_at_price' => '',
             'stock_qty' => 0,
@@ -326,10 +330,30 @@ class Edit extends Component
         $this->authorize($this->product ? 'products.update' : 'products.create');
 
         $this->sku = trim($this->sku);
-        $this->validateProduct();
+
+        // Auto-generate the per-locale slugs from the name when left blank, so
+        // the admin only has to fill the visible required fields.
+        foreach (['ar', 'en'] as $locale) {
+            if (trim((string) ($this->slug[$locale] ?? '')) === '' && trim((string) ($this->name[$locale] ?? '')) !== '') {
+                $this->slug[$locale] = Slug::make($this->name[$locale], $locale);
+            }
+        }
+
+        // The lone default variant inherits the base SKU when its own is blank.
+        if (count($this->variantRows) === 1 && isset($this->variantRows['default'])
+            && trim((string) $this->variantRows['default']['sku']) === '') {
+            $this->variantRows['default']['sku'] = $this->sku;
+        }
+
+        try {
+            $this->validateProduct();
+        } catch (ValidationException $e) {
+            $this->focusErrors(array_keys($e->errors()));
+            throw $e;
+        }
 
         if (! $this->variantsAreValid()) {
-            $this->activeTab = 'var';
+            $this->focusErrors($this->getErrorBag()->keys());
 
             return;
         }
@@ -369,8 +393,70 @@ class Edit extends Component
         app(UpdateProductCacheColumns::class)->handle($product->refresh());
 
         $this->product = $product;
-        $this->dispatch('toast', tone: 'success', title: __('admin.product_edit.saved'), message: $product->sku);
-        $this->redirectRoute('admin.products', navigate: true);
+
+        // Flash the success toast so it survives the redirect (the admin layout
+        // pushes any session-flashed toast on load).
+        session()->flash('admin.toast', [
+            'tone' => 'success',
+            'title' => __('admin.product_edit.saved'),
+            'message' => $product->sku,
+        ]);
+
+        // After creating, land on the new product's edit page; after editing,
+        // reload the same editor.
+        $this->redirectRoute('admin.products.edit', $product, navigate: true);
+    }
+
+    /**
+     * Open the tab holding the first validation error and raise an error toast
+     * so failures on hidden tabs are never silent.
+     *
+     * @param  array<int, string>  $fields
+     */
+    private function focusErrors(array $fields): void
+    {
+        $first = $fields[0] ?? null;
+        if ($first !== null) {
+            $this->activeTab = $this->tabForField($first);
+        }
+
+        $this->dispatch('toast', tone: 'error', title: __('admin.product_edit.has_errors'));
+    }
+
+    private function tabForField(string $field): string
+    {
+        return match (true) {
+            $field === 'sku',
+            str_starts_with($field, 'name'),
+            str_starts_with($field, 'overview'),
+            str_starts_with($field, 'variants_summary'),
+            str_starts_with($field, 'warranty') => 'basic',
+            str_starts_with($field, 'brand_id'),
+            str_starts_with($field, 'category_id') => 'cat',
+            str_starts_with($field, 'variantRows'),
+            $field === 'price_on_request' => 'var',
+            str_starts_with($field, 'specs') => 'spec',
+            str_starts_with($field, 'slug'),
+            str_starts_with($field, 'meta_title'),
+            str_starts_with($field, 'meta_description') => 'seo',
+            $field === 'sort_weight' => 'flags',
+            default => 'basic',
+        };
+    }
+
+    /**
+     * Tabs that currently hold a validation error (for the error markers).
+     *
+     * @return array<int, string>
+     */
+    public function errorTabs(): array
+    {
+        $tabs = [];
+        foreach ($this->getErrorBag()->keys() as $field) {
+            $tabs[$this->tabForField($field)] = true;
+        }
+
+        return array_keys($tabs);
     }
 
     public function deleteProduct(): void
@@ -393,6 +479,17 @@ class Edit extends Component
             'category_id' => ['required', 'exists:categories,id'],
             'sort_weight' => ['integer', 'min:0'],
             'status' => ['required', Rule::enum(ProductStatus::class)],
+        ], [
+            'name.ar.required' => __('admin.product_edit.v_name_required'),
+            'name.en.required' => __('admin.product_edit.v_name_required'),
+            'sku.required' => __('admin.product_edit.v_sku_required'),
+            'sku.unique' => __('admin.product_edit.v_sku_unique'),
+            'slug.ar.unique' => __('admin.product_edit.v_slug_unique'),
+            'slug.en.unique' => __('admin.product_edit.v_slug_unique'),
+            'brand_id.required' => __('admin.product_edit.v_brand_required'),
+            'brand_id.exists' => __('admin.product_edit.v_brand_required'),
+            'category_id.required' => __('admin.product_edit.v_category_required'),
+            'category_id.exists' => __('admin.product_edit.v_category_required'),
         ]);
     }
 
@@ -569,6 +666,7 @@ class Edit extends Component
             'leaves' => Category::query()->where('level', 3)->with('parent.parent')->orderBy('sort_order')->get(),
             'galleryItems' => $this->galleryItems(),
             'fileItems' => $this->fileItems(),
+            'errorTabs' => $this->errorTabs(),
         ]);
     }
 }

@@ -13,17 +13,27 @@
     <div class="a-split" style="--a-aside: 300px;">
         <div style="display: grid; gap: 16px; min-width: 0;">
             <div class="a-card" style="padding: 0 18px;">
-                <x-tabs
-                    :value="$activeTab"
-                    :tabs="collect($tabs)->map(fn ($t) => ['id' => $t, 'label' => __('admin.product_edit.tab_'.$t)])->all()"
-                    x-on:tab-changed="$wire.set('activeTab', $event.detail)"
-                />
+                <div role="tablist" class="d-tabs">
+                    @foreach ($tabs as $t)
+                        @php $tabHasError = in_array($t, $errorTabs, true); @endphp
+                        <button
+                            type="button"
+                            role="tab"
+                            class="d-tab @if ($tabHasError) is-error @endif"
+                            aria-selected="{{ $activeTab === $t ? 'true' : 'false' }}"
+                            wire:click="$set('activeTab', '{{ $t }}')"
+                        >
+                            {{ __('admin.product_edit.tab_'.$t) }}@if ($tabHasError)<span aria-hidden="true" style="color: var(--error-600); margin-inline-start: 4px;">●</span>@endif
+                        </button>
+                    @endforeach
+                </div>
             </div>
 
             {{-- Basic --}}
             <div @class(['a-hidden' => $activeTab !== 'basic'])>
                 <x-admin.card :title="__('admin.product_edit.tab_basic')">
                     <div style="display: grid; gap: 18px;">
+                        <span class="d-help">{{ __('admin.product_edit.required_hint') }}</span>
                         <x-admin.field-bilingual :label="__('admin.product_edit.product_name')" model="name" />
                         @error('name.ar')<span class="d-help d-help--error">{{ $message }}</span>@enderror
                         @error('name.en')<span class="d-help d-help--error">{{ $message }}</span>@enderror

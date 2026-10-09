@@ -162,6 +162,14 @@ return [
         'sort_weight_help' => 'Higher shows first in “Recommended”',
         'visibility' => 'Visibility',
         'status' => 'Status',
+        'has_errors' => 'Please fix the highlighted fields.',
+        'required_hint' => 'Required: product name (AR + EN), base SKU, brand and category. The slug is generated from the name.',
+        'v_name_required' => 'The product name is required.',
+        'v_sku_required' => 'The base SKU is required.',
+        'v_sku_unique' => 'This SKU is already in use.',
+        'v_slug_unique' => 'This slug is already in use.',
+        'v_brand_required' => 'Choose a brand.',
+        'v_category_required' => 'Choose a category.',
     ],
 
     'products' => [
