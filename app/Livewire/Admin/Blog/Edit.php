@@ -56,7 +56,7 @@ class Edit extends Component
 
     public bool $is_featured = false;
 
-    public int|string $post_category_id = '';
+    public string $post_category_id = '';
 
     public string $read_minutes = '';
 
@@ -151,7 +151,7 @@ class Edit extends Component
                 'status' => ['required', 'in:draft,published,scheduled'],
                 'published_at' => $this->status === 'scheduled' ? ['required', 'date'] : ['nullable', 'date'],
                 'is_featured' => ['boolean'],
-                'post_category_id' => ['required', 'integer', 'exists:post_categories,id'],
+                'post_category_id' => ['required', 'exists:post_categories,id'],
                 'read_minutes' => ['nullable', 'integer', 'min:1', 'max:120'],
                 'selectedTagIds.*' => ['integer'],
                 'selectedProductIds.*' => ['integer'],
