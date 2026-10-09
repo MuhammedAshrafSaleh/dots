@@ -6,3 +6,6 @@
 
 /* Alpine: hide elements until Alpine initialises (x-cloak). */
 [x-cloak] { display: none !important; }
+
+/* Inactive tab panels (keeps their inputs mounted so state persists across tabs). */
+.a-hidden { display: none !important; }

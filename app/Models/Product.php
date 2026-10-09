@@ -15,6 +15,17 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property ProductStatus $status
+ * @property StockStatus $stock_status
+ * @property bool $price_on_request
+ * @property bool $is_new
+ * @property bool $is_best_seller
+ * @property bool $is_smart_pick
+ * @property bool $is_dimmable
+ * @property bool $ships_24h
+ * @property int $sort_weight
+ */
 class Product extends Model implements HasMedia
 {
     use HasTranslatableSlug;

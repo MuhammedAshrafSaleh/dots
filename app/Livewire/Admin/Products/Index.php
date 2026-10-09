@@ -113,7 +113,7 @@ class Index extends Component
         // slug_ar/slug_en are generated STORED columns — never copy them.
         $copy = $product->replicate(['search_text', 'slug_ar', 'slug_en']);
         $copy->sku = $this->uniqueSku($product->sku.'-COPY');
-        $copy->status = ProductStatus::Draft->value;
+        $copy->status = ProductStatus::Draft;
         $copy->published_at = null;
         $copy->setTranslations('slug', collect($product->getTranslations('slug'))
             ->map(fn ($v) => $v.'-copy')->all());
