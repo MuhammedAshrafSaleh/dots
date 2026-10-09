@@ -18,7 +18,7 @@ Bilingual (AR RTL default / EN) lighting & electrical catalog + e-commerce. Lara
 - Never commit failing tests, `.env`, or any secret. Never force-push. Never rewrite history (no amend, no rebase) on any branch.
 - If something in the docs is unclear, contradictory, or needs a product decision: ask, do not guess. Technical choices (package versions, class names) you decide, and log them under "Decisions" in PROGRESS.md.
 - Never change the ERD silently. If a column is needed, propose it, then update `docs/ERD.md` after approval.
-- **End of phase N:** run the phase checklist, write the "Phase N report" in PROGRESS.md, **commit it locally**, then **STOP** and tell the owner how to review: URLs to open, commands to run, and `git log --oneline main..phase-N`. Do not merge, tag, or push.
+- **End of phase N:** run the phase checklist, write the "Phase N report" in **`docs/plan/reports/phase-N.md`** (never in PROGRESS.md), **commit it locally**, then **STOP** and tell the owner how to review: URLs to open, commands to run, and `git log --oneline main..phase-N`. Do not merge, tag, or push.
 - **Owner review:** the owner reviews the local branch. If they ask for fixes, make them as **new local commits** (no amend, no rebase). Then STOP again for re-review.
 - **Only when the owner says "approved, push phase N":** `git push -u origin phase-N`, then `git checkout main && git merge --no-ff phase-N -m "Phase N complete"`, tag `phase-N-done`, and `git push origin main --tags`. **Never push anything without the owner's explicit approval message.**
 - If a push fails (network/auth/conflict): **STOP and report the exact error.** Do not work around it, change credentials, or force-push.
