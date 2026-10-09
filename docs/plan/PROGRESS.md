@@ -2,10 +2,10 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.3 done. Next: T4.4 Blog.
-- **Last commit:** `fa08b10` T4.3: Projects admin
+- **Current task:** T4.4 done. Next: T4.5 Content pages.
+- **Last commit:** `(pending)` T4.4: Blog admin
 - **Open issues / left to fix:** none.
-- **What to review:** Open http://dots.test/admin/projects — list with Current/Completed tabs, search, active toggle. Click "Add project" → fill Title EN/AR → auto-generate slugs → pick type/status/stage → save. Reload confirms persistence. Check gallery, cover image, products/services pickers (search + add/remove chips), SEO tab.
+- **What to review:** Open http://dots.test/admin/blog — post list with All/Draft/Published/Scheduled tabs, category & featured filters, search, featured toggle. Click "Categories & tags" → inline-edit categories and tags (add/save/delete per row). Click "New post" → fill Title EN/AR → auto-generate slugs → pick category → set status → save. Check body tab (rich editor), products tab, SEO tab, author sidebar, publish date for scheduled status.
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 
@@ -47,7 +47,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 - [x] T4.1 Page content editor
 - [x] T4.2 Services
 - [x] T4.3 Projects
-- [ ] T4.4 Blog
+- [x] T4.4 Blog
 - [ ] T4.5 Content pages
 - [ ] T4.6 Settings and users
 - [ ] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)

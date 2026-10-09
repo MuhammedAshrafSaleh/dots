@@ -6,6 +6,9 @@ use App\Livewire\Admin\Attributes\Index as AttributeIndex;
 use App\Livewire\Admin\Auth\ForgotPassword;
 use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Auth\ResetPassword;
+use App\Livewire\Admin\Blog\Edit as BlogEdit;
+use App\Livewire\Admin\Blog\Index as BlogIndex;
+use App\Livewire\Admin\Blog\TaxIndex as BlogTaxIndex;
 use App\Livewire\Admin\Brands\Edit as BrandEdit;
 use App\Livewire\Admin\Brands\Index as BrandIndex;
 use App\Livewire\Admin\PageContent\Edit as PageContentEdit;
@@ -77,6 +80,12 @@ Route::prefix('admin')
             Route::get('projects', ProjectIndex::class)->middleware('can:projects.view')->name('projects');
             Route::get('projects/create', ProjectEdit::class)->middleware('can:projects.create')->name('projects.create');
             Route::get('projects/{project}/edit', ProjectEdit::class)->middleware('can:projects.update')->name('projects.edit');
+
+            // Content — Blog (T4.4).
+            Route::get('blog', BlogIndex::class)->middleware('can:posts.view')->name('blog');
+            Route::get('blog/create', BlogEdit::class)->middleware('can:posts.create')->name('blog.create');
+            Route::get('blog/taxonomy', BlogTaxIndex::class)->middleware('can:post_categories.manage')->name('blog.taxonomy');
+            Route::get('blog/{post}/edit', BlogEdit::class)->middleware('can:posts.update')->name('blog.edit');
 
             // Content — Page sections (T4.1).
             Route::get('page-content/{page?}', PageContentEdit::class)

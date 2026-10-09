@@ -27,6 +27,12 @@ it('renders every catalog list', function () {
     }
 });
 
+it('renders the blog list and create page', function () {
+    foreach (['admin.blog', 'admin.blog.create', 'admin.blog.taxonomy'] as $route) {
+        $this->get(route($route))->assertOk()->assertDontSee('Array to string');
+    }
+});
+
 it('renders every create page', function () {
     foreach (['admin.attributes.create', 'admin.brands.create', 'admin.products.create'] as $route) {
         $this->get(route($route))->assertOk()->assertDontSee('Array to string');
