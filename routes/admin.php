@@ -18,6 +18,8 @@ use App\Livewire\Admin\Products\Edit as ProductEdit;
 use App\Livewire\Admin\Products\Index as ProductIndex;
 use App\Livewire\Admin\Projects\Edit as ProjectEdit;
 use App\Livewire\Admin\Projects\Index as ProjectIndex;
+use App\Livewire\Admin\ContentPages\Edit as ContentPageEdit;
+use App\Livewire\Admin\ContentPages\Index as ContentPageIndex;
 use App\Livewire\Admin\Services\Edit as ServiceEdit;
 use App\Livewire\Admin\Services\Index as ServiceIndex;
 use App\Support\Locale;
@@ -86,6 +88,11 @@ Route::prefix('admin')
             Route::get('blog/create', BlogEdit::class)->middleware('can:posts.create')->name('blog.create');
             Route::get('blog/taxonomy', BlogTaxIndex::class)->middleware('can:post_categories.manage')->name('blog.taxonomy');
             Route::get('blog/{post}/edit', BlogEdit::class)->middleware('can:posts.update')->name('blog.edit');
+
+            // Content — Content pages (T4.5).
+            Route::get('content-pages', ContentPageIndex::class)->middleware('can:content_pages.view')->name('content-pages');
+            Route::get('content-pages/create', ContentPageEdit::class)->middleware('can:content_pages.create')->name('content-pages.create');
+            Route::get('content-pages/{page}/edit', ContentPageEdit::class)->middleware('can:content_pages.update')->name('content-pages.edit');
 
             // Content — Page sections (T4.1).
             Route::get('page-content/{page?}', PageContentEdit::class)

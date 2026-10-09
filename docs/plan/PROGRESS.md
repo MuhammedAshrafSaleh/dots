@@ -2,10 +2,10 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.4 done. Next: T4.5 Content pages.
-- **Last commit:** `74868fc` T4.4: Blog admin
+- **Current task:** T4.5 done. Next: T4.6 Settings and users.
+- **Last commit:** `(see below)` T4.5: Content pages
 - **Open issues / left to fix:** none.
-- **What to review:** Open http://dots.test/admin/blog — post list with All/Draft/Published/Scheduled tabs, category & featured filters, search, featured toggle. Click "Categories & tags" → inline-edit categories and tags (add/save/delete per row). Click "New post" → fill Title EN/AR → auto-generate slugs → pick category → set status → save. Check body tab (rich editor), products tab, SEO tab, author sidebar, publish date for scheduled status.
+- **What to review:** Open http://dots.test/admin/content-pages — list of pages (delivery, returns, warranty, careers, terms, privacy) with last-updated, footer toggle, active toggle. Click any row → edit page with Basic/Body/SEO tabs and sidebar (active, footer, sort, delete). Click "New page" → set key (e.g. `faq`) → fill titles → slugs → save.
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 
@@ -48,7 +48,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 - [x] T4.2 Services
 - [x] T4.3 Projects
 - [x] T4.4 Blog
-- [ ] T4.5 Content pages
+- [x] T4.5 Content pages
 - [ ] T4.6 Settings and users
 - [ ] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
 - [ ] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
