@@ -4,6 +4,7 @@ use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
 
 /**
  * Real-browser E2E (Pest 4 + Playwright). Logs in through the form and drives
@@ -151,5 +152,45 @@ it('switches between page content tabs without JS errors', function () {
         ->assertSee('Our story')
         ->navigate('/admin/page-content/global')
         ->assertSee('Quote band')
+        ->assertNoJavaScriptErrors();
+});
+
+it('opens settings and saves the contact tab — cache key is updated', function () {
+    signInAdmin()
+        ->navigate('/admin/settings')
+        ->assertSee('Settings')
+        ->fill('[wire\\:model="whatsapp_number"]', '201009999999')
+        ->press('Save changes')
+        ->assertSee('Settings saved')
+        ->assertDontSee('This action is unauthorized')
+        ->assertNoJavaScriptErrors();
+
+    expect(\App\Services\Settings::class)
+        ->and(app(\App\Services\Settings::class)->get('contact.whatsapp_number'))
+        ->toBe('201009999999');
+});
+
+it('deactivated admin cannot log in', function () {
+    $other = User::factory()->create([
+        'email' => 'deactivated@dots.test',
+        'is_active' => false,
+    ]);
+    $other->syncRoles(['Admin']);
+
+    visit('/admin/lang/en')
+        ->navigate('/admin/login')
+        ->fill('input[type=email]', 'deactivated@dots.test')
+        ->fill('input[type=password]', 'password')
+        ->click('button[type=submit]')
+        ->assertDontSee('Dashboard')
+        ->assertNoJavaScriptErrors();
+});
+
+it('opens the users list', function () {
+    signInAdmin()
+        ->navigate('/admin/users')
+        ->assertSee('Users')
+        ->assertSee('Everyone here has full Admin access')
+        ->assertDontSee('This action is unauthorized')
         ->assertNoJavaScriptErrors();
 });

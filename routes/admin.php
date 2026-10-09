@@ -22,6 +22,8 @@ use App\Livewire\Admin\ContentPages\Edit as ContentPageEdit;
 use App\Livewire\Admin\ContentPages\Index as ContentPageIndex;
 use App\Livewire\Admin\Services\Edit as ServiceEdit;
 use App\Livewire\Admin\Services\Index as ServiceIndex;
+use App\Livewire\Admin\Settings\Edit as SettingsEdit;
+use App\Livewire\Admin\Users\Index as UsersIndex;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
 
@@ -100,6 +102,10 @@ Route::prefix('admin')
                 ->name('page-content')
                 ->defaults('page', 'home')
                 ->whereIn('page', ['home', 'about', 'services', 'brands', 'projects', 'blog', 'global']);
+
+            // Settings and users (T4.6).
+            Route::get('settings', SettingsEdit::class)->middleware('can:settings.view')->name('settings');
+            Route::get('users', UsersIndex::class)->middleware('can:users.view')->name('users');
 
             // Catalog — Products (T3.6).
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');

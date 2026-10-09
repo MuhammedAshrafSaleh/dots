@@ -2,10 +2,12 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.5 done. Next: T4.6 Settings and users.
-- **Last commit:** `(see below)` T4.5: Content pages
+- **Current task:** T4.6 done. Next: T4.7 TipTap rich text editor.
+- **Last commit:** `TBD` T4.6: Settings and users
 - **Open issues / left to fix:** none.
-- **What to review:** Open http://dots.test/admin/content-pages — list of pages (delivery, returns, warranty, careers, terms, privacy) with last-updated, footer toggle, active toggle. Click any row → edit page with Basic/Body/SEO tabs and sidebar (active, footer, sort, delete). Click "New page" → set key (e.g. `faq`) → fill titles → slugs → save.
+- **What to review:**
+  - `http://dots.test/admin/settings` — 5 tabs (Contact, Commerce, WhatsApp templates, Footer, SEO). Fill any field, press "Save changes" → toast "Settings saved". Switch tabs, verify fields.
+  - `http://dots.test/admin/users` — list with current admin. Click "Add admin" → drawer opens (invite checkbox toggles temp password field). Row actions: Deactivate / Reset password / Remove (not for yourself).
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 
@@ -49,7 +51,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 - [x] T4.3 Projects
 - [x] T4.4 Blog
 - [x] T4.5 Content pages
-- [ ] T4.6 Settings and users
+- [x] T4.6 Settings and users
 - [ ] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
 - [ ] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
 
