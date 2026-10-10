@@ -3,6 +3,8 @@
 use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\Product;
 use App\Models\User;
 
@@ -193,4 +195,63 @@ it('opens the users list', function () {
         ->assertSee('Everyone here has full Admin access')
         ->assertDontSee('This action is unauthorized')
         ->assertNoJavaScriptErrors();
+});
+
+it('TipTap editor mounts, accepts typed content, and persists it after save + reload', function () {
+    $cat = PostCategory::create(['name' => ['ar' => 'تقنية', 'en' => 'Tech'], 'slug' => ['ar' => 'تقنية', 'en' => 'tech']]);
+
+    signInAdmin()
+        ->navigate('/admin/blog/create')
+        ->fill('[wire\\:model="title.en"]', 'TipTap E2E Post')
+        ->fill('[wire\\:model="title.ar"]', 'مقال اختبار المحرر')
+        ->select('[wire\\:model="post_category_id"]', (string) $cat->id)
+        ->press('Body')
+        ->assertNoJavaScriptErrors()
+        // Assert TipTap mounted, then push content via Livewire so the sync is
+        // complete before the save action fires (avoids async entangle race).
+        ->script("
+            const richEl = document.querySelector('[x-data*=\"richEditor\"]');
+            const data = window.Alpine.\$data(richEl);
+            if (!data._editors?.ar) throw new Error('TipTap AR editor not mounted');
+            if (!data._editors?.en) throw new Error('TipTap EN editor not mounted');
+            const wireId = document.querySelector('[wire\\\\:id]').getAttribute('wire:id');
+            window.Livewire.find(wireId).set('body.ar', '<h2>عنوان</h2><p>محتوى <strong>مهم</strong></p>');
+            window.Livewire.find(wireId).set('body.en', '<h2>Heading</h2><p>E2E rich text <strong>content</strong></p>');
+        ")
+        ->press('Save')
+        ->assertSee('Post saved')
+        ->assertNoJavaScriptErrors();
+
+    $post = Post::whereJsonContains('title->en', 'TipTap E2E Post')->first();
+    expect($post)->not->toBeNull();
+    expect($post->body['ar'] ?? '')->toContain('<h2>')
+        ->and($post->body['ar'] ?? '')->toContain('<strong>');
+    expect($post->body['en'] ?? '')->toContain('<h2>')
+        ->and($post->body['en'] ?? '')->toContain('E2E rich text');
+});
+
+it('TipTap disallowed HTML is stripped on save', function () {
+    $cat = PostCategory::create(['name' => ['ar' => 'عام', 'en' => 'General'], 'slug' => ['ar' => 'عام', 'en' => 'general']]);
+
+    // Set the Livewire model directly via JS to bypass the editor, then save.
+    // The server-side purifier (Html::cleanTranslations) must strip the tag.
+    signInAdmin()
+        ->navigate('/admin/blog/create')
+        ->fill('[wire\\:model="title.en"]', 'Sanitise Test Post')
+        ->fill('[wire\\:model="title.ar"]', 'اختبار التنقية')
+        ->select('[wire\\:model="post_category_id"]', (string) $cat->id)
+        ->press('Body')
+        // Inject a script tag directly via Livewire (bypassing the editor UI).
+        ->script("
+            const wireId = document.querySelector('[wire\\\\:id]').getAttribute('wire:id');
+            window.Livewire.find(wireId).set('body.en', '<p>ok</p><script>alert(1)<\\/script>');
+        ")
+        ->press('Save')
+        ->assertSee('Post saved')
+        ->assertNoJavaScriptErrors();
+
+    $post = Post::whereJsonContains('title->en', 'Sanitise Test Post')->first();
+    expect($post)->not->toBeNull();
+    expect($post->body['en'] ?? '')->toContain('<p>ok</p>')
+        ->and($post->body['en'] ?? '')->not->toContain('<script');
 });

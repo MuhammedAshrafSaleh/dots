@@ -10,6 +10,7 @@ use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Support\Html;
 use App\Support\Slug;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
@@ -362,7 +363,7 @@ class Edit extends Component
         $product->fill([
             'sku' => $this->sku,
             'name' => $this->name,
-            'overview' => $this->overview,
+            'overview' => Html::cleanTranslations($this->overview),
             'variants_summary' => $this->variants_summary,
             'warranty' => $this->warranty,
             'slug' => $this->slug,

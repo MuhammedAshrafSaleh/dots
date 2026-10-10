@@ -74,6 +74,11 @@
                                     :label="$fLabel"
                                     model="form.{{ $sectionKey }}.content.{{ $fieldName }}" />
 
+                            @elseif ($fType === 'long_text')
+                                <x-admin.rich
+                                    :label="$fLabel"
+                                    model="form.{{ $sectionKey }}.content.{{ $fieldName }}" />
+
                             @elseif ($fType === 'link')
                                 <x-input
                                     dir="ltr"
@@ -129,6 +134,10 @@
                                                     @endphp
                                                     @if ($st === 'text')
                                                         <x-admin.field-bilingual
+                                                            :label="$sfLabel"
+                                                            model="form.{{ $sectionKey }}.content.{{ $fieldName }}.{{ $li }}.{{ $sf }}" />
+                                                    @elseif ($st === 'long_text')
+                                                        <x-admin.rich
                                                             :label="$sfLabel"
                                                             model="form.{{ $sectionKey }}.content.{{ $fieldName }}.{{ $li }}.{{ $sf }}" />
                                                     @elseif ($st === 'link')

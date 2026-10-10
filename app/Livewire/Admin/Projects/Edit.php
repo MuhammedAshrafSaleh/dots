@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Projects;
 
 use App\Livewire\Admin\Concerns\InteractsWithAdminForms;
 use App\Models\Product;
+use App\Support\Html;
 use App\Models\Project;
 use App\Models\Service;
 use Illuminate\Contracts\View\View;
@@ -237,7 +238,7 @@ class Edit extends Component
             'progress' => $this->progress,
             'phase_label' => $this->phase_label,
             'scope_summary' => $this->scope_summary,
-            'about' => $this->about,
+            'about' => Html::cleanTranslations($this->about),
             'challenge' => $this->challenge,
             'solution' => $this->solution,
             'result' => $this->result,

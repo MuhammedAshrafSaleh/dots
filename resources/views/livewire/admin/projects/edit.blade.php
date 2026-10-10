@@ -94,7 +94,7 @@
             <div @class(['a-hidden' => $activeTab !== 'content'])>
                 <x-admin.card :title="__('admin.projects.tab_content')">
                     <div style="display: grid; gap: 18px;">
-                        <x-admin.field-bilingual :label="__('admin.projects.about')" model="about" multiline :rows="6" />
+                        <x-admin.rich :label="__('admin.projects.about')" model="about" :min-h="280" />
                         <x-admin.field-bilingual :label="__('admin.projects.challenge')" model="challenge" multiline :rows="4" />
                         <x-admin.field-bilingual :label="__('admin.projects.solution')" model="solution" multiline :rows="4" />
                         <x-admin.field-bilingual :label="__('admin.projects.result')" model="result" multiline :rows="4" />

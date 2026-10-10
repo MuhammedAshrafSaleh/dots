@@ -37,7 +37,7 @@
                         <x-admin.field-bilingual :label="__('admin.product_edit.product_name')" model="name" />
                         @error('name.ar')<span class="d-help d-help--error">{{ $message }}</span>@enderror
                         @error('name.en')<span class="d-help d-help--error">{{ $message }}</span>@enderror
-                        <x-admin.field-bilingual :label="__('admin.product_edit.overview')" model="overview" multiline :rows="5" />
+                        <x-admin.rich :label="__('admin.product_edit.overview')" model="overview" />
                         <x-admin.field-bilingual :label="__('admin.product_edit.variants_summary')" model="variants_summary" />
                         <x-admin.field-bilingual :label="__('admin.product_edit.warranty')" model="warranty" />
                         <div style="max-width: 50%;">

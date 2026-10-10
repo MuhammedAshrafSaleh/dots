@@ -2,12 +2,14 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.6 done. Next: T4.7 TipTap rich text editor.
-- **Last commit:** `TBD` T4.6: Settings and users
-- **Open issues / left to fix:** none.
+- **Current task:** T4.7 implementation done — awaiting browser verification + commit.
+- **Last commit:** `719608a` T4.6: Settings and users (T4.7 not yet committed — pending browser sign-off)
+- **Open issues / left to fix:** Browser E2E tests were running but multiple concurrent test runs competed; need a fresh `php artisan test tests/Browser/AdminFlowTest.php` after concurrent runs settle.
 - **What to review:**
-  - `http://dots.test/admin/settings` — 5 tabs (Contact, Commerce, WhatsApp templates, Footer, SEO). Fill any field, press "Save changes" → toast "Settings saved". Switch tabs, verify fields.
-  - `http://dots.test/admin/users` — list with current admin. Click "Add admin" → drawer opens (invite checkbox toggles temp password field). Row actions: Deactivate / Reset password / Remove (not for yourself).
+  - `http://dots.test/admin/blog/create` → click **Body** tab → TipTap toolbar should appear; type a heading + bold text, save, reload → formatting persists.
+  - `http://dots.test/admin/projects/create` → **Content** tab → **About** field has TipTap.
+  - `http://dots.test/admin/products/create` → **Basic info** tab → **Overview** field has TipTap.
+  - `http://dots.test/admin/content-pages/create` → **Body** tab → TipTap.
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 

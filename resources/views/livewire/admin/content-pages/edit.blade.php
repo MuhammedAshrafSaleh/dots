@@ -60,7 +60,7 @@
             {{-- Body --}}
             <div @class(['a-hidden' => $activeTab !== 'body'])>
                 <x-admin.card :title="__('admin.content_pages.tab_body')">
-                    <x-admin.field-bilingual :label="__('admin.content_pages.body')" model="body" multiline :rows="12" />
+                    <x-admin.rich :label="__('admin.content_pages.body')" model="body" :min-h="360" />
                 </x-admin.card>
             </div>
 
