@@ -134,7 +134,7 @@
             {{-- Organise --}}
             <x-admin.card :title="__('admin.blog.organise')">
                 <div style="display: grid; gap: 16px;">
-                    @php $catOptions = $categories->mapWithKeys(fn ($c) => [(string) $c->id => $c->getTranslation('name', app()->getLocale(), false)])->all(); @endphp
+                    @php $catOptions = $categories->map(fn ($c) => ['value' => (string) $c->id, 'label' => $c->getTranslation('name', app()->getLocale(), false)])->all(); @endphp
                     <x-select :label="__('admin.blog.category')" wire:model="post_category_id" :options="$catOptions" :selected="(string) $post_category_id" placeholder="{{ __('admin.blog.category_placeholder') }}" :error="$errors->first('post_category_id')" />
 
                     <div class="d-field">

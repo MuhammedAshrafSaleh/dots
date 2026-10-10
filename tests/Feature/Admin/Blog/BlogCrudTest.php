@@ -119,6 +119,17 @@ it('creates a post with required fields', function () {
         ->and($post->status)->toBe(PostStatus::Draft);
 });
 
+it('renders category options with the real id as the option value', function () {
+    $cat = blogTestCat();
+
+    // Regression: PHP coerces numeric-string array keys back to int, so building
+    // options as [id => label] made x-select use the label as the value, which then
+    // failed `exists:post_categories,id` on save. Options must carry the real id.
+    Livewire::test(Edit::class)
+        ->assertSeeHtml('<option value="'.$cat->id.'"')
+        ->assertDontSeeHtml('<option value="'.$cat->getTranslation('name', 'ar', false).'"');
+});
+
 it('requires both title locales', function () {
     $cat = blogTestCat();
 
