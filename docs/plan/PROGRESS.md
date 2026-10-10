@@ -2,14 +2,13 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.7 implementation done — awaiting browser verification + commit.
-- **Last commit:** `719608a` T4.6: Settings and users (T4.7 not yet committed — pending browser sign-off)
-- **Open issues / left to fix:** Browser E2E tests were running but multiple concurrent test runs competed; need a fresh `php artisan test tests/Browser/AdminFlowTest.php` after concurrent runs settle.
+- **Current task:** T4.8 implementation done — awaiting browser verification + commit.
+- **Last commit:** `2b7dc90` T4.7: TipTap rich text editor (T4.8 not yet committed — pending browser sign-off)
+- **Open issues / left to fix:** Browser test needed — upload a file to each named slot and an extra; save, reload, check files persist; download list on product page uses slot/title.
 - **What to review:**
-  - `http://dots.test/admin/blog/create` → click **Body** tab → TipTap toolbar should appear; type a heading + bold text, save, reload → formatting persists.
-  - `http://dots.test/admin/projects/create` → **Content** tab → **About** field has TipTap.
-  - `http://dots.test/admin/products/create` → **Basic info** tab → **Overview** field has TipTap.
-  - `http://dots.test/admin/content-pages/create` → **Body** tab → TipTap.
+  - `http://dots.test/admin/products/create` → **Files** tab → 4 named slots (Datasheet, IES, LDT, Installation guide) each with Upload button; "Add another file" adds a bilingual title + upload row.
+  - Edit an existing product → **Files** tab → verify Replace / Remove on a slot that has a file; verify extra file Remove button.
+  - Save with a slot upload → reload → file name appears in the slot row.
 
 **Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
 
@@ -54,7 +53,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 - [x] T4.4 Blog
 - [x] T4.5 Content pages
 - [x] T4.6 Settings and users
-- [ ] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
+- [x] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
 - [ ] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
 
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)

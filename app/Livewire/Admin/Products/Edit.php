@@ -110,8 +110,22 @@ class Edit extends Component
     /** @var array<int, array<string, string>> */
     public array $captions = [];
 
-    /** @var array<int, mixed> */
-    public array $fileUploads = [];
+    // Files — named slots
+    /** @var array<string, mixed> Temp uploads keyed by slot name */
+    public array $slotUploads = [];
+
+    /** @var array<int, string> Slot names the user has marked for removal */
+    public array $removedSlots = [];
+
+    // Files — extra (titled) files
+    /** @var array<string, array{ar: string, en: string, media_id: int|null}> */
+    public array $extraFiles = [];
+
+    /** @var array<string, mixed> Temp uploads for new extras, keyed by the same key */
+    public array $extraUploads = [];
+
+    /** @var array<int, int> Extra media IDs queued for deletion on save */
+    public array $removedExtraIds = [];
 
     public function mount(?Product $product = null): void
     {
@@ -151,6 +165,19 @@ class Edit extends Component
                 $this->captions[$media->id] = is_array($caption)
                     ? ['ar' => (string) ($caption['ar'] ?? ''), 'en' => (string) ($caption['en'] ?? '')]
                     : ['ar' => '', 'en' => (string) ($caption ?? '')];
+            }
+
+            foreach ($product->getMedia('files') as $media) {
+                if ($media->getCustomProperty('slot') === 'extra') {
+                    $title = $media->getCustomProperty('title');
+                    $key = (string) $media->id;
+                    $this->extraFiles[$key] = [
+                        'ar'       => is_array($title) ? (string) ($title['ar'] ?? '') : '',
+                        'en'       => is_array($title) ? (string) ($title['en'] ?? '') : '',
+                        'media_id' => $media->id,
+                        'filename' => $media->file_name,
+                    ];
+                }
             }
         } else {
             $this->variantRows = ['default' => $this->blankVariant([])];
@@ -615,32 +642,117 @@ class Edit extends Component
         }
     }
 
-    public function removeFile(int $mediaId): void
+    public function markSlotRemoved(string $slot): void
     {
-        $this->product?->media()->where('collection_name', 'files')->whereKey($mediaId)->first()?->delete();
+        if (! in_array($slot, ['datasheet', 'ies', 'ldt', 'guide'])) {
+            return;
+        }
+        if (! in_array($slot, $this->removedSlots)) {
+            $this->removedSlots[] = $slot;
+        }
+        // Clear any pending upload for this slot too.
+        unset($this->slotUploads[$slot]);
+    }
+
+    public function addExtra(): void
+    {
+        $key = (string) \Illuminate\Support\Str::uuid();
+        $this->extraFiles[$key] = ['ar' => '', 'en' => '', 'media_id' => null];
+    }
+
+    public function removeExtra(string $key): void
+    {
+        $mediaId = $this->extraFiles[$key]['media_id'] ?? null;
+        if ($mediaId !== null) {
+            $this->removedExtraIds[] = (int) $mediaId;
+        }
+        unset($this->extraFiles[$key]);
+        unset($this->extraUploads[$key]);
     }
 
     private function syncFiles(Product $product): void
     {
-        foreach ($this->fileUploads as $upload) {
+        $existing = $product->getMedia('files');
+
+        // 1. Named slot uploads — replace the old media for the same slot.
+        foreach ($this->slotUploads as $slot => $upload) {
             if ($upload instanceof TemporaryUploadedFile) {
+                $existing->filter(fn ($m) => $m->getCustomProperty('slot') === $slot)->each->delete();
                 $product->addMedia($upload->getRealPath())
                     ->usingFileName($upload->getClientOriginalName())
+                    ->withCustomProperties(['slot' => $slot])
                     ->toMediaCollection('files');
             }
         }
-        $this->fileUploads = [];
-    }
 
-    /** @return array<int, array{id: int, name: string}> */
-    public function fileItems(): array
-    {
-        if (! $this->product) {
-            return [];
+        // 2. Named slots the user cleared (without a new upload).
+        foreach ($this->removedSlots as $slot) {
+            if (! isset($this->slotUploads[$slot])) {
+                $existing->filter(fn ($m) => $m->getCustomProperty('slot') === $slot)->each->delete();
+            }
         }
 
-        return $this->product->getMedia('files')
-            ->map(fn ($media) => ['id' => (int) $media->id, 'name' => $media->file_name])->all();
+        // 3. Remove queued extras.
+        foreach ($this->removedExtraIds as $mediaId) {
+            $product->media()->where('collection_name', 'files')->whereKey($mediaId)->first()?->delete();
+        }
+
+        // 4. New extra uploads + update titles on existing extras.
+        foreach ($this->extraFiles as $key => $extra) {
+            if (is_null($extra['media_id'])) {
+                $upload = $this->extraUploads[$key] ?? null;
+                if ($upload instanceof TemporaryUploadedFile) {
+                    $product->addMedia($upload->getRealPath())
+                        ->usingFileName($upload->getClientOriginalName())
+                        ->withCustomProperties([
+                            'slot'  => 'extra',
+                            'title' => ['ar' => $extra['ar'], 'en' => $extra['en']],
+                        ])
+                        ->toMediaCollection('files');
+                }
+            } else {
+                $media = $product->media()->where('collection_name', 'files')->whereKey($extra['media_id'])->first();
+                if ($media) {
+                    $media->setCustomProperty('title', ['ar' => $extra['ar'], 'en' => $extra['en']]);
+                    $media->save();
+                }
+            }
+        }
+
+        $this->slotUploads = [];
+        $this->extraUploads = [];
+        $this->removedSlots = [];
+        $this->removedExtraIds = [];
+    }
+
+    /**
+     * @return array<string, array{label_ar: string, label_en: string, ext: string, media_id: int|null, filename: string|null}>
+     */
+    public function slotItems(): array
+    {
+        $definitions = [
+            'datasheet' => ['label_ar' => 'الداتا شيت',   'label_en' => 'Datasheet',         'ext' => 'PDF'],
+            'ies'       => ['label_ar' => 'IES',           'label_en' => 'IES',               'ext' => 'IES'],
+            'ldt'       => ['label_ar' => 'LDT',           'label_en' => 'LDT',               'ext' => 'LDT'],
+            'guide'     => ['label_ar' => 'دليل التركيب',  'label_en' => 'Installation guide', 'ext' => 'PDF'],
+        ];
+
+        $bySlot = $this->product
+            ? $this->product->getMedia('files')
+                ->filter(fn ($m) => array_key_exists($m->getCustomProperty('slot', ''), $definitions))
+                ->keyBy(fn ($m) => $m->getCustomProperty('slot'))
+            : collect();
+
+        $result = [];
+        foreach ($definitions as $slot => $def) {
+            $media = $bySlot->get($slot);
+            $result[$slot] = array_merge($def, [
+                'media_id' => $media?->id,
+                'filename' => $media?->file_name,
+            ]);
+        }
+
+        return $result;
     }
 
     /** @return array<int, array{id: int, url: string}> */
@@ -666,7 +778,7 @@ class Edit extends Component
             'brands' => Brand::orderBy('name')->get(),
             'leaves' => Category::query()->where('level', 3)->with('parent.parent')->orderBy('sort_order')->get(),
             'galleryItems' => $this->galleryItems(),
-            'fileItems' => $this->fileItems(),
+            'slotItems' => $this->slotItems(),
             'errorTabs' => $this->errorTabs(),
         ]);
     }
