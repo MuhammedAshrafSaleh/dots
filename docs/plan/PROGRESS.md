@@ -2,19 +2,21 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.4 About page — DONE. Next: `start T5.5`.
-- **Last commit:** `60f66b0` T5.4: About page
-- **Open issues / left to fix:** none from T5.4.
+- **Current task:** T5.5 Services and service detail — DONE. Next: `start T5.6`.
+- **Last commit:** see Git line below (T5.5)
+- **Open issues / left to fix:** none from T5.5.
   - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` Browser reds fixed in `0982dda`. 8/13 Browser tests pass; 5 remaining errors are a `DatabaseTruncation` + Spatie permission table drop issue — pre-existing, not caused by T5.x. Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
-  - Open `/ar/about` — hero, story (3-image mosaic), stats strip (4 numbers), mission/vision cards, 3 discipline overlay cards, why-dots 3×2 grid, partner brand logos, dark CTA band.
-  - Open `/en/about` — same in English, LTR.
-  - Open at 390px in DevTools — all multi-column grids collapse to 1-col.
-  - All content comes from DB. Seed first if needed: `php artisan migrate:fresh --seed`.
+  - Open `/ar/services` — 4 service cards (number, title, excerpt, image), 4-step process, FAQ accordion.
+  - Open `/en/services` — same in English, LTR.
+  - Open `/en/services/lighting-design` (or `/ar/services/تصميم-الاضاءة`) — hero header, what's included list, gallery, process steps, consultation form.
+  - Fill in the consultation form (name, mobile `01012345678`, project type, area) and submit — success card should appear.
+  - Open at 390px in DevTools — 1-col grid, 1-col service header, 2-col process.
+  - Seed first if needed: `php artisan migrate:fresh --seed`.
 
-**Git:** branch `phase-5` · last local commit `60f66b0` (T5.4) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit TBD (T5.5) · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done
 
 ---
 
@@ -62,8 +64,8 @@ Current phase: **5 — Public site: layout and content pages** — IN PROGRESS �
 - [x] T5.1 Global layout
 - [x] T5.2 WhatsApp click logging
 - [x] T5.3 Home
-- [ ] T5.4 About
-- [ ] T5.5 Services and service detail
+- [x] T5.4 About
+- [x] T5.5 Services and service detail
 - [ ] T5.6 Projects
 - [ ] T5.7 Blog and article
 - [ ] T5.8 Brands and brand detail

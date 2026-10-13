@@ -113,4 +113,32 @@ return [
     'about_vision' => 'Vision',
     'explore' => 'Explore',
     'our_services' => 'Our services',
+
+    // Services page
+    'service_label' => 'Service',
+    'whats_included' => "What's included",
+    'process_eyebrow' => 'Process',
+
+    // Consultation form
+    'book_consultation' => 'Book a consultation',
+    'send_request' => 'Send request',
+    'full_name' => 'Full name',
+    'mobile_label' => 'Mobile',
+    'project_type_label' => 'Project type',
+    'area_label' => 'Area',
+    'select_placeholder' => '— select —',
+    'notes_label_service' => 'Tell us about the space',
+    'notes_placeholder_service' => 'Stage of construction, ceiling heights, style…',
+    'request_received' => 'Request received',
+    'request_received_lead' => 'An engineer will call you within one working day.',
+    'or_whatsapp' => 'Or WhatsApp',
+    'mobile_invalid' => 'Enter a valid Egyptian mobile number (01XXXXXXXXX).',
+    'too_many_attempts' => 'Too many submissions. Please try again in a few minutes.',
+
+    // Consultation project types
+    'project_type_apartment' => 'Apartment',
+    'project_type_villa' => 'Villa',
+    'project_type_office' => 'Office',
+    'project_type_retail' => 'Retail / F&B',
+    'project_type_hotel' => 'Hotel',
 ];

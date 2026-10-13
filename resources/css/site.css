@@ -92,3 +92,15 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-about-why > * { border-inline-start: 0 !important; padding-inline-start: 0 !important; }
 .d-compact .d-about-partners { grid-template-columns: 1fr 1fr !important; }
 .d-compact .d-about-cta     { padding-block: 56px !important; }
+
+/* Services page — compact overrides. */
+.d-compact .d-services-grid  { grid-template-columns: 1fr !important; }
+.d-compact .d-services-faq   { grid-template-columns: 1fr !important; }
+.d-compact .d-process        { grid-template-columns: 1fr 1fr !important; }
+.d-compact .d-process__step  { padding-inline-end: 0 !important; }
+.d-compact .d-process__line  { display: none; }
+
+/* Service detail page — compact overrides. */
+.d-compact .d-svc-head  { grid-template-columns: 1fr !important; padding-top: 20px !important; padding-bottom: 12px !important; gap: 24px !important; }
+.d-compact .d-svc-inc   { grid-template-columns: 1fr !important; }
+.d-compact .d-svc-book  { grid-template-columns: 1fr !important; }

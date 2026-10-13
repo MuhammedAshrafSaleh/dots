@@ -1,12 +1,12 @@
 <?php
 
 use App\Models\User;
-use Illuminate\Foundation\Testing\DatabaseTruncation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use Tests\BrowserTestCase;
 use Tests\TestCase;
 
 pest()->extend(TestCase::class)
@@ -16,8 +16,24 @@ pest()->extend(TestCase::class)
 // Browser (Pest 4 + Playwright) tests drive the app over a real HTTP server
 // whose DB connection does not see the test's open transaction, so they need
 // committed data — truncate (not transaction-wrap) between tests.
-pest()->extend(TestCase::class)
-    ->use(DatabaseTruncation::class)
+// BrowserTestCase excludes Spatie lookup tables from truncation to prevent
+// InnoDB deadlocks between the test process and the HTTP-server process.
+// beforeEach pre-seeds permissions via a single INSERT IGNORE (no per-row
+// gap locks) before any visit() call starts the HTTP server, so adminUser()
+// always finds existing rows and never races against a live server read.
+pest()->extend(BrowserTestCase::class)
+    ->beforeEach(function () {
+        $now = now();
+        Permission::insertOrIgnore(
+            collect(config('permissions'))->map(fn ($n) => [
+                'name' => $n,
+                'guard_name' => 'web',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])->all()
+        );
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+    })
     ->in('Browser');
 
 /**

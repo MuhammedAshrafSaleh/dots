@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ServiceDetailController;
+use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
@@ -27,7 +29,8 @@ Route::prefix('{locale}')
 
         Route::get('/products', $comingSoon)->name('products');
         Route::get('/brands', $comingSoon)->name('brands');
-        Route::get('/services', $comingSoon)->name('services');
+        Route::get('/services', ServicesController::class)->name('services');
+        Route::get('/services/{slug}', ServiceDetailController::class)->name('service.show');
         Route::get('/projects', $comingSoon)->name('projects.current');
         Route::get('/projects/previous', $comingSoon)->name('projects.previous');
         Route::get('/blog', $comingSoon)->name('blog');

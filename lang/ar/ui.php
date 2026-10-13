@@ -113,4 +113,32 @@ return [
     'about_vision' => 'رؤيتنا',
     'explore' => 'اكتشف',
     'our_services' => 'خدماتنا',
+
+    // صفحة الخدمات
+    'service_label' => 'خدمة',
+    'whats_included' => 'ماذا تشمل الخدمة',
+    'process_eyebrow' => 'المراحل',
+
+    // نموذج الاستشارة
+    'book_consultation' => 'احجز استشارة',
+    'send_request' => 'إرسال الطلب',
+    'full_name' => 'الاسم بالكامل',
+    'mobile_label' => 'الموبايل',
+    'project_type_label' => 'نوع المشروع',
+    'area_label' => 'المساحة',
+    'select_placeholder' => '— اختر —',
+    'notes_label_service' => 'أخبرنا عن المساحة',
+    'notes_placeholder_service' => 'مرحلة التنفيذ، ارتفاع الأسقف، الطراز…',
+    'request_received' => 'تم استلام طلبك',
+    'request_received_lead' => 'سيتصل بك مهندس خلال يوم عمل.',
+    'or_whatsapp' => 'أو واتساب',
+    'mobile_invalid' => 'أدخل رقم موبايل مصري صحيح (01XXXXXXXXX).',
+    'too_many_attempts' => 'محاولات كثيرة. يرجى المحاولة مجدداً بعد قليل.',
+
+    // أنواع مشروع الاستشارة
+    'project_type_apartment' => 'شقة',
+    'project_type_villa' => 'فيلا',
+    'project_type_office' => 'مكتب',
+    'project_type_retail' => 'محل / مطعم',
+    'project_type_hotel' => 'فندق',
 ];
