@@ -4,6 +4,7 @@ namespace App\Livewire\Admin\Services;
 
 use App\Livewire\Admin\Concerns\InteractsWithAdminForms;
 use App\Models\Service;
+use App\Support\Html;
 use Illuminate\Contracts\View\View;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -240,7 +241,7 @@ class Edit extends Component
             'title' => $this->title,
             'slug' => $this->slug,
             'excerpt' => $this->excerpt,
-            'description' => $this->description,
+            'description' => Html::cleanTranslations($this->description),
             'included_title' => $this->included_title,
             'duration_text' => $this->duration_text,
             'meta_title' => $this->meta_title,

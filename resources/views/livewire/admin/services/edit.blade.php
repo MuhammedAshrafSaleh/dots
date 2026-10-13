@@ -46,7 +46,7 @@
                         <x-input :label="__('admin.services.number')" wire:model="number.en" dir="ltr" :error="$errors->first('number.en')" />
 
                         <x-admin.field-bilingual :label="__('admin.services.excerpt')" model="excerpt" multiline :rows="3" />
-                        <x-admin.field-bilingual :label="__('admin.services.description')" model="description" multiline :rows="4" />
+                        <x-admin.rich :label="__('admin.services.description')" model="description" :min-h="200" />
                         <x-admin.field-bilingual :label="__('admin.services.included_title')" model="included_title" />
                         <x-admin.field-bilingual :label="__('admin.services.duration_text')" model="duration_text" />
                     </div>
