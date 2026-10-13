@@ -14,7 +14,7 @@
   - Open at 390px in DevTools — 1-col grid, 1-col service header, 2-col process.
   - Seed first if needed: `php artisan migrate:fresh --seed`.
 
-**Git:** branch `phase-5` · last local commit TBD (T5.5) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `2fb2501` (T5.5) · last tag `phase-4-done` · push state: phase-5 not pushed
 
 Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done
 
