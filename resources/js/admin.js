@@ -120,9 +120,10 @@ document.addEventListener('alpine:init', () => {
                 }
             });
 
-            this.$cleanup(() => {
-                Object.values(this._editors).forEach((e) => e.destroy());
-            });
+        },
+
+        destroy() {
+            Object.values(this._editors).forEach((e) => e.destroy());
         },
 
         _mkEditor(locale, element, minH) {
