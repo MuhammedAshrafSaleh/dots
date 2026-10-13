@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AboutController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\WhatsAppController;
 use App\Support\Locale;
@@ -30,7 +31,7 @@ Route::prefix('{locale}')
         Route::get('/projects', $comingSoon)->name('projects.current');
         Route::get('/projects/previous', $comingSoon)->name('projects.previous');
         Route::get('/blog', $comingSoon)->name('blog');
-        Route::get('/about', $comingSoon)->name('about');
+        Route::get('/about', AboutController::class)->name('about');
         Route::get('/track-order', $comingSoon)->name('track');
         Route::get('/search', $comingSoon)->name('search');
         Route::get('/c/{category}', $comingSoon)->name('category');

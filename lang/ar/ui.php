@@ -107,4 +107,10 @@ return [
     'price_on_request' => 'السعر عند الطلب',
     'all_categories' => 'كل الأقسام',
     'egp' => 'ج.م',
+
+    // من نحن
+    'about_mission' => 'مهمتنا',
+    'about_vision' => 'رؤيتنا',
+    'explore' => 'اكتشف',
+    'our_services' => 'خدماتنا',
 ];

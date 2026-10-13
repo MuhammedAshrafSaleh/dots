@@ -83,3 +83,12 @@ html:not(.d-preload) .d-pre { display: none; }
 
 /* Card overlay link: prevent any browser from surfacing the href as visible text. */
 .d-card a.d-card__link { font-size: 0; line-height: 0; }
+
+/* About page — compact (mobile) overrides for multi-column grids. */
+.d-compact .d-about-story   { grid-template-columns: 1fr !important; }
+.d-compact .d-about-mv      { grid-template-columns: 1fr !important; }
+.d-compact .d-about-discs   { grid-template-columns: 1fr !important; }
+.d-compact .d-about-why     { grid-template-columns: 1fr !important; }
+.d-compact .d-about-why > * { border-inline-start: 0 !important; padding-inline-start: 0 !important; }
+.d-compact .d-about-partners { grid-template-columns: 1fr 1fr !important; }
+.d-compact .d-about-cta     { padding-block: 56px !important; }

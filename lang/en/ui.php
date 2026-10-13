@@ -107,4 +107,10 @@ return [
     'price_on_request' => 'Price on request',
     'all_categories' => 'All categories',
     'egp' => 'EGP',
+
+    // About
+    'about_mission' => 'Mission',
+    'about_vision' => 'Vision',
+    'explore' => 'Explore',
+    'our_services' => 'Our services',
 ];
