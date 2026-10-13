@@ -7,6 +7,13 @@
 /* Alpine: hide elements until Alpine initialises (x-cloak). */
 [x-cloak] { display: none !important; }
 
+/* Breadcrumbs on dark/image backgrounds. */
+.d-crumbs--dark,
+.d-crumbs--dark a                { color: rgba(255,255,255,.75); }
+.d-crumbs--dark a:hover          { color: var(--white); text-decoration-color: var(--accent); }
+.d-crumbs--dark [aria-current]   { color: var(--white); }
+.d-crumbs--dark .d-icon          { color: rgba(255,255,255,.45); }
+
 /* Skip-to-content link (accessibility; not part of the design export). */
 .d-skip { position: absolute; inset-inline-start: 8px; top: -48px; z-index: var(--z-toast, 9999); padding: 8px 14px; border-radius: var(--radius-md); background: var(--ink-900); color: var(--white); font: 700 14px/1 var(--font-body); transition: top var(--dur-fast); }
 .d-skip:focus { top: 8px; }

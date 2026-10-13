@@ -1,10 +1,11 @@
 @props([
     'items' => [],
+    'dark'  => false,
 ])
 {{-- Mirror of design/website/src/components/wayfinding/Breadcrumbs.jsx.
      $items: list of ['label','url'?]. Last item is the current page. Chevrons mirror in RTL. --}}
 <nav aria-label="{{ __('ui.breadcrumb') }}">
-    <ol class="d-crumbs">
+    <ol class="{{ $dark ? 'd-crumbs d-crumbs--dark' : 'd-crumbs' }}">
         @foreach ($items as $i => $it)
             <li style="display:inline-flex;align-items:center;gap:6px;">
                 @if ($i > 0)<x-icon name="chevron-right" size="14" />@endif
