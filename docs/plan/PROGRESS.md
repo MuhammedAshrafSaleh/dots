@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
 - **Current task:** T5.3 Home page — DONE (design fix). Next: `start T5.4`.
-- **Last commit:** T5.3 fix (to be committed)
+- **Last commit:** `3c0bdc3` T5.3 fix: card image sizing and overlay link
 - **Open issues / left to fix:** none from T5.3.
   - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for Browser reds — commit them when convenient or at phase end.
 - **What to review on dots.test:**
