@@ -15,10 +15,13 @@ use Spatie\Permission\Models\Role;
 class Index extends Component
 {
     public bool $showAdd = false;
+
     public bool $invite = true;
 
     public string $name = '';
+
     public string $addEmail = '';
+
     public string $tempPassword = '';
 
     public string $search = '';

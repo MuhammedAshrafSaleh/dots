@@ -5,6 +5,7 @@ use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 
 beforeEach(fn () => loginAdmin());
@@ -161,7 +162,7 @@ it('loads named-slot file data from media on mount', function () {
     ]);
     $product->variants()->create(['sku' => 'TST-SLOT-V', 'price' => 10, 'stock_qty' => 1, 'is_default' => true]);
 
-    $fake = \Illuminate\Http\UploadedFile::fake()->create('datasheet.pdf', 10, 'application/pdf');
+    $fake = UploadedFile::fake()->create('datasheet.pdf', 10, 'application/pdf');
     $product->addMedia($fake->getRealPath())
         ->usingFileName('datasheet.pdf')
         ->withCustomProperties(['slot' => 'datasheet'])
@@ -183,7 +184,7 @@ it('loads extra files into extraFiles on mount', function () {
     ]);
     $product->variants()->create(['sku' => 'TST-EXTRA-V', 'price' => 10, 'stock_qty' => 1, 'is_default' => true]);
 
-    $fake = \Illuminate\Http\UploadedFile::fake()->create('dimmer-list.pdf', 5, 'application/pdf');
+    $fake = UploadedFile::fake()->create('dimmer-list.pdf', 5, 'application/pdf');
     $product->addMedia($fake->getRealPath())
         ->usingFileName('dimmer-list.pdf')
         ->withCustomProperties(['slot' => 'extra', 'title' => ['ar' => 'قائمة الديمرات', 'en' => 'Dimmer list']])

@@ -55,15 +55,15 @@ it('creates a service with items and FAQs', function () {
         ->tap(function ($component) {
             $key = array_key_first($component->get('items'));
             $component->set("items.$key.text.en", 'Site assessment')
-                      ->set("items.$key.text.ar", 'تقييم الموقع');
+                ->set("items.$key.text.ar", 'تقييم الموقع');
         })
         ->call('addFaq')
         ->tap(function ($component) {
             $key = array_key_first($component->get('faqs'));
             $component->set("faqs.$key.question.en", 'How long does it take?')
-                      ->set("faqs.$key.question.ar", 'كم يستغرق؟')
-                      ->set("faqs.$key.answer.en", 'Depends on scope.')
-                      ->set("faqs.$key.answer.ar", 'يعتمد على النطاق.');
+                ->set("faqs.$key.question.ar", 'كم يستغرق؟')
+                ->set("faqs.$key.answer.en", 'Depends on scope.')
+                ->set("faqs.$key.answer.ar", 'يعتمد على النطاق.');
         })
         ->call('save')
         ->assertHasNoErrors();

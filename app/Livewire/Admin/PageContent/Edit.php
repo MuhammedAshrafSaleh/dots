@@ -5,6 +5,7 @@ namespace App\Livewire\Admin\PageContent;
 use App\Livewire\Admin\Concerns\InteractsWithAdminForms;
 use App\Models\PageSection;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Collection;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -52,16 +53,16 @@ class Edit extends Component
     {
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
-        $rows   = PageSection::where('page', $this->page)->get()->keyBy('key');
+        $rows = PageSection::where('page', $this->page)->get()->keyBy('key');
 
         foreach ($schema as $sectionKey => $fields) {
             /** @var array<string, mixed> $fields */
-            $row     = $rows->get($sectionKey);
+            $row = $rows->get($sectionKey);
             $existing = is_array($row?->content) ? $row->content : [];
 
             $this->form[$sectionKey] = [
                 'is_active' => $row ? (bool) $row->is_active : true,
-                'content'   => $this->initContent($fields, $existing),
+                'content' => $this->initContent($fields, $existing),
             ];
         }
 
@@ -72,24 +73,24 @@ class Edit extends Component
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
                 if ($type === 'media') {
-                    $this->uploads["{$sectionKey}__{$fieldName}"]    = null;
+                    $this->uploads["{$sectionKey}__{$fieldName}"] = null;
                     $this->removeMedia["{$sectionKey}__{$fieldName}"] = false;
                 } elseif ($type === 'media_many') {
                     $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
                     for ($i = 0; $i < $count; $i++) {
                         $slot = "{$sectionKey}__{$fieldName}_{$i}";
-                        $this->uploads[$slot]    = null;
+                        $this->uploads[$slot] = null;
                         $this->removeMedia[$slot] = false;
                     }
                 } elseif ($type === 'list') {
-                    $listCount  = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                    $listCount = is_array($spec) ? ($spec['count'] ?? 0) : 0;
                     $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
                     /** @var array<string, mixed> $listFields */
                     foreach ($listFields as $sf => $st) {
                         if ($st === 'media') {
                             for ($i = 0; $i < $listCount; $i++) {
                                 $slot = "{$sectionKey}__item_{$sf}_{$i}";
-                                $this->uploads[$slot]    = null;
+                                $this->uploads[$slot] = null;
                                 $this->removeMedia[$slot] = false;
                             }
                         }
@@ -123,13 +124,13 @@ class Edit extends Component
                     'en' => is_array($val) ? ($val['en'] ?? '') : '',
                 ];
             } elseif ($type === 'list') {
-                $count      = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                $count = is_array($spec) ? ($spec['count'] ?? 0) : 0;
                 $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
-                $rawItems   = is_array($val) ? $val : [];
-                $items      = [];
+                $rawItems = is_array($val) ? $val : [];
+                $items = [];
 
                 for ($i = 0; $i < $count; $i++) {
-                    $raw  = is_array($rawItems[$i] ?? null) ? $rawItems[$i] : [];
+                    $raw = is_array($rawItems[$i] ?? null) ? $rawItems[$i] : [];
                     $item = [];
 
                     /** @var array<string, mixed> $listFields */
@@ -160,7 +161,7 @@ class Edit extends Component
     {
         if (array_key_exists($slot, $this->removeMedia)) {
             $this->removeMedia[$slot] = true;
-            $this->uploads[$slot]     = null;
+            $this->uploads[$slot] = null;
         }
     }
 
@@ -172,15 +173,15 @@ class Edit extends Component
 
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
-        $rows   = PageSection::where('page', $this->page)->get()->keyBy('key');
+        $rows = PageSection::where('page', $this->page)->get()->keyBy('key');
 
         foreach ($schema as $sectionKey => $fields) {
             /** @var array<string, mixed> $fields */
-            $row            = $rows->get($sectionKey) ?? new PageSection;
-            $row->page      = $this->page;
-            $row->key       = $sectionKey;
+            $row = $rows->get($sectionKey) ?? new PageSection;
+            $row->page = $this->page;
+            $row->key = $sectionKey;
             $row->is_active = (bool) ($this->form[$sectionKey]['is_active'] ?? true);
-            $row->content   = $this->form[$sectionKey]['content'] ?? [];
+            $row->content = $this->form[$sectionKey]['content'] ?? [];
             $row->save();
 
             $this->syncSectionMedia($row, $sectionKey, $fields);
@@ -194,7 +195,7 @@ class Edit extends Component
     /** @return array<string, mixed> */
     private function buildRules(): array
     {
-        $rules  = [];
+        $rules = [];
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
 
@@ -213,7 +214,7 @@ class Edit extends Component
                     $rules["form.{$sectionKey}.content.{$fieldName}.ar"] = ['nullable', 'string', 'max:2000'];
                     $rules["form.{$sectionKey}.content.{$fieldName}.en"] = ['nullable', 'string', 'max:2000'];
                 } elseif ($type === 'list') {
-                    $count      = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                    $count = is_array($spec) ? ($spec['count'] ?? 0) : 0;
                     $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
 
                     for ($i = 0; $i < $count; $i++) {
@@ -252,13 +253,13 @@ class Edit extends Component
             if ($type === 'media') {
                 $this->syncOneMediaSlot($row, "{$sectionKey}__{$fieldName}", $fieldName);
             } elseif ($type === 'media_many') {
-                $count      = is_array($spec) ? ($spec['count'] ?? 1) : 1;
+                $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
                 $mediaItems = $row->getMedia('section')
                     ->filter(fn ($m) => $m->getCustomProperty('field') === $fieldName)
                     ->values();
 
                 for ($i = 0; $i < $count; $i++) {
-                    $slot   = "{$sectionKey}__{$fieldName}_{$i}";
+                    $slot = "{$sectionKey}__{$fieldName}_{$i}";
                     $upload = $this->uploads[$slot] ?? null;
                     $remove = $this->removeMedia[$slot] ?? false;
 
@@ -273,7 +274,7 @@ class Edit extends Component
                     }
                 }
             } elseif ($type === 'list') {
-                $listCount  = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                $listCount = is_array($spec) ? ($spec['count'] ?? 0) : 0;
                 $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
 
                 /** @var array<string, mixed> $listFields */
@@ -313,7 +314,7 @@ class Edit extends Component
     private function resetUploadsAndRemoves(): void
     {
         foreach (array_keys($this->uploads) as $slot) {
-            $this->uploads[$slot]     = null;
+            $this->uploads[$slot] = null;
             $this->removeMedia[$slot] = false;
         }
     }
@@ -322,18 +323,18 @@ class Edit extends Component
     {
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
-        $rows   = PageSection::where('page', $this->page)->with('media')->get()->keyBy('key');
+        $rows = PageSection::where('page', $this->page)->with('media')->get()->keyBy('key');
 
         return view('livewire.admin.page-content.edit', [
             'pageSchema' => $schema,
-            'pages'      => $this->pages(),
-            'mediaUrls'  => $this->computeMediaUrls($schema, $rows),
+            'pages' => $this->pages(),
+            'mediaUrls' => $this->computeMediaUrls($schema, $rows),
         ]);
     }
 
     /**
      * @param  array<string, mixed>  $schema
-     * @param  \Illuminate\Support\Collection<string, PageSection>  $rows
+     * @param  Collection<string, PageSection>  $rows
      * @return array<string, string|null>
      */
     private function computeMediaUrls(array $schema, $rows): array
@@ -348,20 +349,24 @@ class Edit extends Component
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
                 if ($type === 'media') {
-                    $slot        = "{$sectionKey}__{$fieldName}";
+                    $slot = "{$sectionKey}__{$fieldName}";
                     $urls[$slot] = $this->resolveMediaSlotUrl($slot, $row, $fieldName);
                 } elseif ($type === 'media_many') {
-                    $count      = is_array($spec) ? ($spec['count'] ?? 1) : 1;
+                    $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
                     $mediaItems = $row?->getMedia('section')
                         ->filter(fn ($m) => $m->getCustomProperty('field') === $fieldName)
                         ->values();
 
                     for ($i = 0; $i < $count; $i++) {
-                        $slot   = "{$sectionKey}__{$fieldName}_{$i}";
+                        $slot = "{$sectionKey}__{$fieldName}_{$i}";
                         $upload = $this->uploads[$slot] ?? null;
 
                         if ($upload instanceof TemporaryUploadedFile) {
-                            try { $urls[$slot] = $upload->temporaryUrl(); } catch (\Throwable) { $urls[$slot] = null; }
+                            try {
+                                $urls[$slot] = $upload->temporaryUrl();
+                            } catch (\Throwable) {
+                                $urls[$slot] = null;
+                            }
                         } elseif ($this->removeMedia[$slot] ?? false) {
                             $urls[$slot] = null;
                         } else {
@@ -369,7 +374,7 @@ class Edit extends Component
                         }
                     }
                 } elseif ($type === 'list') {
-                    $listCount  = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                    $listCount = is_array($spec) ? ($spec['count'] ?? 0) : 0;
                     $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
 
                     /** @var array<string, mixed> $listFields */
@@ -378,7 +383,7 @@ class Edit extends Component
                             continue;
                         }
                         for ($i = 0; $i < $listCount; $i++) {
-                            $slot        = "{$sectionKey}__item_{$sf}_{$i}";
+                            $slot = "{$sectionKey}__item_{$sf}_{$i}";
                             $urls[$slot] = $this->resolveMediaSlotUrl($slot, $row, "item_{$sf}_{$i}");
                         }
                     }
@@ -394,7 +399,11 @@ class Edit extends Component
         $upload = $this->uploads[$slot] ?? null;
 
         if ($upload instanceof TemporaryUploadedFile) {
-            try { return $upload->temporaryUrl(); } catch (\Throwable) { return null; }
+            try {
+                return $upload->temporaryUrl();
+            } catch (\Throwable) {
+                return null;
+            }
         }
 
         if ($this->removeMedia[$slot] ?? false) {

@@ -10,6 +10,7 @@ use App\Models\Tag;
 use App\Support\Html;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -257,7 +258,7 @@ class Edit extends Component
         return array_keys($tabs);
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Product> */
+    /** @return Collection<int, Product> */
     public function productSearchResults()
     {
         if ($this->productSearch === '') {
@@ -274,7 +275,7 @@ class Edit extends Component
             ->get();
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Product> */
+    /** @return Collection<int, Product> */
     public function selectedProducts()
     {
         if (empty($this->selectedProductIds)) {

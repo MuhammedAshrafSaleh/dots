@@ -14,67 +14,97 @@ class Edit extends Component
 
     // --- contact ---
     public string $whatsapp_number = '';
+
     public string $hotline = '';
+
     public string $email = '';
+
     public string $maps_url = '';
+
     /** @var array<string, string> */
     public array $showroom_label = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $showroom_address = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $working_hours = ['ar' => '', 'en' => ''];
+
     public string $social_instagram = '';
+
     public string $social_facebook = '';
+
     public string $social_linkedin = '';
+
     public string $social_youtube = '';
 
     // --- commerce ---
     public string $instapay_address = '';
+
     public string $vat_rate = '14';
+
     /** @var array<string, string> */
     public array $vat_note = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $project_pricing_note = ['ar' => '', 'en' => ''];
+
     public string $low_stock_threshold = '5';
+
     public string $instapay_hold_hours = '24';
+
     public string $order_prefix = 'DT-';
+
     public string $currency = 'EGP';
+
     /** @var array<int, array<string, string>> */
     public array $trust_items = [];
+
     /** @var array<string, string> */
     public array $product_delivery_text = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $product_returns_text = ['ar' => '', 'en' => ''];
 
     // --- whatsapp templates ---
     /** @var array<string, string> */
     public array $tpl_product = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $tpl_cart = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $tpl_instapay_order = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $tpl_boq = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $tpl_general = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $tpl_order_confirm_admin = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $tpl_order_update = ['ar' => '', 'en' => ''];
 
     // --- footer ---
     /** @var array<string, string> */
     public array $footer_about_text = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $footer_payments_line = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $footer_copyright = ['ar' => '', 'en' => ''];
 
     // --- seo ---
     /** @var array<string, string> */
     public array $seo_default_title = ['ar' => '', 'en' => ''];
+
     /** @var array<string, string> */
     public array $seo_default_description = ['ar' => '', 'en' => ''];
+
     public string $seo_og_image = '';
 
     /** @return array<string, array<int, string>> */

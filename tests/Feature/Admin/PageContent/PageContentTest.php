@@ -39,7 +39,7 @@ it('pre-fills form from the seeded content', function () {
 
     $headline = $section->content['headline'] ?? [];
     $component->assertSet('form.hero.content.headline.en', $headline['en'] ?? '')
-              ->assertSet('form.hero.content.headline.ar', $headline['ar'] ?? '');
+        ->assertSet('form.hero.content.headline.ar', $headline['ar'] ?? '');
 });
 
 it('saves edited text content to the database', function () {

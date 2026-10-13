@@ -7,6 +7,7 @@ use App\Models\Post;
 use App\Models\PostCategory;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\Settings;
 
 /**
  * Real-browser E2E (Pest 4 + Playwright). Logs in through the form and drives
@@ -167,8 +168,8 @@ it('opens settings and saves the contact tab — cache key is updated', function
         ->assertDontSee('This action is unauthorized')
         ->assertNoJavaScriptErrors();
 
-    expect(\App\Services\Settings::class)
-        ->and(app(\App\Services\Settings::class)->get('contact.whatsapp_number'))
+    expect(Settings::class)
+        ->and(app(Settings::class)->get('contact.whatsapp_number'))
         ->toBe('201009999999');
 });
 

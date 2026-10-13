@@ -282,6 +282,7 @@ class Edit extends Component
                 if ($item) {
                     $item->update(['text' => $row['text'], 'sort_order' => $order++]);
                     $seenIds[] = $id;
+
                     continue;
                 }
             }
@@ -301,6 +302,7 @@ class Edit extends Component
                 if ($faq) {
                     $faq->update(['question' => $row['question'], 'answer' => $row['answer'], 'sort_order' => $order++]);
                     $seenFaqIds[] = $id;
+
                     continue;
                 }
             }
@@ -343,6 +345,7 @@ class Edit extends Component
         foreach ($this->getErrorBag()->keys() as $field) {
             $tabs[$this->tabForField($field)] = true;
         }
+
         return array_keys($tabs);
     }
 
@@ -352,6 +355,7 @@ class Edit extends Component
         if (! $this->service) {
             return [];
         }
+
         return $this->service->getMedia('gallery')
             ->map(fn ($m) => ['id' => (int) $m->id, 'url' => $m->getUrl()])->all();
     }

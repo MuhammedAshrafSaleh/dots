@@ -4,11 +4,12 @@ namespace App\Livewire\Admin\Projects;
 
 use App\Livewire\Admin\Concerns\InteractsWithAdminForms;
 use App\Models\Product;
-use App\Support\Html;
 use App\Models\Project;
 use App\Models\Service;
+use App\Support\Html;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -329,7 +330,7 @@ class Edit extends Component
             ->map(fn ($m) => ['id' => (int) $m->id, 'url' => $m->getUrl()])->all();
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Product> */
+    /** @return Collection<int, Product> */
     public function productSearchResults()
     {
         if ($this->productSearch === '') {
@@ -346,7 +347,7 @@ class Edit extends Component
             ->get();
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Service> */
+    /** @return Collection<int, Service> */
     public function serviceSearchResults()
     {
         if ($this->serviceSearch === '') {
@@ -363,7 +364,7 @@ class Edit extends Component
             ->get();
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Product> */
+    /** @return Collection<int, Product> */
     public function selectedProducts()
     {
         if (empty($this->selectedProductIds)) {
@@ -373,7 +374,7 @@ class Edit extends Component
         return Product::whereIn('id', $this->selectedProductIds)->get();
     }
 
-    /** @return \Illuminate\Database\Eloquent\Collection<int, Service> */
+    /** @return Collection<int, Service> */
     public function selectedServices()
     {
         if (empty($this->selectedServiceIds)) {
