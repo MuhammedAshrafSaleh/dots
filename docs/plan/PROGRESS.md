@@ -2,17 +2,18 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** T4.8 implementation done — awaiting browser verification + commit.
-- **Last commit:** `2b7dc90` T4.7: TipTap rich text editor (T4.8 not yet committed — pending browser sign-off)
-- **Open issues / left to fix:** Browser test needed — upload a file to each named slot and an extra; save, reload, check files persist; download list on product page uses slot/title.
-- **What to review:**
-  - `http://dots.test/admin/products/create` → **Files** tab → 4 named slots (Datasheet, IES, LDT, Installation guide) each with Upload button; "Add another file" adds a bilingual title + upload row.
-  - Edit an existing product → **Files** tab → verify Replace / Remove on a slot that has a file; verify extra file Remove button.
-  - Save with a slot upload → reload → file name appears in the slot row.
+- **Current task:** Phase 4 end-check done. Report written at `docs/plan/reports/phase-4.md`. **Blocked on failures below before push.**
+- **Last commit:** `0ca3fc2` T4.8: Product Files tab: named slots + titled extras (T4.8 was already committed — PROGRESS was stale)
+- **Open issues / left to fix (must resolve before owner approves push):**
+  1. **PHPStan 8 errors** — `Blog/Edit.php:91-92` (`$value` on string / `format()` on string); `Projects/Edit.php:115-120` (same); `Products/Edit.php:743` (Collection keyBy template type).
+  2. **Pint 14 files** need formatting — run `vendor/bin/pint` to auto-fix, then commit.
+  3. **Uncommitted working-tree edits** in `resources/js/admin.js` and `tests/Browser/AdminFlowTest.php` — stage and commit these (or confirm intentionally dropped).
+  4. **`services.description` not on TipTap** — confirm with owner whether intentional (T4.7 spec listed services as a rich-text target).
+- **What to review (smoke-test list in the report):** See `docs/plan/reports/phase-4.md` § 10-minute smoke-test.
 
-**Git:** branch `phase-4` · last tag `phase-3-done` · push state: not pushed _(updated after every commit)_
+**Git:** branch `phase-4` · last local commit `0ca3fc2` · last tag `phase-3-done` · push state: not pushed
 
-Current phase: **4 — Admin: content and settings** — in progress
+Current phase: **4 — Admin: content and settings** — gates failing, fixes needed
 
 ---
 
@@ -54,7 +55,7 @@ Current phase: **4 — Admin: content and settings** — in progress
 - [x] T4.5 Content pages
 - [x] T4.6 Settings and users
 - [x] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
-- [ ] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
+- [x] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
 
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)
 - [ ] T5.1 Global layout
