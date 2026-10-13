@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
 - **Current task:** T5.4 About page — DONE. Next: `start T5.5`.
-- **Last commit:** TBD (T5.4 commit pending)
+- **Last commit:** `60f66b0` T5.4: About page
 - **Open issues / left to fix:** none from T5.4.
   - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` Browser reds fixed in `0982dda`. 8/13 Browser tests pass; 5 remaining errors are a `DatabaseTruncation` + Spatie permission table drop issue — pre-existing, not caused by T5.x. Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
@@ -12,7 +12,7 @@
   - Open at 390px in DevTools — all multi-column grids collapse to 1-col.
   - All content comes from DB. Seed first if needed: `php artisan migrate:fresh --seed`.
 
-**Git:** branch `phase-5` · last local commit `0982dda` (Browser fix) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `60f66b0` (T5.4) · last tag `phase-4-done` · push state: phase-5 not pushed
 
 Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done
 
