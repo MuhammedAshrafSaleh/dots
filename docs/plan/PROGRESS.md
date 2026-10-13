@@ -7,9 +7,9 @@
 - **Open issues / left to fix:** none — all post-check failures resolved.
 - **What to review:** See `docs/plan/reports/phase-4.md` § 10-minute smoke-test list. Confirm each URL/action before approving push.
 
-**Git:** branch `phase-4` · last local commit `7ad3ef1` · last tag `phase-3-done` · push state: not pushed
+**Git:** branch `main` · last local commit merge "Phase 4 complete" · last tag `phase-4-done` · push state: pushed
 
-Current phase: **4 — Admin: content and settings** — all tasks done, all gates green
+Current phase: **4 — Admin: content and settings** — DONE ✅ · next: Phase 5
 
 ---
 
