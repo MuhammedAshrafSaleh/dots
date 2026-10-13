@@ -104,3 +104,23 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-svc-head  { grid-template-columns: 1fr !important; padding-top: 20px !important; padding-bottom: 12px !important; gap: 24px !important; }
 .d-compact .d-svc-inc   { grid-template-columns: 1fr !important; }
 .d-compact .d-svc-book  { grid-template-columns: 1fr !important; }
+
+/* Projects — current page compact overrides. */
+.d-compact .d-prcard-lead          { grid-template-columns: 1fr !important; }
+.d-compact .d-prcard-lead__media   { min-height: 240px !important; }
+.d-compact .d-prcard-lead__body    { padding: 20px !important; }
+.d-compact .d-prcard-lead .d-progress__steps { display: none !important; }
+.d-compact .d-projects-grid        { grid-template-columns: 1fr !important; }
+
+/* Projects — previous page compact overrides. */
+.d-compact .d-prev-masonry { columns: 1 !important; }
+
+/* Project detail page — compact overrides. */
+.d-compact .d-project-body     { grid-template-columns: 1fr !important; gap: 32px !important; }
+.d-compact .d-project-gallery  { grid-template-columns: 1fr !important; }
+.d-compact .d-project-gallery > div:last-child { display: none !important; }
+.d-compact .d-project-sidebar  { position: static !important; }
+.d-compact .d-project-title-row { align-items: flex-start !important; }
+.d-compact .d-project-share    { flex-wrap: wrap !important; }
+.d-compact .d-related-grid     { grid-template-columns: 1fr !important; }
+.d-compact .d-proj-products    { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }

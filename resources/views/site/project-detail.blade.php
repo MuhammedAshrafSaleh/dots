@@ -44,7 +44,7 @@
             ['label' => $project->getTranslation('title', $locale)],
         ]" />
 
-        <div class="d-rv" style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-top:22px;padding-bottom:28px;">
+        <div class="d-rv d-project-title-row" style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap;padding-top:22px;padding-bottom:28px;">
             <div style="display:grid;gap:14px;max-width:760px;">
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     @if ($isCurrent)
@@ -58,7 +58,7 @@
             </div>
 
             {{-- Share bar --}}
-            <div style="display:flex;gap:8px;align-items:center;" x-data="{ copied: false }">
+            <div class="d-project-share" style="display:flex;gap:8px;align-items:center;" x-data="{ copied: false }">
                 <button type="button"
                         class="d-btn d-btn--outline d-btn--sm"
                         x-on:click="navigator.clipboard.writeText(window.location.href); copied = true; setTimeout(() => copied = false, 2000)"
@@ -79,7 +79,7 @@
             @if ($allImgs->count() === 1)
                 <x-image-frame ratio="21 / 9" radius="var(--radius-xl)" :src="$allImgs->first()" :alt="$project->getTranslation('title', $locale)" />
             @else
-                <div style="display:grid;grid-template-columns:2fr 1fr;gap:8px;border-radius:var(--radius-xl);overflow:hidden;">
+                <div class="d-project-gallery" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;border-radius:var(--radius-xl);overflow:hidden;">
                     <div>
                         <x-image-frame ratio="4 / 3" :src="$allImgs->get(0)" :alt="$project->getTranslation('title', $locale)" />
                     </div>
@@ -177,7 +177,7 @@
         </div>
 
         {{-- RIGHT: Sidebar --}}
-        <aside style="display:grid;gap:16px;position:sticky;top:24px;">
+        <aside class="d-project-sidebar" style="display:grid;gap:16px;position:sticky;top:24px;">
             <div style="border:1px solid var(--border-1);border-radius:var(--radius-lg);padding:22px;display:grid;gap:18px;background:var(--white);">
 
                 {{-- Progress bar --}}

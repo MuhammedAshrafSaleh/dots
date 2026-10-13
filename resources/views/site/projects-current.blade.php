@@ -74,13 +74,13 @@
                     $leadProgress = $lead->progress;
                 @endphp
                 <div class="d-rv" style="margin-bottom:24px;">
-                    <a href="{{ route('project.show', [$locale, $leadSlug]) }}" class="d-card"
+                    <a href="{{ route('project.show', [$locale, $leadSlug]) }}" class="d-card d-prcard-lead"
                        style="display:grid;grid-template-columns:1.4fr 1fr;text-decoration:none;">
-                        <div class="d-prcard__media" style="aspect-ratio:auto;min-height:380px;">
+                        <div class="d-prcard__media d-prcard-lead__media" style="aspect-ratio:auto;min-height:380px;">
                             <x-image-frame ratio="auto" style="height:100%;" :src="$leadImg ?: null"
                                            :alt="$lead->getTranslation('title', $locale)" />
                         </div>
-                        <div class="d-card__body" style="padding:36px;display:grid;gap:16px;align-content:center;">
+                        <div class="d-card__body d-prcard-lead__body" style="padding:36px;display:grid;gap:16px;align-content:center;">
                             <div style="display:flex;gap:6px;flex-wrap:wrap;">
                                 <x-badge tone="accent" :dot="true">{{ __('ui.in_progress') }}</x-badge>
                                 <x-badge tone="outline">{{ $lead->type->label() }}</x-badge>
