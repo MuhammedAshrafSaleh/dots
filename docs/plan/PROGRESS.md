@@ -3,12 +3,12 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
 - **Current task:** T5.1 Global layout — DONE. Next: `start T5.2`.
-- **Last commit:** `<pending>` T5.1: Global layout (header, mega menu, footer, motion)
+- **Last commit:** `1887eb9` T5.1: Global layout (header, mega menu, footer, motion)
 - **Open issues / left to fix:**
   - Pre-existing (NOT from T5.1): `tests/Browser/AdminFlowTest.php` has 2 reds locally — "deactivated admin cannot log in" (needs seeded `Admin` role, which `DatabaseTruncation` wipes between tests) and "TipTap … Post saved". They fail run alone on an untouched tree; admin domain, unrelated to Phase 5. The default `php artisan test` (Unit+Feature only — Browser is NOT in phpunit.xml testsuites) is fully green.
 - **What to review on dots.test:** open `/ar` and `/en` (home) — utility strip, header, EN/عربي switch, click **Categories** (mega menu from the seeded tree + promo), **Projects ▾**, footer columns + newsletter + socials + payments line, the quote band. Resize to ~390px → compact header (hamburger + slide-down menu). Click a nav link → page curtain; first visit of a session → preloader. All motion off under `prefers-reduced-motion`. Nav targets (Products/Brands/Services/Projects/Blog/About/Track/category) render a "coming soon" placeholder — real screens land in T5.3+.
 
-**Git:** branch `phase-5` · last local commit `<pending>` (T5.1) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `1887eb9` (T5.1) · last tag `phase-4-done` · push state: phase-5 not pushed
 
 Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done
 
