@@ -26,6 +26,7 @@
 /storage/framework/testing
 /storage/app/purifier
 /storage/app/public/*
+/storage/app/private/
 
 # Tooling caches
 .phpunit.result.cache
