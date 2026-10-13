@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\ArticleController;
+use App\Http\Controllers\BlogController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\ProjectsCurrentController;
@@ -37,7 +39,8 @@ Route::prefix('{locale}')
         Route::get('/projects', ProjectsCurrentController::class)->name('projects.current');
         Route::get('/projects/previous', ProjectsPreviousController::class)->name('projects.previous');
         Route::get('/projects/{slug}', ProjectDetailController::class)->name('project.show');
-        Route::get('/blog', $comingSoon)->name('blog');
+        Route::get('/blog', BlogController::class)->name('blog');
+        Route::get('/blog/{slug}', ArticleController::class)->name('blog.show');
         Route::get('/about', AboutController::class)->name('about');
         Route::get('/track-order', $comingSoon)->name('track');
         Route::get('/search', $comingSoon)->name('search');

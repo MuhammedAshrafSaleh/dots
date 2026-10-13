@@ -131,3 +131,11 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-project-share    { flex-wrap: wrap !important; }
 .d-compact .d-related-grid     { grid-template-columns: 1fr !important; }
 .d-compact .d-proj-products    { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
+/* Blog list page — compact overrides. */
+.d-compact .d-blog-grid        { grid-template-columns: 1fr !important; }
+.d-compact .d-nl-band          { grid-template-columns: 1fr !important; }
+
+/* Article page — compact overrides. */
+.d-compact .d-article-layout   { grid-template-columns: 1fr !important; gap: 32px !important; }
+.d-compact .d-article-aside    { display: none !important; }

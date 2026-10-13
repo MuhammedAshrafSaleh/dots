@@ -2,24 +2,23 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.6 Projects — DONE. Next: `start T5.7`.
-- **Last commit:** `40e2060` (T5.6)
-- **Open issues / left to fix:** none from T5.6.
+- **Current task:** T5.7 Blog — DONE. Next: `start T5.8`.
+- **Last commit:** (commit T5.7 — see git log)
+- **Open issues / left to fix:** none from T5.7.
   - Pre-existing (NOT from T5.x): 5 Browser test failures (`DatabaseTruncation` + Spatie permission table drop). Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
   - Seed first if needed: `php artisan migrate:fresh --seed`.
-  - Open `/en/projects` — hero with cover of featured project, type filter chips, featured lead card with progress bar, 3-col grid of remaining current projects.
-  - Open `/ar/projects` — same in Arabic RTL.
-  - Click a type chip (e.g. Residential) — URL updates `?type=residential`, grid filters, lead card hidden.
-  - Open `/en/projects/previous` — page head, type chips + year filter chips, masonry grid of completed projects, pagination.
-  - Filter by year (e.g. 2026) and type — grid updates.
-  - Open a current project detail (e.g. `/en/projects/villa-27-palm-hills`) — gallery, progress bar with 5 stages, facts sidebar, WA button, related section.
-  - Open a completed project detail (e.g. `/en/projects/red-sea-resort-relight`) — Challenge/Solution/Result cards, scope sidebar, 100% progress bar.
-  - Open at 390px in DevTools — hero 1-col, grid 1-col (uses `d-projects-grid`), detail content + sidebar stack.
+  - Open `/en/blog` — featured wide card (Layered Lighting article), category chips (All / Guides / Smart home / etc.), 3-col grid of other posts, pagination, newsletter subscribe band.
+  - Open `/ar/blog` — same in Arabic RTL.
+  - Click a category chip (e.g. "Guides") — URL updates `?cat=guides`, grid filters.
+  - Type in the search box and submit — URL updates `?q=…`, grid filters by title.
+  - Subscribe to newsletter with an email — success state shown. Subscribe again with same email — still shows success, no duplicate row.
+  - Open an article (e.g. `/en/blog/layered-lighting-how-to-light-a-living-room-in-three-layers`) — author block, cover image, prose body, tags, sidebar "Shop products" box + WA button, related articles grid.
+  - Open at 390px in DevTools — blog grid 1-col, featured card stacks vertically, article sidebar hidden.
 
-**Git:** branch `phase-5` · last local commit `40e2060` (T5.6) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit (T5.7) · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done · T5.6 done
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done · T5.6 done · T5.7 done
 
 ---
 
