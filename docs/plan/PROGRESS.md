@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
 - **Current task:** T5.7 Blog — DONE. Next: `start T5.8`.
-- **Last commit:** (commit T5.7 — see git log)
+- **Last commit:** `97d9cf8` (T5.7)
 - **Open issues / left to fix:** none from T5.7.
   - Pre-existing (NOT from T5.x): 5 Browser test failures (`DatabaseTruncation` + Spatie permission table drop). Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
