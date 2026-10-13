@@ -6,12 +6,24 @@ use App\Livewire\Admin\Attributes\Index as AttributeIndex;
 use App\Livewire\Admin\Auth\ForgotPassword;
 use App\Livewire\Admin\Auth\Login;
 use App\Livewire\Admin\Auth\ResetPassword;
+use App\Livewire\Admin\Blog\Edit as BlogEdit;
+use App\Livewire\Admin\Blog\Index as BlogIndex;
+use App\Livewire\Admin\Blog\TaxIndex as BlogTaxIndex;
 use App\Livewire\Admin\Brands\Edit as BrandEdit;
 use App\Livewire\Admin\Brands\Index as BrandIndex;
 use App\Livewire\Admin\Categories\Index as CategoryIndex;
+use App\Livewire\Admin\ContentPages\Edit as ContentPageEdit;
+use App\Livewire\Admin\ContentPages\Index as ContentPageIndex;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\PageContent\Edit as PageContentEdit;
 use App\Livewire\Admin\Products\Edit as ProductEdit;
 use App\Livewire\Admin\Products\Index as ProductIndex;
+use App\Livewire\Admin\Projects\Edit as ProjectEdit;
+use App\Livewire\Admin\Projects\Index as ProjectIndex;
+use App\Livewire\Admin\Services\Edit as ServiceEdit;
+use App\Livewire\Admin\Services\Index as ServiceIndex;
+use App\Livewire\Admin\Settings\Edit as SettingsEdit;
+use App\Livewire\Admin\Users\Index as UsersIndex;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
 
@@ -62,6 +74,38 @@ Route::prefix('admin')
 
             // Catalog — Categories (T3.5).
             Route::get('categories', CategoryIndex::class)->middleware('can:categories.view')->name('categories');
+
+            // Content — Services (T4.2).
+            Route::get('services', ServiceIndex::class)->middleware('can:services.view')->name('services');
+            Route::get('services/create', ServiceEdit::class)->middleware('can:services.create')->name('services.create');
+            Route::get('services/{service}/edit', ServiceEdit::class)->middleware('can:services.update')->name('services.edit');
+
+            // Content — Projects (T4.3).
+            Route::get('projects', ProjectIndex::class)->middleware('can:projects.view')->name('projects');
+            Route::get('projects/create', ProjectEdit::class)->middleware('can:projects.create')->name('projects.create');
+            Route::get('projects/{project}/edit', ProjectEdit::class)->middleware('can:projects.update')->name('projects.edit');
+
+            // Content — Blog (T4.4).
+            Route::get('blog', BlogIndex::class)->middleware('can:posts.view')->name('blog');
+            Route::get('blog/create', BlogEdit::class)->middleware('can:posts.create')->name('blog.create');
+            Route::get('blog/taxonomy', BlogTaxIndex::class)->middleware('can:post_categories.manage')->name('blog.taxonomy');
+            Route::get('blog/{post}/edit', BlogEdit::class)->middleware('can:posts.update')->name('blog.edit');
+
+            // Content — Content pages (T4.5).
+            Route::get('content-pages', ContentPageIndex::class)->middleware('can:content_pages.view')->name('content-pages');
+            Route::get('content-pages/create', ContentPageEdit::class)->middleware('can:content_pages.create')->name('content-pages.create');
+            Route::get('content-pages/{page}/edit', ContentPageEdit::class)->middleware('can:content_pages.update')->name('content-pages.edit');
+
+            // Content — Page sections (T4.1).
+            Route::get('page-content/{page?}', PageContentEdit::class)
+                ->middleware('can:page_content.view')
+                ->name('page-content')
+                ->defaults('page', 'home')
+                ->whereIn('page', ['home', 'about', 'services', 'brands', 'projects', 'blog', 'global']);
+
+            // Settings and users (T4.6).
+            Route::get('settings', SettingsEdit::class)->middleware('can:settings.view')->name('settings');
+            Route::get('users', UsersIndex::class)->middleware('can:users.view')->name('users');
 
             // Catalog — Products (T3.6).
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');

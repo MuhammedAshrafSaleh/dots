@@ -5,6 +5,7 @@ use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use Illuminate\Http\UploadedFile;
 use Livewire\Livewire;
 
 beforeEach(fn () => loginAdmin());
@@ -152,6 +153,73 @@ it('edits an existing product and syncs specs', function () {
     $product->refresh();
     expect($product->getTranslation('name', 'en'))->toBe('Renamed')
         ->and($product->specs()->count())->toBe(1);
+});
+
+it('loads named-slot file data from media on mount', function () {
+    $product = Product::create([
+        'brand_id' => editBrand()->id, 'category_id' => editLeaf()->id,
+        'name' => ['ar' => 'ت', 'en' => 'Test'], 'slug' => ['ar' => 'ت', 'en' => 'test-slots'], 'sku' => 'TST-SLOT',
+    ]);
+    $product->variants()->create(['sku' => 'TST-SLOT-V', 'price' => 10, 'stock_qty' => 1, 'is_default' => true]);
+
+    $fake = UploadedFile::fake()->create('datasheet.pdf', 10, 'application/pdf');
+    $product->addMedia($fake->getRealPath())
+        ->usingFileName('datasheet.pdf')
+        ->withCustomProperties(['slot' => 'datasheet'])
+        ->toMediaCollection('files');
+
+    $component = Livewire::test(Edit::class, ['product' => $product]);
+    $slots = $component->instance()->slotItems();
+
+    expect($slots['datasheet']['filename'])->toBe('datasheet.pdf')
+        ->and($slots['ies']['media_id'])->toBeNull()
+        ->and($slots['ldt']['media_id'])->toBeNull()
+        ->and($slots['guide']['media_id'])->toBeNull();
+});
+
+it('loads extra files into extraFiles on mount', function () {
+    $product = Product::create([
+        'brand_id' => editBrand()->id, 'category_id' => editLeaf()->id,
+        'name' => ['ar' => 'إ', 'en' => 'Extra'], 'slug' => ['ar' => 'إ', 'en' => 'test-extra'], 'sku' => 'TST-EXTRA',
+    ]);
+    $product->variants()->create(['sku' => 'TST-EXTRA-V', 'price' => 10, 'stock_qty' => 1, 'is_default' => true]);
+
+    $fake = UploadedFile::fake()->create('dimmer-list.pdf', 5, 'application/pdf');
+    $product->addMedia($fake->getRealPath())
+        ->usingFileName('dimmer-list.pdf')
+        ->withCustomProperties(['slot' => 'extra', 'title' => ['ar' => 'قائمة الديمرات', 'en' => 'Dimmer list']])
+        ->toMediaCollection('files');
+
+    $component = Livewire::test(Edit::class, ['product' => $product]);
+
+    $extras = $component->get('extraFiles');
+    expect($extras)->toHaveCount(1);
+    $first = array_values($extras)[0];
+    expect($first['en'])->toBe('Dimmer list')
+        ->and($first['ar'])->toBe('قائمة الديمرات');
+});
+
+it('markSlotRemoved adds slot to removedSlots', function () {
+    $product = Product::create([
+        'brand_id' => editBrand()->id, 'category_id' => editLeaf()->id,
+        'name' => ['ar' => 'ر', 'en' => 'Rm'], 'slug' => ['ar' => 'ر', 'en' => 'test-rm'], 'sku' => 'TST-RM',
+    ]);
+
+    Livewire::test(Edit::class, ['product' => $product])
+        ->call('markSlotRemoved', 'datasheet')
+        ->assertSet('removedSlots', ['datasheet']);
+});
+
+it('addExtra and removeExtra manage extraFiles', function () {
+    $component = Livewire::test(Edit::class)
+        ->call('addExtra');
+
+    expect($component->get('extraFiles'))->toHaveCount(1);
+
+    $key = array_key_first($component->get('extraFiles'));
+    $component->call('removeExtra', $key);
+
+    expect($component->get('extraFiles'))->toBeEmpty();
 });
 
 it('deletes a product from the editor', function () {

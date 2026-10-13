@@ -1,15 +1,15 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `main` (phase-3 merged, tagged `phase-3-done`, pushed).
-- **Current task:** None in progress. Starting Phase 4.
-- **Last commit:** merge commit — `Phase 3 complete` (on main).
-- **Open issues / left to fix:** none. Phase 3 fully merged and tagged.
-- **Next:** create `phase-4` branch from main, then `start T4.1`.
+- **Branch:** `phase-4` (local only, not pushed).
+- **Current task:** Phase 4 complete. All gates green. Awaiting owner smoke-test and push approval.
+- **Last commit:** `7ad3ef1` T4.7 fix: services.description → TipTap + Html::cleanTranslations on save
+- **Open issues / left to fix:** none — all post-check failures resolved.
+- **What to review:** See `docs/plan/reports/phase-4.md` § 10-minute smoke-test list. Confirm each URL/action before approving push.
 
-**Git:** branch `main` · last tag `phase-3-done` · push state: main pushed, phase-3 merged _(updated after every commit)_
+**Git:** branch `phase-4` · last local commit `7ad3ef1` · last tag `phase-3-done` · push state: not pushed
 
-Current phase: **4 — Admin: content and settings** — not started
+Current phase: **4 — Admin: content and settings** — all tasks done, all gates green
 
 ---
 
@@ -44,14 +44,14 @@ Current phase: **4 — Admin: content and settings** — not started
 - [x] T3.7 Product edit
 
 ## Phase 4 — Admin: content and settings  (`phase-04-admin-content.md`)
-- [ ] T4.1 Page content editor
-- [ ] T4.2 Services
-- [ ] T4.3 Projects
-- [ ] T4.4 Blog
-- [ ] T4.5 Content pages
-- [ ] T4.6 Settings and users
-- [ ] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
-- [ ] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
+- [x] T4.1 Page content editor
+- [x] T4.2 Services
+- [x] T4.3 Projects
+- [x] T4.4 Blog
+- [x] T4.5 Content pages
+- [x] T4.6 Settings and users
+- [x] T4.7 Rich text editor: TipTap everywhere (carried from Phase 3)
+- [x] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
 
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)
 - [ ] T5.1 Global layout

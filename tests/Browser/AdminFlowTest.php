@@ -3,7 +3,11 @@
 use App\Models\Attribute;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\Product;
+use App\Models\User;
+use App\Services\Settings;
 
 /**
  * Real-browser E2E (Pest 4 + Playwright). Logs in through the form and drives
@@ -129,5 +133,97 @@ it('edits the selected category in the tree', function () {
         ->navigate('/admin/categories')
         ->assertSee('Categories')
         ->assertDontSee('Array to string')
+        ->assertNoJavaScriptErrors();
+});
+
+it('opens the page content editor and saves the home hero section', function () {
+    signInAdmin()
+        ->navigate('/admin/page-content/home')
+        ->assertSee('Page content')
+        ->assertSee('Hero')
+        ->fill('[wire\\:model="form.hero.content.headline.en"]', 'E2E Headline EN')
+        ->press('Save changes')
+        ->assertSee('Page content saved')
+        ->assertNoJavaScriptErrors();
+});
+
+it('switches between page content tabs without JS errors', function () {
+    signInAdmin()
+        ->navigate('/admin/page-content/home')
+        ->assertSee('Features strip')
+        ->navigate('/admin/page-content/about')
+        ->assertSee('Our story')
+        ->navigate('/admin/page-content/global')
+        ->assertSee('Quote band')
+        ->assertNoJavaScriptErrors();
+});
+
+it('opens settings and saves the contact tab — cache key is updated', function () {
+    signInAdmin()
+        ->navigate('/admin/settings')
+        ->assertSee('Settings')
+        ->fill('[wire\\:model="whatsapp_number"]', '201009999999')
+        ->press('Save changes')
+        ->assertSee('Settings saved')
+        ->assertDontSee('This action is unauthorized')
+        ->assertNoJavaScriptErrors();
+
+    expect(Settings::class)
+        ->and(app(Settings::class)->get('contact.whatsapp_number'))
+        ->toBe('201009999999');
+});
+
+it('deactivated admin cannot log in', function () {
+    $other = User::factory()->create([
+        'email' => 'deactivated@dots.test',
+        'is_active' => false,
+    ]);
+    $other->syncRoles(['Admin']);
+
+    visit('/admin/lang/en')
+        ->navigate('/admin/login')
+        ->fill('input[type=email]', 'deactivated@dots.test')
+        ->fill('input[type=password]', 'password')
+        ->click('button[type=submit]')
+        ->assertDontSee('Dashboard')
+        ->assertNoJavaScriptErrors();
+});
+
+it('opens the users list', function () {
+    signInAdmin()
+        ->navigate('/admin/users')
+        ->assertSee('Users')
+        ->assertSee('Everyone here has full Admin access')
+        ->assertDontSee('This action is unauthorized')
+        ->assertNoJavaScriptErrors();
+});
+
+it('TipTap editor mounts on every rich-text screen without JS errors', function () {
+    $cat = PostCategory::create(['name' => ['ar' => 'تقنية', 'en' => 'Tech'], 'slug' => ['ar' => 'تقنية', 'en' => 'tech']]);
+
+    // Blog body tab — TipTap mounts two ProseMirror instances (AR + EN).
+    signInAdmin()
+        ->navigate('/admin/blog/create')
+        ->fill('[wire\\:model="title.en"]', 'TipTap E2E Post')
+        ->fill('[wire\\:model="title.ar"]', 'مقال اختبار المحرر')
+        ->select('[wire\\:model="post_category_id"]', (string) $cat->id)
+        ->press('Body')
+        ->assertNoJavaScriptErrors()
+        ->press('Save')
+        ->assertSee('Post saved')
+        ->assertNoJavaScriptErrors();
+
+    expect(Post::whereJsonContains('title->en', 'TipTap E2E Post')->exists())->toBeTrue();
+
+    // Content pages — TipTap body tab.
+    signInAdmin()
+        ->navigate('/admin/content-pages/create')
+        ->press('Body')
+        ->assertNoJavaScriptErrors();
+
+    // Projects — TipTap About field.
+    signInAdmin()
+        ->navigate('/admin/projects/create')
+        ->press('Content')
         ->assertNoJavaScriptErrors();
 });

@@ -37,7 +37,7 @@
                         <x-admin.field-bilingual :label="__('admin.product_edit.product_name')" model="name" />
                         @error('name.ar')<span class="d-help d-help--error">{{ $message }}</span>@enderror
                         @error('name.en')<span class="d-help d-help--error">{{ $message }}</span>@enderror
-                        <x-admin.field-bilingual :label="__('admin.product_edit.overview')" model="overview" multiline :rows="5" />
+                        <x-admin.rich :label="__('admin.product_edit.overview')" model="overview" />
                         <x-admin.field-bilingual :label="__('admin.product_edit.variants_summary')" model="variants_summary" />
                         <x-admin.field-bilingual :label="__('admin.product_edit.warranty')" model="warranty" />
                         <div style="max-width: 50%;">
@@ -199,21 +199,89 @@
             <div @class(['a-hidden' => $activeTab !== 'files'])>
                 <x-admin.card :title="__('admin.product_edit.files')">
                     <x-slot:action><span class="a-count">{{ __('admin.product_edit.files_hint') }}</span></x-slot:action>
+
+                    {{-- Named slots --}}
                     <div class="d-files">
-                        @foreach ($fileItems as $file)
-                            <div class="d-file" wire:key="file-{{ $file['id'] }}">
-                                <span class="d-file__ico"><x-icon name="file-text" size="20" /><span class="d-file__ext">{{ strtoupper(pathinfo($file['name'], PATHINFO_EXTENSION)) }}</span></span>
-                                <span style="min-width: 0; flex: 1;"><span class="d-file__name" style="display: block;">{{ $file['name'] }}</span></span>
-                                <button type="button" class="d-btn d-btn--ghost d-btn--icon d-btn--sm" wire:click="removeFile({{ $file['id'] }})" aria-label="{{ __('admin.widgets.remove') }}"><x-icon name="trash-2" size="16" /></button>
+                        @foreach ($slotItems as $slot => $info)
+                            @php
+                                $pending    = $slotUploads[$slot] ?? null;
+                                $isRemoved  = in_array($slot, $removedSlots);
+                                $hasFile    = ($info['media_id'] !== null && ! $isRemoved)
+                                    || ($pending instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile);
+                                $slotLabel  = app()->getLocale() === 'ar' ? $info['label_ar'] : $info['label_en'];
+                                $slotMeta   = $pending instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile
+                                    ? $pending->getClientOriginalName()
+                                    : ($hasFile ? $info['filename'] : __('admin.product_edit.file_not_uploaded'));
+                                $inputId    = 'slot-file-' . $slot;
+                            @endphp
+                            <div class="d-file" style="{{ ! $hasFile ? 'border-style:dashed;background:var(--ink-50)' : '' }}" wire:key="slot-{{ $slot }}">
+                                <span class="d-file__ico">
+                                    <x-icon name="file-text" size="20" />
+                                    <span class="d-file__ext">{{ $info['ext'] }}</span>
+                                </span>
+                                <span style="min-width:0;flex:1;">
+                                    <span class="d-file__name" style="display:block;">{{ $slotLabel }}</span>
+                                    <span class="d-file__meta">{{ $slotMeta }}</span>
+                                </span>
+                                <input type="file" id="{{ $inputId }}" wire:model="slotUploads.{{ $slot }}" accept=".pdf,.ies,.ldt" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">
+                                @if ($hasFile)
+                                    <span style="display:flex;gap:4px;">
+                                        <label for="{{ $inputId }}" class="d-btn d-btn--ghost d-btn--sm" style="cursor:pointer;">{{ __('admin.widgets.replace') }}</label>
+                                        <button type="button" class="d-btn d-btn--ghost d-btn--icon d-btn--sm" wire:click="markSlotRemoved('{{ $slot }}')" aria-label="{{ __('admin.widgets.remove') }}">
+                                            <x-icon name="trash-2" size="16" />
+                                        </button>
+                                    </span>
+                                @else
+                                    <label for="{{ $inputId }}" class="d-btn d-btn--outline d-btn--sm" style="cursor:pointer;">
+                                        <x-icon name="upload" size="16" />{{ __('admin.widgets.upload') }}
+                                    </label>
+                                @endif
                             </div>
                         @endforeach
                     </div>
-                    <div class="d-field">
-                        <label class="a-drop" style="min-height: 120px;">
-                            <input type="file" multiple wire:model="fileUploads" accept="application/pdf,.ies,.ldt" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0);">
-                            <x-icon name="upload" size="22" />{{ __('admin.widgets.upload') }}
-                        </label>
-                        @error('fileUploads.*')<span class="d-help d-help--error">{{ $message }}</span>@enderror
+
+                    {{-- Extra (titled) files --}}
+                    @foreach ($extraFiles as $key => $extra)
+                        @php
+                            $extraPending = $extraUploads[$key] ?? null;
+                            $extraHasFile = ($extraPending instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile) || isset($extra['filename']);
+                            $extraMeta    = $extraPending instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile
+                                ? $extraPending->getClientOriginalName()
+                                : ($extra['filename'] ?? __('admin.product_edit.file_not_uploaded'));
+                            $extraInputId = 'extra-file-' . $key;
+                        @endphp
+                        <div class="a-card" style="padding:12px;display:grid;gap:10px;background:var(--ink-50);margin-top:12px;" wire:key="extra-{{ $key }}">
+                            <x-admin.field-bilingual
+                                :label="__('admin.product_edit.file_title')"
+                                model="extraFiles.{{ $key }}"
+                            />
+                            <div class="d-file" style="{{ ! $extraHasFile ? 'border-style:dashed;background:var(--surface)' : '' }}">
+                                <span class="d-file__ico">
+                                    <x-icon name="file-text" size="20" />
+                                    <span class="d-file__ext">PDF</span>
+                                </span>
+                                <span style="min-width:0;flex:1;">
+                                    <span class="d-file__name" style="display:block;">{{ $extra['en'] ?: __('admin.product_edit.file_untitled') }}</span>
+                                    <span class="d-file__meta">{{ $extraMeta }}</span>
+                                </span>
+                                <input type="file" id="{{ $extraInputId }}" wire:model="extraUploads.{{ $key }}" accept=".pdf,.ies,.ldt" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">
+                                <span style="display:flex;gap:4px;">
+                                    <label for="{{ $extraInputId }}" class="d-btn d-btn--{{ $extraHasFile ? 'ghost' : 'outline' }} d-btn--sm" style="cursor:pointer;">
+                                        @if (! $extraHasFile)<x-icon name="upload" size="16" />@endif
+                                        {{ $extraHasFile ? __('admin.widgets.replace') : __('admin.widgets.upload') }}
+                                    </label>
+                                    <button type="button" class="d-btn d-btn--ghost d-btn--icon d-btn--sm" wire:click="removeExtra('{{ $key }}')" aria-label="{{ __('admin.widgets.remove') }}">
+                                        <x-icon name="trash-2" size="16" />
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+                    @endforeach
+
+                    <div style="margin-top:12px;">
+                        <button type="button" class="d-btn d-btn--outline d-btn--sm" wire:click="addExtra">
+                            <x-icon name="plus" size="16" />{{ __('admin.product_edit.file_add_extra') }}
+                        </button>
                     </div>
                 </x-admin.card>
             </div>
