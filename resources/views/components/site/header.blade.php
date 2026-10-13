@@ -5,13 +5,17 @@
     // Mirror of design/website/src/components/navigation/Navbar.jsx.
     use App\Services\Navigation;
     use App\Services\Settings;
-    use App\Services\WhatsApp;
+    use Illuminate\Support\Facades\URL;
 
     $settings = app(Settings::class);
     $roots = app(Navigation::class)->megaTree();
     $hotline = $settings->get('contact.hotline');
     $showroom = $settings->translated('contact.showroom_address', $locale);
-    $quoteLink = app(WhatsApp::class)->link('general', [], $locale);
+    $quoteLink = URL::signedRoute('wa.redirect', [
+        'locale'   => $locale,
+        'source'   => 'general',
+        'ref_url'  => request()->url(),
+    ]);
 
     // Active nav section for the current route (highlights the matching link).
     $active = $active ?? null;

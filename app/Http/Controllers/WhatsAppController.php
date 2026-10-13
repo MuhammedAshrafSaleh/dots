@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enums\QuoteSource;
 use App\Models\QuoteRequest;
 use App\Services\Settings;
+use App\Services\WhatsApp;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -35,7 +36,7 @@ class WhatsAppController extends Controller
         ]);
 
         $settings = app(Settings::class);
-        $number = $settings->get('contact.whatsapp_number', '');
+        $number = WhatsApp::normalizeNumber((string) $settings->get('contact.whatsapp_number', ''));
         $text = $this->buildText($src, $locale, $request, $settings);
 
         return redirect('https://wa.me/'.$number.'?text='.rawurlencode($text));

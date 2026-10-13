@@ -1,8 +1,10 @@
 <?php
 
 use App\Enums\QuoteSource;
+use App\Models\PageSection;
 use App\Models\QuoteRequest;
 use App\Models\Setting;
+use App\Services\WhatsApp;
 use Illuminate\Support\Facades\URL;
 
 beforeEach(function () {
@@ -85,4 +87,66 @@ it('boq button has no file-input element in the rendered component', function ()
 
     $view->assertDontSee('<input', false);
     $view->assertDontSee('type="file"', false);
+});
+
+// ── Number normalisation ──────────────────────────────────────────────────────
+
+it('normalizes a local Egyptian number to international format', function (string $raw, string $expected) {
+    expect(WhatsApp::normalizeNumber($raw))->toBe($expected);
+})->with([
+    'local with leading zero' => ['01500060828', '201500060828'],
+    'already international' => ['201000000000', '201000000000'],
+    'with spaces and dashes' => ['0150 006-0828', '201500060828'],
+    'with plus prefix' => ['+201000000000', '201000000000'],
+    'empty string' => ['', ''],
+]);
+
+it('redirects to the normalized number when the setting stores a local number', function () {
+    Setting::query()->updateOrCreate(
+        ['group' => 'contact', 'key' => 'whatsapp_number'],
+        ['value' => '01500060828'],
+    );
+    cache()->forget('settings:contact.whatsapp_number');
+
+    $url = waUrl('general');
+
+    $this->get($url)->assertRedirectContains('wa.me/201500060828');
+});
+
+// ── Rendered public buttons must use the signed logging route ─────────────────
+
+it('quote band button href points to the signed wa.redirect route, not wa.me', function () {
+    // Create the minimum page section so the component renders.
+    PageSection::query()->updateOrCreate(
+        ['page' => 'global', 'key' => 'quote_band'],
+        ['content' => [
+            'eyebrow' => ['ar' => 'اقتباس', 'en' => 'Quote'],
+            'title' => ['ar' => 'عنوان', 'en' => 'Title'],
+            'button_label' => ['ar' => 'واتساب', 'en' => 'WhatsApp'],
+            'hours_text' => ['ar' => 'الأحد-الجمعة', 'en' => 'Sun-Fri'],
+            'bullets' => [],
+        ]],
+    );
+    app()->setLocale('ar');
+
+    $view = $this->withoutVite()->blade('<x-site.quote-band locale="ar" />');
+
+    $html = (string) $view;
+
+    expect($html)
+        ->toContain('/ar/wa/boq')
+        ->not->toContain('wa.me');
+});
+
+it('nav header quote link href points to the signed wa.redirect route, not wa.me', function () {
+    // Set URL defaults so locale-prefixed route helpers resolve without throwing.
+    URL::defaults(['locale' => 'ar']);
+
+    $view = $this->withoutVite()->blade('<x-site.header locale="ar" />');
+
+    $html = (string) $view;
+
+    expect($html)
+        ->toContain('/ar/wa/general')
+        ->not->toContain('wa.me');
 });

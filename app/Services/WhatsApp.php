@@ -37,8 +37,24 @@ class WhatsApp
      */
     public function link(string $template, array $replacements = [], ?string $locale = null): string
     {
-        $number = preg_replace('/\D+/', '', (string) $this->settings->get('contact.whatsapp_number')) ?? '';
+        $number = self::normalizeNumber((string) $this->settings->get('contact.whatsapp_number', ''));
 
-        return "https://wa.me/{$number}?text=".rawurlencode($this->message($template, $replacements, $locale));
+        return 'https://wa.me/'.$number.'?text='.rawurlencode($this->message($template, $replacements, $locale));
+    }
+
+    /**
+     * Strip non-digits and convert a leading-0 local Egyptian number to
+     * international format (wa.me requires no leading zero).
+     * Examples: "01500060828" → "201500060828", "201000000000" → "201000000000".
+     */
+    public static function normalizeNumber(string $raw): string
+    {
+        $digits = preg_replace('/\D+/', '', $raw) ?? '';
+
+        if (str_starts_with($digits, '0')) {
+            $digits = '20'.substr($digits, 1);
+        }
+
+        return $digits;
     }
 }
