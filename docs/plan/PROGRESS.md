@@ -5,14 +5,14 @@
 - **Current task:** T5.3 Home page — DONE (design fix). Next: `start T5.4`.
 - **Last commit:** `3c0bdc3` T5.3 fix: card image sizing and overlay link
 - **Open issues / left to fix:** none from T5.3.
-  - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for Browser reds — commit them when convenient or at phase end.
+  - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` Browser reds fixed in `0982dda`. 8/13 Browser tests pass; 5 remaining errors are a `DatabaseTruncation` + Spatie permission table drop issue — pre-existing, not caused by T5.x. Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
   - Open `/ar` — hero, features strip, shop-by-category (4/3 images), featured products (1:1 images), services (4/3 images), smart banner, brands, quote band.
   - Open `/en` — same in English, LTR.
   - Open at 390px in DevTools — compact layout, all card images cropped to ratio.
   - All content comes from DB. Seed first if needed: `php artisan migrate:fresh --seed`.
 
-**Git:** branch `phase-5` · last local commit `ec9b870` (T5.3) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `0982dda` (Browser fix) · last tag `phase-4-done` · push state: phase-5 not pushed
 
 Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done
 
