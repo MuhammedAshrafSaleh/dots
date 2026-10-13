@@ -2,18 +2,14 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** Phase 4 end-check done. Report written at `docs/plan/reports/phase-4.md`. **Blocked on failures below before push.**
-- **Last commit:** `0ca3fc2` T4.8: Product Files tab: named slots + titled extras (T4.8 was already committed — PROGRESS was stale)
-- **Open issues / left to fix (must resolve before owner approves push):**
-  1. **PHPStan 8 errors** — `Blog/Edit.php:91-92` (`$value` on string / `format()` on string); `Projects/Edit.php:115-120` (same); `Products/Edit.php:743` (Collection keyBy template type).
-  2. **Pint 14 files** need formatting — run `vendor/bin/pint` to auto-fix, then commit.
-  3. **Uncommitted working-tree edits** in `resources/js/admin.js` and `tests/Browser/AdminFlowTest.php` — stage and commit these (or confirm intentionally dropped).
-  4. **`services.description` not on TipTap** — confirm with owner whether intentional (T4.7 spec listed services as a rich-text target).
-- **What to review (smoke-test list in the report):** See `docs/plan/reports/phase-4.md` § 10-minute smoke-test.
+- **Current task:** Phase 4 complete. All gates green. Awaiting owner smoke-test and push approval.
+- **Last commit:** `7ad3ef1` T4.7 fix: services.description → TipTap + Html::cleanTranslations on save
+- **Open issues / left to fix:** none — all post-check failures resolved.
+- **What to review:** See `docs/plan/reports/phase-4.md` § 10-minute smoke-test list. Confirm each URL/action before approving push.
 
-**Git:** branch `phase-4` · last local commit `0ca3fc2` · last tag `phase-3-done` · push state: not pushed
+**Git:** branch `phase-4` · last local commit `7ad3ef1` · last tag `phase-3-done` · push state: not pushed
 
-Current phase: **4 — Admin: content and settings** — gates failing, fixes needed
+Current phase: **4 — Admin: content and settings** — all tasks done, all gates green
 
 ---
 

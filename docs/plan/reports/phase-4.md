@@ -6,21 +6,21 @@
 
 ---
 
-## Gate results
+## Gate results (final — after fixes)
 
 | Gate | Result |
 |---|---|
 | `php artisan test` | ✅ 223 tests, 223 passed, 805 assertions |
 | `npm run build` | ✅ Clean build (admin 388 kB JS, 107 kB CSS) |
-| `composer analyse` (PHPStan) | ❌ 8 errors in 3 files — see Failures |
-| `vendor/bin/pint --test` | ❌ 14 files need formatting — see Failures |
+| `composer analyse` (PHPStan) | ✅ 0 errors |
+| `vendor/bin/pint --test` | ✅ 0 files need formatting |
 
 ---
 
 ## Phase checklist
 
 - ✅ **Every CONTENT_MAP admin column points to a working screen.** All Phase 4 admin columns verified: page_sections → `admin/page-content/{page}`, services → `admin/services`, projects → `admin/projects`, blog/posts/categories → `admin/blog` + `admin/blog/taxonomy`, content pages → `admin/content-pages`, settings (contact/footer/seo/commerce/whatsapp) → `admin/settings`, users → `admin/users`.
-- ⚠️ **TipTap rich text live on every rich-text field; Files tab has the 4 named slots + titled extras.** TipTap (`x-admin.rich`) confirmed on: blog body, project about, content-page body, product overview, page_sections long-text fields. **`services.description` uses a plain multiline `x-admin.field-bilingual` instead of TipTap** — T4.7 spec listed services as a rich-text target. Files tab has the 4 named slots (datasheet, ies, ldt, guide) plus bilingual-titled extras.
+- ✅ **TipTap rich text live on every rich-text field; Files tab has the 4 named slots + titled extras.** TipTap (`x-admin.rich`) confirmed on: blog body, project about, content-page body, product overview, page_sections long-text fields, and services.description (fixed in post-check commit). Files tab has the 4 named slots (datasheet, ies, ldt, guide) plus bilingual-titled extras.
 - ✅ **Tests green (including browser E2E).** All 223 tests pass including Browser suite.
 
 ---
@@ -63,31 +63,15 @@ All ✅.
 
 ---
 
-## Failures — must fix before push
+## Post-check fixes (all resolved)
 
-### 1. PHPStan — 8 errors
-
-**`app/Livewire/Admin/Blog/Edit.php`**
-- Line 91: `Cannot access property $value on string` (`property.nonObject`)
-- Line 92: `Cannot call method format() on string` (`method.nonObject`)
-
-**`app/Livewire/Admin/Projects/Edit.php`**
-- Lines 115–120: Same `$value` access / `format()` on string (5 errors)
-
-**`app/Livewire/Admin/Products/Edit.php`**
-- Line 743: `Unable to resolve template type TNewKey` in `Collection::keyBy()`
-
-### 2. Pint — 14 files need formatting
-
-`app/Livewire/Admin/Settings/Edit.php`, `Products/Edit.php`, `Projects/Edit.php`, `PageContent/Edit.php`, `Blog/Edit.php`, `Users/Index.php`, `Services/Edit.php`, `tests/Browser/AdminFlowTest.php`, `tests/Feature/Admin/Products/ProductEditTest.php`, `tests/Feature/Admin/PageContent/PageContentTest.php`, `tests/Feature/Admin/Services/ServicesCrudTest.php`, `lang/ar/admin.php`, `lang/en/admin.php`, `routes/admin.php`.
-
-### 3. Uncommitted working-tree changes
-
-`resources/js/admin.js` and `tests/Browser/AdminFlowTest.php` have unstaged edits not included in any commit.
-
-### 4. `services.description` not on TipTap
-
-T4.7 spec: "Swap it into every rich-text field (services, …)". The service edit form uses `x-admin.field-bilingual multiline` for `description` instead of `x-admin.rich`. Confirm with owner whether this was intentional.
+| Issue | Fix | Commit |
+|---|---|---|
+| PHPStan 8 errors (enum cast inference, keyBy template type) | `@property` docblocks on Post/Project models; explicit `string` return type on `keyBy` closure | `dc3aecf` |
+| Pint 14 files | `vendor/bin/pint` auto-fix | `f4d2a0c` |
+| 2 uncommitted T4.7 working-tree files | Staged and committed as T4.7 fix | `d91ad95` |
+| `storage/app/private/` temp uploads committed by accident | Added to `.gitignore`, removed from tracking | `e05fb7d` |
+| `services.description` plain textarea instead of TipTap | Switched to `x-admin.rich` + `Html::cleanTranslations` on save | `7ad3ef1` |
 
 ---
 
