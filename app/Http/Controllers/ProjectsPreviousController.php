@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\ProjectType;
+use App\Models\PageSection;
 use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -40,6 +41,11 @@ class ProjectsPreviousController extends Controller
 
         $types = ProjectType::cases();
 
-        return view('site.projects-previous', compact('projects', 'years', 'type', 'year', 'types'));
+        $section = PageSection::with('media')
+            ->where('page', 'projects')
+            ->where('key', 'previous_head')
+            ->first();
+
+        return view('site.projects-previous', compact('projects', 'years', 'type', 'year', 'types', 'section'));
     }
 }

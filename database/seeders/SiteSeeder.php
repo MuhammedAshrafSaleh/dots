@@ -227,11 +227,14 @@ class SiteSeeder extends Seeder
             $this->attachPhoto($currentHero, 20, 'section', ['field' => 'image']);
         }
 
-        $this->section('projects', 'previous_head', [
+        $previousHead = $this->section('projects', 'previous_head', [
             'eyebrow' => $this->m('Portfolio', 'أعمالنا'),
             'title' => $this->m('Previous projects', 'مشروعات سابقة'),
             'lede' => $this->m('2,400+ completed homes, offices, hotels and landscapes — a selection of case studies.', 'أكثر من 2,400 منزل ومكتب وفندق ومساحة خارجية منجزة — مختارات من دراسات الحالة.'),
         ]);
+        if (! $previousHead->hasMedia('section')) {
+            $this->attachPhoto($previousHead, 23, 'section', ['field' => 'image']);
+        }
 
         // ---- Blog (Blog.jsx) ----
         $this->section('blog', 'head', [

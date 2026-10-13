@@ -1,31 +1,62 @@
 @php
     use App\Enums\ProjectType;
+    use App\Models\PageSection;
 
     /** @var \Illuminate\Pagination\LengthAwarePaginator $projects */
     /** @var \Illuminate\Support\Collection $years */
     /** @var string $type */
     /** @var string $year */
     /** @var ProjectType[] $types */
+    /** @var PageSection|null $section */
 
     $filterUrl = fn (array $extra) => request()->fullUrlWithQuery(array_merge(['type' => $type, 'year' => $year, 'page' => 1], $extra));
-@endphp
-<x-layouts.app :title="__('ui.previous_projects')">
 
-    {{-- ========== 1. PAGE HEAD ========== --}}
-    <section class="d-sec d-sec--subtle">
-        <div class="d-container">
-            <x-breadcrumbs :items="[
-                ['label' => __('ui.home'), 'href' => route('home')],
-                ['label' => __('ui.projects'), 'href' => route('projects.current')],
-                ['label' => __('ui.previous_projects')],
-            ]" />
-            <div class="d-rv" style="max-width:680px;display:grid;gap:14px;padding-top:32px;padding-bottom:40px;">
-                <x-eyebrow>{{ __('ui.portfolio') }}</x-eyebrow>
-                <h1 class="t-display" style="margin:0;">{{ __('ui.previous_projects') }}</h1>
-                <p class="t-body-lg" style="margin:0;color:var(--fg-2);">{{ __('ui.previous_projects_sub') }}</p>
+    $heroImg   = $section?->getMedia('section')->where('custom_properties.field', 'image')->first()?->getUrl();
+    $eyebrow   = $section?->field('eyebrow', $locale) ?: __('ui.portfolio');
+    $title     = $section?->field('title', $locale) ?: __('ui.previous_projects');
+    $lede      = $section?->field('lede', $locale) ?: __('ui.previous_projects_sub');
+@endphp
+<x-layouts.app :title="$title">
+
+    {{-- ========== 1. HERO ========== --}}
+    @if ($heroImg)
+        <section class="d-media-hero" style="min-height:400px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;background:var(--ink-900);overflow:hidden;">
+            <img src="{{ $heroImg }}" alt="" aria-hidden="true"
+                 style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;">
+            <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(24,24,22,.75) 0%,rgba(24,24,22,.2) 60%,transparent 100%);"></div>
+            <div class="d-container" style="position:relative;z-index:2;padding-block:40px;">
+                <x-breadcrumbs :items="[
+                    ['label' => __('ui.home'), 'href' => route('home')],
+                    ['label' => __('ui.projects'), 'href' => route('projects.current')],
+                    ['label' => __('ui.previous_projects')],
+                ]" :dark="true" />
+                <div class="d-rv" style="max-width:680px;display:grid;gap:14px;padding-top:28px;color:var(--white);">
+                    <x-eyebrow style="color:rgba(255,255,255,.75);">{{ $eyebrow }}</x-eyebrow>
+                    <h1 class="t-display" style="margin:0;color:var(--white);">{{ $title }}</h1>
+                    @if ($lede)
+                        <p class="t-body-lg" style="margin:0;color:rgba(255,255,255,.8);">{{ $lede }}</p>
+                    @endif
+                </div>
             </div>
-        </div>
-    </section>
+        </section>
+    @else
+        <section class="d-sec d-sec--subtle">
+            <div class="d-container">
+                <x-breadcrumbs :items="[
+                    ['label' => __('ui.home'), 'href' => route('home')],
+                    ['label' => __('ui.projects'), 'href' => route('projects.current')],
+                    ['label' => __('ui.previous_projects')],
+                ]" />
+                <div class="d-rv" style="max-width:680px;display:grid;gap:14px;padding-top:32px;padding-bottom:40px;">
+                    <x-eyebrow>{{ $eyebrow }}</x-eyebrow>
+                    <h1 class="t-display" style="margin:0;">{{ $title }}</h1>
+                    @if ($lede)
+                        <p class="t-body-lg" style="margin:0;color:var(--fg-2);">{{ $lede }}</p>
+                    @endif
+                </div>
+            </div>
+        </section>
+    @endif
 
     {{-- ========== 2. FILTERS + MASONRY GRID ========== --}}
     <section class="d-sec">

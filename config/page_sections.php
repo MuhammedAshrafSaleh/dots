@@ -181,6 +181,7 @@ return [
             'eyebrow' => 'text',
             'title' => 'text',
             'lede' => 'text',
+            'image' => 'media',
         ],
     ],
 
