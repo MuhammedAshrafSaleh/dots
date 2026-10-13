@@ -8,7 +8,7 @@
 <div class="d-rv">
     <article class="d-card d-pcard">
         <div class="d-pcard__media">
-            <x-image-frame :src="$imgUrl" :alt="$productName" style="height:100%;" />
+            <x-image-frame :src="$imgUrl" :alt="$productName" />
             <div class="d-pcard__badges">
                 @if ($product->is_new)
                     <x-badge variant="accent">{{ __('ui.tab_new') }}</x-badge>

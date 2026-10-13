@@ -148,7 +148,6 @@
                                     <x-image-frame
                                         :src="$cat->getFirstMediaUrl('image')"
                                         :alt="$cat->getTranslation('name', $locale)"
-                                        style="height:100%;"
                                     />
                                 </div>
                                 <div class="d-ccard__body">
@@ -239,7 +238,6 @@
                                     <x-image-frame
                                         :src="$service->getFirstMediaUrl('image')"
                                         :alt="$service->getTranslation('title', $locale)"
-                                        style="height:100%;"
                                     />
                                 </div>
                                 <div class="d-scard__body">

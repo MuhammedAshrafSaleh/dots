@@ -2,15 +2,15 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.3 Home page — DONE. Next: `start T5.4`.
-- **Last commit:** `ec9b870` T5.3: Home page
+- **Current task:** T5.3 Home page — DONE (design fix). Next: `start T5.4`.
+- **Last commit:** T5.3 fix (to be committed)
 - **Open issues / left to fix:** none from T5.3.
   - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for Browser reds — commit them when convenient or at phase end.
 - **What to review on dots.test:**
-  - Open `/ar` — real home page with hero, features strip, shop-by-category, featured products (tabs: new / best / smart), services, smart banner, brands, quote band.
+  - Open `/ar` — hero, features strip, shop-by-category (4/3 images), featured products (1:1 images), services (4/3 images), smart banner, brands, quote band.
   - Open `/en` — same in English, LTR.
-  - All content comes from DB (page_sections + categories/products/services/brands). Empty sections are silently skipped.
-  - Seed first if needed: `php artisan migrate:fresh --seed`.
+  - Open at 390px in DevTools — compact layout, all card images cropped to ratio.
+  - All content comes from DB. Seed first if needed: `php artisan migrate:fresh --seed`.
 
 **Git:** branch `phase-5` · last local commit `ec9b870` (T5.3) · last tag `phase-4-done` · push state: phase-5 not pushed
 
@@ -61,7 +61,7 @@ Current phase: **5 — Public site: layout and content pages** — IN PROGRESS �
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)
 - [x] T5.1 Global layout
 - [x] T5.2 WhatsApp click logging
-- [ ] T5.3 Home
+- [x] T5.3 Home
 - [ ] T5.4 About
 - [ ] T5.5 Services and service detail
 - [ ] T5.6 Projects
@@ -153,3 +153,7 @@ Legend: [ ] todo · [x] done
   - **Motion** (`resources/js/site/motion.js`, port of Motion.jsx): first-visit preloader, page-transition curtain (intercepts same-origin left-clicks, ~480ms sweep, opt out with `data-no-curtain`), custom cursor (fine pointer), scroll reveal (IntersectionObserver). All disabled under `prefers-reduced-motion`.
   - **Language switch** = two `<a>` links (`Locale::switchUrl`), styled for anchors in `site.css` (design CSS only styled `button`).
   - **Placeholder routes.** `web.php` registers named routes the layout links to (`products`, `brands`, `services`, `projects.current`, `projects.previous`, `blog`, `about`, `track`, `search`, `category` `/c/{category}`, `page` `/p/{page}`, `newsletter.subscribe`) all rendering `site.coming-soon`. Each later Phase 5/6 task replaces the matching route body (keep the names). WhatsApp quote links use `WhatsApp::link('general')` for now; T5.2 swaps them for the logged `<x-whatsapp-button>`.
+- **2026-10-13 — WhatsApp logging (T5.2):**
+  - **No public `wa.me` links anywhere.** Every WhatsApp CTA in a public Blade view must use `<x-whatsapp-button source="...">` (or a plain `<a>` whose `href` is `URL::signedRoute('wa.redirect', …)`). The signed route logs a `quote_requests` row then redirects. `grep -r "wa\.me"` across app/ config/ database/ resources/ routes/ must only hit `app/Http/Controllers/WhatsAppController.php` and `app/Services/WhatsApp.php`. Admin views that build `wa.me` links for staff use (e.g. order update in T7.6) are exempt.
+  - **Number normalisation.** `WhatsApp::normalizeNumber(string $raw)` strips non-digits and converts a leading-`0` local Egyptian number to international format (e.g. `01500060828` → `201500060828`). Both `WhatsApp::link()` and `WhatsAppController::redirect()` pass the raw setting through this helper. The setting `contact.whatsapp_number` should store the number in international format (`201xxxxxxxxx`) — the normaliser is a safety net, not the authoritative source.
+  - **Client action pending:** set `contact.whatsapp_number` to the real number in international format via admin Settings → Contact.

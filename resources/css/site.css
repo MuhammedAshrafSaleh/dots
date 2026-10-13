@@ -70,3 +70,16 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-smart__text { padding: 24px; }
 .d-smart__media { min-height: 440px; }
 .d-compact .d-smart__media { min-height: 260px; }
+
+/* Card media containers: constrain images to the aspect-ratio box.
+   d-img uses display:grid;place-items:center which makes height:100% unreliable
+   unless the frame is absolutely positioned inside a positioned/overflow-hidden shell. */
+.d-pcard__media,
+.d-ccard__media,
+.d-scard__media { position: relative; overflow: hidden; }
+.d-pcard__media > .d-img,
+.d-ccard__media > .d-img,
+.d-scard__media > .d-img { position: absolute; inset: 0; height: 100%; }
+
+/* Card overlay link: prevent any browser from surfacing the href as visible text. */
+.d-card a.d-card__link { font-size: 0; line-height: 0; }
