@@ -88,4 +88,7 @@ return [
     'newsletter_placeholder' => 'بريدك للعروض والجديد',
     'email' => 'البريد',
     'join' => 'اشترك',
+
+    // واتساب
+    'whatsapp_cta' => 'استفسر عبر واتساب',
 ];

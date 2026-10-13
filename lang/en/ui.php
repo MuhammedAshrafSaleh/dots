@@ -88,4 +88,7 @@ return [
     'newsletter_placeholder' => 'Email for offers & new arrivals',
     'email' => 'Email',
     'join' => 'Join',
+
+    // WhatsApp
+    'whatsapp_cta' => 'Ask via WhatsApp',
 ];

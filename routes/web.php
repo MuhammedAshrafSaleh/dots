@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\WhatsAppController;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
 
@@ -14,6 +15,9 @@ Route::prefix('{locale}')
     ->middleware('setlocale')
     ->group(function (): void {
         Route::get('/', fn () => view('welcome'))->name('home');
+
+        Route::get('/wa/{source}', [WhatsAppController::class, 'redirect'])
+            ->name('wa.redirect');
 
         // Placeholder public pages. The global layout (T5.1) links to all of
         // these; each is replaced by its real screen in a later Phase 5/6 task.
