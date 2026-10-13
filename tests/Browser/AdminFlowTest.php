@@ -21,7 +21,10 @@ use App\Services\Settings;
  */
 function signInAdmin()
 {
-    $admin = adminUser();
+    // Reuse the e2e user if already created earlier in this test (multiple
+    // signInAdmin() calls within one test would otherwise hit a duplicate-key
+    // error because DatabaseTruncation only runs between tests, not between calls).
+    $admin = User::firstWhere('email', 'e2e@dots.test') ?? adminUser();
     $admin->forceFill(['email' => 'e2e@dots.test'])->save(); // factory password is "password"
 
     return visit('/admin/lang/en')
@@ -174,11 +177,11 @@ it('opens settings and saves the contact tab — cache key is updated', function
 });
 
 it('deactivated admin cannot log in', function () {
-    $other = User::factory()->create([
-        'email' => 'deactivated@dots.test',
-        'is_active' => false,
-    ]);
-    $other->syncRoles(['Admin']);
+    // adminUser() creates the user with password='password' via factory.
+    // Reuse it so the 'Admin' role does not need to pre-exist (syncRoles by
+    // name fails when DatabaseTruncation has wiped the roles table).
+    $other = adminUser();
+    $other->forceFill(['email' => 'deactivated@dots.test', 'is_active' => false])->save();
 
     visit('/admin/lang/en')
         ->navigate('/admin/login')
@@ -202,10 +205,14 @@ it('TipTap editor mounts on every rich-text screen without JS errors', function 
     $cat = PostCategory::create(['name' => ['ar' => 'تقنية', 'en' => 'Tech'], 'slug' => ['ar' => 'تقنية', 'en' => 'tech']]);
 
     // Blog body tab — TipTap mounts two ProseMirror instances (AR + EN).
+    // slug.ar + slug.en are required — fill them so validation passes.
+    // (The test previously omitted them; this was a test omission, not a code bug.)
     signInAdmin()
         ->navigate('/admin/blog/create')
         ->fill('[wire\\:model="title.en"]', 'TipTap E2E Post')
         ->fill('[wire\\:model="title.ar"]', 'مقال اختبار المحرر')
+        ->fill('[wire\\:model="slug.en"]', 'tiptap-e2e-post')
+        ->fill('[wire\\:model="slug.ar"]', 'مقال-اختبار-المحرر')
         ->select('[wire\\:model="post_category_id"]', (string) $cat->id)
         ->press('Body')
         ->assertNoJavaScriptErrors()
