@@ -2,21 +2,24 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.5 Services and service detail — DONE. Next: `start T5.6`.
-- **Last commit:** see Git line below (T5.5)
-- **Open issues / left to fix:** none from T5.5.
-  - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` Browser reds fixed in `0982dda`. 8/13 Browser tests pass; 5 remaining errors are a `DatabaseTruncation` + Spatie permission table drop issue — pre-existing, not caused by T5.x. Fix in a dedicated session before Phase 5 end.
+- **Current task:** T5.6 Projects — DONE. Next: `start T5.7`.
+- **Last commit:** `40e2060` (T5.6)
+- **Open issues / left to fix:** none from T5.6.
+  - Pre-existing (NOT from T5.x): 5 Browser test failures (`DatabaseTruncation` + Spatie permission table drop). Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
-  - Open `/ar/services` — 4 service cards (number, title, excerpt, image), 4-step process, FAQ accordion.
-  - Open `/en/services` — same in English, LTR.
-  - Open `/en/services/lighting-design` (or `/ar/services/تصميم-الاضاءة`) — hero header, what's included list, gallery, process steps, consultation form.
-  - Fill in the consultation form (name, mobile `01012345678`, project type, area) and submit — success card should appear.
-  - Open at 390px in DevTools — 1-col grid, 1-col service header, 2-col process.
   - Seed first if needed: `php artisan migrate:fresh --seed`.
+  - Open `/en/projects` — hero with cover of featured project, type filter chips, featured lead card with progress bar, 3-col grid of remaining current projects.
+  - Open `/ar/projects` — same in Arabic RTL.
+  - Click a type chip (e.g. Residential) — URL updates `?type=residential`, grid filters, lead card hidden.
+  - Open `/en/projects/previous` — page head, type chips + year filter chips, masonry grid of completed projects, pagination.
+  - Filter by year (e.g. 2026) and type — grid updates.
+  - Open a current project detail (e.g. `/en/projects/villa-27-palm-hills`) — gallery, progress bar with 5 stages, facts sidebar, WA button, related section.
+  - Open a completed project detail (e.g. `/en/projects/red-sea-resort-relight`) — Challenge/Solution/Result cards, scope sidebar, 100% progress bar.
+  - Open at 390px in DevTools — hero 1-col, grid 1-col (uses `d-projects-grid`), detail content + sidebar stack.
 
-**Git:** branch `phase-5` · last local commit `2fb2501` (T5.5) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `40e2060` (T5.6) · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done · T5.6 done
 
 ---
 
@@ -66,7 +69,7 @@ Current phase: **5 — Public site: layout and content pages** — IN PROGRESS �
 - [x] T5.3 Home
 - [x] T5.4 About
 - [x] T5.5 Services and service detail
-- [ ] T5.6 Projects
+- [x] T5.6 Projects
 - [ ] T5.7 Blog and article
 - [ ] T5.8 Brands and brand detail
 - [ ] T5.9 Content pages
