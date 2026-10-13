@@ -3,16 +3,17 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
 - **Current task:** T5.2 WhatsApp click logging — DONE. Next: `start T5.3`.
-- **Last commit:** `72e7595` T5.2: WhatsApp click logging
+- **Last commit:** `cb8d71a` T5.2 fix: route all public WA buttons through the signed logging route
 - **Open issues / left to fix:** none from T5.2.
   - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for the 2 Browser reds — commit them when convenient or at phase end; NOT part of T5.2 gate.
+  - **Client action needed:** update `contact.whatsapp_number` in Settings → Contact to international format (e.g. `201xxxxxxxxx`, no leading `+` or `0`). Current DB value appears to be local format; code now auto-converts but the admin should store the correct value.
 - **What to review on dots.test:**
-  - Visit `/ar` (or `/en`) and check the dev console for the component: `<x-whatsapp-button source="general" />` renders a green button linking to `/ar/wa/general?…&signature=…`.
-  - Click the button → should log a `quote_requests` row and redirect to `https://wa.me/201000000000?text=…`.
-  - Verify in `php artisan tinker`: `App\Models\QuoteRequest::latest()->first()` shows `source=general, locale=ar, ip=…`.
-  - BOQ button: `<x-whatsapp-button source="boq" />` — no file input in DOM.
+  - Open `/ar` — the nav "Request a quote" link and the quote band button both have `href` pointing to `/ar/wa/general?…&signature=…` (not `wa.me`).
+  - Click either button → browser redirects to `wa.me` AND `App\Models\QuoteRequest::latest()->first()` shows a logged row.
+  - BOQ (quote band) logs `source=boq`; nav quote logs `source=general`.
+  - Number format: WA redirects to `wa.me/20…` (international) even if DB stores `01…`.
 
-**Git:** branch `phase-5` · last local commit `72e7595` (T5.2) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `cb8d71a` (T5.2 fix) · last tag `phase-4-done` · push state: phase-5 not pushed
 
 Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done
 
