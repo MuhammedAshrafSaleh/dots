@@ -9,10 +9,18 @@ use App\Models\Concerns\HasTranslatableSlug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\Translatable\HasTranslations;
 
+/**
+ * @property ProjectStatus $status
+ * @property ProjectType $type
+ * @property ProjectStage $stage
+ * @property Carbon|null $start_date
+ * @property Carbon|null $expected_completion
+ */
 class Project extends Model implements HasMedia
 {
     use HasTranslatableSlug;

@@ -172,8 +172,8 @@ class Edit extends Component
                     $title = $media->getCustomProperty('title');
                     $key = (string) $media->id;
                     $this->extraFiles[$key] = [
-                        'ar'       => is_array($title) ? (string) ($title['ar'] ?? '') : '',
-                        'en'       => is_array($title) ? (string) ($title['en'] ?? '') : '',
+                        'ar' => is_array($title) ? (string) ($title['ar'] ?? '') : '',
+                        'en' => is_array($title) ? (string) ($title['en'] ?? '') : '',
                         'media_id' => $media->id,
                         'filename' => $media->file_name,
                     ];
@@ -656,7 +656,7 @@ class Edit extends Component
 
     public function addExtra(): void
     {
-        $key = (string) \Illuminate\Support\Str::uuid();
+        $key = (string) Str::uuid();
         $this->extraFiles[$key] = ['ar' => '', 'en' => '', 'media_id' => null];
     }
 
@@ -705,7 +705,7 @@ class Edit extends Component
                     $product->addMedia($upload->getRealPath())
                         ->usingFileName($upload->getClientOriginalName())
                         ->withCustomProperties([
-                            'slot'  => 'extra',
+                            'slot' => 'extra',
                             'title' => ['ar' => $extra['ar'], 'en' => $extra['en']],
                         ])
                         ->toMediaCollection('files');
@@ -732,15 +732,15 @@ class Edit extends Component
     {
         $definitions = [
             'datasheet' => ['label_ar' => 'الداتا شيت',   'label_en' => 'Datasheet',         'ext' => 'PDF'],
-            'ies'       => ['label_ar' => 'IES',           'label_en' => 'IES',               'ext' => 'IES'],
-            'ldt'       => ['label_ar' => 'LDT',           'label_en' => 'LDT',               'ext' => 'LDT'],
-            'guide'     => ['label_ar' => 'دليل التركيب',  'label_en' => 'Installation guide', 'ext' => 'PDF'],
+            'ies' => ['label_ar' => 'IES',           'label_en' => 'IES',               'ext' => 'IES'],
+            'ldt' => ['label_ar' => 'LDT',           'label_en' => 'LDT',               'ext' => 'LDT'],
+            'guide' => ['label_ar' => 'دليل التركيب',  'label_en' => 'Installation guide', 'ext' => 'PDF'],
         ];
 
         $bySlot = $this->product
             ? $this->product->getMedia('files')
                 ->filter(fn ($m) => array_key_exists($m->getCustomProperty('slot', ''), $definitions))
-                ->keyBy(fn ($m) => $m->getCustomProperty('slot'))
+                ->keyBy(fn ($m): string => (string) $m->getCustomProperty('slot'))
             : collect();
 
         $result = [];
