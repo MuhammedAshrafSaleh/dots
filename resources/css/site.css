@@ -10,3 +10,30 @@
 /* Skip-to-content link (accessibility; not part of the design export). */
 .d-skip { position: absolute; inset-inline-start: 8px; top: -48px; z-index: var(--z-toast, 9999); padding: 8px 14px; border-radius: var(--radius-md); background: var(--ink-900); color: var(--white); font: 700 14px/1 var(--font-body); transition: top var(--dur-fast); }
 .d-skip:focus { top: 8px; }
+
+/* Language switch rendered as links (server-side navigation, hreflang-aware).
+   Mirrors the design's `.d-lang button` styling for anchors. */
+.d-lang a { display: inline-flex; align-items: center; justify-content: center; text-decoration: none; height: 30px; min-width: 38px; padding-inline: 10px; border-radius: var(--radius-pill); background: transparent; font: 800 12px/1 var(--font-body); color: var(--fg-2); }
+.d-lang a[lang="ar"] { font-family: 'IBM Plex Sans Arabic', sans-serif; font-size: 13px; }
+.d-lang a[aria-pressed="true"] { background: var(--white); color: var(--fg-1); box-shadow: var(--shadow-xs); }
+.d-lang a:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Quote band (Shared.jsx KQuoteBand) — card + responsive layout. */
+.d-qb-sec { background: var(--bg-subtle); padding-block: 48px; }
+.d-qb { border: 1px solid var(--border-1); background: var(--white); border-radius: var(--radius-xl); padding: 40px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 40px; align-items: center; }
+.d-compact .d-qb-sec { padding-block: 32px; }
+.d-compact .d-qb { grid-template-columns: 1fr; padding: 24px; gap: 20px; }
+.d-compact .d-qb .d-node-list { grid-template-columns: 1fr; }
+
+/* Header: show the full bar on wide viewports, the compact bar on narrow ones.
+   `.d-compact` is toggled on <html> by viewport (app.js) + an inline head script. */
+html:not(.d-compact) .d-nav--compact { display: none; }
+html.d-compact .d-nav--full { display: none; }
+
+/* Progressive enhancement: without JS, reveal elements and never let the
+   preloader cover the page. The inline head script adds `.d-js`; the preloader
+   only shows on the first visit of a session (`.d-preload`). */
+html:not(.d-js) .d-rv { opacity: 1; transform: none; }
+html:not(.d-js) .d-rv:not(.is-on) > .d-img,
+html:not(.d-js) .d-rv:not(.is-on) > * > .d-img { clip-path: none; }
+html:not(.d-preload) .d-pre { display: none; }

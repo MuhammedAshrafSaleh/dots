@@ -8,22 +8,24 @@ it('redirects the bare root to the default locale', function () {
     $this->get('/')->assertRedirect('/ar');
 });
 
-it('renders Arabic with rtl direction and the placeholder shell', function () {
+it('renders Arabic with rtl direction and the global layout', function () {
     $this->get('/ar')
         ->assertOk()
         ->assertSee('lang="ar-EG"', false)
         ->assertSee('dir="rtl"', false)
         ->assertSee(__('ui.under_construction', [], 'ar'))
-        ->assertSee(__('ui.all_rights_reserved', [], 'ar'));
+        ->assertSee('d-nav', false)                       // global header (T5.1)
+        ->assertSee(__('ui.track_order', [], 'ar'));      // locale-aware nav label
 });
 
-it('renders English with ltr direction and the placeholder shell', function () {
+it('renders English with ltr direction and the global layout', function () {
     $this->get('/en')
         ->assertOk()
         ->assertSee('lang="en"', false)
         ->assertSee('dir="ltr"', false)
         ->assertSee('DOTS — under construction')
-        ->assertSee('All rights reserved.');
+        ->assertSee('d-nav', false)                       // global header (T5.1)
+        ->assertSee('Track order');                       // locale-aware nav label
 });
 
 it('404s on an unsupported locale', function () {

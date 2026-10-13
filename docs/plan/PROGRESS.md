@@ -1,15 +1,16 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-4` (local only, not pushed).
-- **Current task:** Phase 4 complete. All gates green. Awaiting owner smoke-test and push approval.
-- **Last commit:** `7ad3ef1` T4.7 fix: services.description → TipTap + Html::cleanTranslations on save
-- **Open issues / left to fix:** none — all post-check failures resolved.
-- **What to review:** See `docs/plan/reports/phase-4.md` § 10-minute smoke-test list. Confirm each URL/action before approving push.
+- **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
+- **Current task:** T5.1 Global layout — DONE. Next: `start T5.2`.
+- **Last commit:** `<pending>` T5.1: Global layout (header, mega menu, footer, motion)
+- **Open issues / left to fix:**
+  - Pre-existing (NOT from T5.1): `tests/Browser/AdminFlowTest.php` has 2 reds locally — "deactivated admin cannot log in" (needs seeded `Admin` role, which `DatabaseTruncation` wipes between tests) and "TipTap … Post saved". They fail run alone on an untouched tree; admin domain, unrelated to Phase 5. The default `php artisan test` (Unit+Feature only — Browser is NOT in phpunit.xml testsuites) is fully green.
+- **What to review on dots.test:** open `/ar` and `/en` (home) — utility strip, header, EN/عربي switch, click **Categories** (mega menu from the seeded tree + promo), **Projects ▾**, footer columns + newsletter + socials + payments line, the quote band. Resize to ~390px → compact header (hamburger + slide-down menu). Click a nav link → page curtain; first visit of a session → preloader. All motion off under `prefers-reduced-motion`. Nav targets (Products/Brands/Services/Projects/Blog/About/Track/category) render a "coming soon" placeholder — real screens land in T5.3+.
 
-**Git:** branch `main` · last local commit merge "Phase 4 complete" · last tag `phase-4-done` · push state: pushed
+**Git:** branch `phase-5` · last local commit `<pending>` (T5.1) · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **4 — Admin: content and settings** — DONE ✅ · next: Phase 5
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done
 
 ---
 
@@ -54,7 +55,7 @@ Current phase: **4 — Admin: content and settings** — DONE ✅ · next: Phase
 - [x] T4.8 Product Files tab: named slots + titled extras (carried from Phase 3)
 
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)
-- [ ] T5.1 Global layout
+- [x] T5.1 Global layout
 - [ ] T5.2 WhatsApp click logging
 - [ ] T5.3 Home
 - [ ] T5.4 About
@@ -142,3 +143,9 @@ Legend: [ ] todo · [x] done
   - **Widget architecture:** presentational Blade components under `resources/views/components/admin/` bind to the parent Livewire component via `wire:model`/method names passed as props (so state stays server-authoritative); stateful search is a real Livewire widget (`ProductPicker`, `#[Modelable]`). Conditional attributes via `@if … @endif` inside an `<x-…>` tag break the Blade component compiler — always-render the attribute or branch in plain markup instead.
   - **Rich text (updates Q6):** the editor is an Alpine `contenteditable` wrapper with the design toolbar (`execCommand`), synced to Livewire via `$wire.entangle`. Full TipTap is deferred to the Phase 4 content editors; the security guarantee is server-side: `App\Support\Html::clean()` runs every rich field through the `dots_rich` HTMLPurifier profile (h2/h3/p/strong/em/a/ul/ol/li/blockquote/figure+figcaption/img/div.d-callout only) on save.
   - **phpstan:** `InteractsWithAdminForms` + `WithAdminTable` are temporarily in `excludePaths` (larastan `trait.unused` until a screen consumes them in T3.3/T3.6 — remove then; both are covered by the T3.2 widget-harness test).
+- **2026-10-13 — Global layout (T5.1):**
+  - **Site components** live under `resources/views/components/site/` (`header`, `mega-menu`, `footer`, `search-bar`, `lang-switch`, `quote-band`, `motion`), wired into `components/layouts/app.blade.php`. Data comes from the DB via `App\Services\Navigation` (category mega tree + footer categories/pages, queried live — caching is a Phase 9 concern) and the `Settings` service (contact/footer/socials) + `global.*` `page_sections` (mega_promo, newsletter, quote_band). Only nav/UI labels are in `lang/{ar,en}/ui.php`.
+  - **Responsive `compact` mode.** The design keys mobile styling off a `.d-compact` ancestor class (not media queries). A blocking inline `<head>` script sets `.d-js` + `.d-compact` (≤860px) + `.d-preload` (first visit of a session, motion allowed) on `<html>` before paint (no FOUC); `resources/js/site/motion.js` keeps `.d-compact` in sync on resize. The header renders BOTH a full and a compact bar; `site.css` shows one per `.d-compact` state. No-JS guards in `site.css` reveal `.d-rv` and hide `.d-pre` when `.d-js` is absent.
+  - **Motion** (`resources/js/site/motion.js`, port of Motion.jsx): first-visit preloader, page-transition curtain (intercepts same-origin left-clicks, ~480ms sweep, opt out with `data-no-curtain`), custom cursor (fine pointer), scroll reveal (IntersectionObserver). All disabled under `prefers-reduced-motion`.
+  - **Language switch** = two `<a>` links (`Locale::switchUrl`), styled for anchors in `site.css` (design CSS only styled `button`).
+  - **Placeholder routes.** `web.php` registers named routes the layout links to (`products`, `brands`, `services`, `projects.current`, `projects.previous`, `blog`, `about`, `track`, `search`, `category` `/c/{category}`, `page` `/p/{page}`, `newsletter.subscribe`) all rendering `site.coming-soon`. Each later Phase 5/6 task replaces the matching route body (keep the names). WhatsApp quote links use `WhatsApp::link('general')` for now; T5.2 swaps them for the logged `<x-whatsapp-button>`.
