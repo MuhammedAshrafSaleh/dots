@@ -2,15 +2,19 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.1 Global layout — DONE. Next: `start T5.2`.
-- **Last commit:** `1887eb9` T5.1: Global layout (header, mega menu, footer, motion)
-- **Open issues / left to fix:**
-  - Pre-existing (NOT from T5.1): `tests/Browser/AdminFlowTest.php` has 2 reds locally — "deactivated admin cannot log in" (needs seeded `Admin` role, which `DatabaseTruncation` wipes between tests) and "TipTap … Post saved". They fail run alone on an untouched tree; admin domain, unrelated to Phase 5. The default `php artisan test` (Unit+Feature only — Browser is NOT in phpunit.xml testsuites) is fully green.
-- **What to review on dots.test:** open `/ar` and `/en` (home) — utility strip, header, EN/عربي switch, click **Categories** (mega menu from the seeded tree + promo), **Projects ▾**, footer columns + newsletter + socials + payments line, the quote band. Resize to ~390px → compact header (hamburger + slide-down menu). Click a nav link → page curtain; first visit of a session → preloader. All motion off under `prefers-reduced-motion`. Nav targets (Products/Brands/Services/Projects/Blog/About/Track/category) render a "coming soon" placeholder — real screens land in T5.3+.
+- **Current task:** T5.2 WhatsApp click logging — DONE. Next: `start T5.3`.
+- **Last commit:** `72e7595` T5.2: WhatsApp click logging
+- **Open issues / left to fix:** none from T5.2.
+  - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for the 2 Browser reds — commit them when convenient or at phase end; NOT part of T5.2 gate.
+- **What to review on dots.test:**
+  - Visit `/ar` (or `/en`) and check the dev console for the component: `<x-whatsapp-button source="general" />` renders a green button linking to `/ar/wa/general?…&signature=…`.
+  - Click the button → should log a `quote_requests` row and redirect to `https://wa.me/201000000000?text=…`.
+  - Verify in `php artisan tinker`: `App\Models\QuoteRequest::latest()->first()` shows `source=general, locale=ar, ip=…`.
+  - BOQ button: `<x-whatsapp-button source="boq" />` — no file input in DOM.
 
-**Git:** branch `phase-5` · last local commit `1887eb9` (T5.1) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `72e7595` (T5.2) · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done
 
 ---
 
@@ -56,7 +60,7 @@ Current phase: **5 — Public site: layout and content pages** — IN PROGRESS �
 
 ## Phase 5 — Public site: layout and content pages  (`phase-05-public-content.md`)
 - [x] T5.1 Global layout
-- [ ] T5.2 WhatsApp click logging
+- [x] T5.2 WhatsApp click logging
 - [ ] T5.3 Home
 - [ ] T5.4 About
 - [ ] T5.5 Services and service detail
