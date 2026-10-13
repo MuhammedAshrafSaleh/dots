@@ -2,20 +2,19 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.2 WhatsApp click logging — DONE. Next: `start T5.3`.
-- **Last commit:** `cb8d71a` T5.2 fix: route all public WA buttons through the signed logging route
-- **Open issues / left to fix:** none from T5.2.
-  - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for the 2 Browser reds — commit them when convenient or at phase end; NOT part of T5.2 gate.
-  - **Client action needed:** update `contact.whatsapp_number` in Settings → Contact to international format (e.g. `201xxxxxxxxx`, no leading `+` or `0`). Current DB value appears to be local format; code now auto-converts but the admin should store the correct value.
+- **Current task:** T5.3 Home page — DONE. Next: `start T5.4`.
+- **Last commit:** `ec9b870` T5.3: Home page
+- **Open issues / left to fix:** none from T5.3.
+  - Pre-existing (NOT from T5.x): `phpunit.xml` and `tests/Browser/AdminFlowTest.php` have uncommitted fixes for Browser reds — commit them when convenient or at phase end.
 - **What to review on dots.test:**
-  - Open `/ar` — the nav "Request a quote" link and the quote band button both have `href` pointing to `/ar/wa/general?…&signature=…` (not `wa.me`).
-  - Click either button → browser redirects to `wa.me` AND `App\Models\QuoteRequest::latest()->first()` shows a logged row.
-  - BOQ (quote band) logs `source=boq`; nav quote logs `source=general`.
-  - Number format: WA redirects to `wa.me/20…` (international) even if DB stores `01…`.
+  - Open `/ar` — real home page with hero, features strip, shop-by-category, featured products (tabs: new / best / smart), services, smart banner, brands, quote band.
+  - Open `/en` — same in English, LTR.
+  - All content comes from DB (page_sections + categories/products/services/brands). Empty sections are silently skipped.
+  - Seed first if needed: `php artisan migrate:fresh --seed`.
 
-**Git:** branch `phase-5` · last local commit `cb8d71a` (T5.2 fix) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `ec9b870` (T5.3) · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done
 
 ---
 
