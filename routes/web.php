@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\WhatsAppController;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Route;
@@ -14,7 +15,7 @@ Route::prefix('{locale}')
     ->whereIn('locale', Locale::SUPPORTED)
     ->middleware('setlocale')
     ->group(function (): void {
-        Route::get('/', fn () => view('welcome'))->name('home');
+        Route::get('/', HomeController::class)->name('home');
 
         Route::get('/wa/{source}', [WhatsAppController::class, 'redirect'])
             ->name('wa.redirect');

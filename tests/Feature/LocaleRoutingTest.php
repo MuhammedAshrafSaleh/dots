@@ -13,7 +13,7 @@ it('renders Arabic with rtl direction and the global layout', function () {
         ->assertOk()
         ->assertSee('lang="ar-EG"', false)
         ->assertSee('dir="rtl"', false)
-        ->assertSee(__('ui.under_construction', [], 'ar'))
+        ->assertSee('d-hi', false)                        // home hero section (T5.3)
         ->assertSee('d-nav', false)                       // global header (T5.1)
         ->assertSee(__('ui.track_order', [], 'ar'));      // locale-aware nav label
 });
@@ -23,7 +23,7 @@ it('renders English with ltr direction and the global layout', function () {
         ->assertOk()
         ->assertSee('lang="en"', false)
         ->assertSee('dir="ltr"', false)
-        ->assertSee('DOTS — under construction')
+        ->assertSee('d-hi', false)                        // home hero section (T5.3)
         ->assertSee('d-nav', false)                       // global header (T5.1)
         ->assertSee('Track order');                       // locale-aware nav label
 });

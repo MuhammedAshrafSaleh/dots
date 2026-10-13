@@ -91,4 +91,20 @@ return [
 
     // WhatsApp
     'whatsapp_cta' => 'Ask via WhatsApp',
+
+    // Home — hero controls
+    'replay_intro' => 'Replay intro',
+    'pause_video' => 'Pause video',
+    'play_video' => 'Play video',
+
+    // Home — featured products tabs
+    'tab_new' => 'New arrivals',
+    'tab_best' => 'Best sellers',
+    'tab_smart' => 'Smart home',
+
+    // Home — category / product card labels
+    'n_products' => ':count products',
+    'price_on_request' => 'Price on request',
+    'all_categories' => 'All categories',
+    'egp' => 'EGP',
 ];
