@@ -2,6 +2,9 @@
 
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProjectDetailController;
+use App\Http\Controllers\ProjectsCurrentController;
+use App\Http\Controllers\ProjectsPreviousController;
 use App\Http\Controllers\ServiceDetailController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
@@ -31,8 +34,9 @@ Route::prefix('{locale}')
         Route::get('/brands', $comingSoon)->name('brands');
         Route::get('/services', ServicesController::class)->name('services');
         Route::get('/services/{slug}', ServiceDetailController::class)->name('service.show');
-        Route::get('/projects', $comingSoon)->name('projects.current');
-        Route::get('/projects/previous', $comingSoon)->name('projects.previous');
+        Route::get('/projects', ProjectsCurrentController::class)->name('projects.current');
+        Route::get('/projects/previous', ProjectsPreviousController::class)->name('projects.previous');
+        Route::get('/projects/{slug}', ProjectDetailController::class)->name('project.show');
         Route::get('/blog', $comingSoon)->name('blog');
         Route::get('/about', AboutController::class)->name('about');
         Route::get('/track-order', $comingSoon)->name('track');
