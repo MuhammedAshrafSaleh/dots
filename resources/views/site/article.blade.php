@@ -22,6 +22,13 @@
     }
 @endphp
 <x-layouts.app :title="$post->getTranslation('meta_title', $locale) ?: $title">
+<x-seo
+    :title="$post->getTranslation('meta_title', $locale) ?: $title"
+    :description="$post->getTranslation('meta_description', $locale) ?: $excerpt"
+    :image="$coverImg"
+    type="article"
+    :alternate-url="$alternateUrl ?? null"
+/>
 
     {{-- ========== 1. ARTICLE HEADER ========== --}}
     <div class="d-container" style="padding-top:32px;display:grid;gap:24px;max-width:1000px;">

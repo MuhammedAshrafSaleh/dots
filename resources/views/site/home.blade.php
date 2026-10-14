@@ -14,6 +14,7 @@
     $smartImg = $media('smart_banner', 'image');
 @endphp
 <x-layouts.app :title="$field('hero', 'headline') ?: 'DOTS'">
+<x-seo :title="$field('hero', 'headline')" :description="$field('hero', 'subhead')" :image="$heroPoster" />
 
     {{-- ========== 1. HERO ========== --}}
     <section

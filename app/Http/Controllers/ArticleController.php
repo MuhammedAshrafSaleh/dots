@@ -22,6 +22,10 @@ class ArticleController extends Controller
             ->take(3)
             ->get();
 
-        return view('site.article', compact('post', 'related', 'locale'));
+        $altLocale = $locale === 'ar' ? 'en' : 'ar';
+        $altSlug = $post->getTranslation('slug', $altLocale);
+        $alternateUrl = $altSlug ? "/{$altLocale}/blog/{$altSlug}" : null;
+
+        return view('site.article', compact('post', 'related', 'locale', 'alternateUrl'));
     }
 }

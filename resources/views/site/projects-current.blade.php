@@ -13,6 +13,7 @@
     $stageLabels = array_map(fn ($s) => $s->label(), $stages);
 @endphp
 <x-layouts.app :title="__('ui.current_projects')">
+<x-seo :title="__('ui.current_projects')" />
 
     {{-- ========== 1. HERO ========== --}}
     @php

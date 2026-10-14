@@ -17,6 +17,7 @@
     $lede      = $section?->field('lede', $locale) ?: __('ui.previous_projects_sub');
 @endphp
 <x-layouts.app :title="$title">
+<x-seo :title="$title" :description="$lede" />
 
     {{-- ========== 1. HERO ========== --}}
     @if ($heroImg)

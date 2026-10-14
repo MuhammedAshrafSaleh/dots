@@ -14,6 +14,7 @@ use App\Http\Controllers\ServiceDetailController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
 use App\Support\Locale;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
 
 // Admin area (/admin) — not locale-prefixed; see routes/admin.php.
@@ -21,6 +22,26 @@ require __DIR__.'/admin.php';
 
 // Bare "/" (and any locale-less visit) goes to the default locale.
 Route::get('/', fn () => redirect('/'.Locale::DEFAULT));
+
+// SEO files — served outside the locale prefix.
+Route::get('/robots.txt', function () {
+    $sitemap = url('/sitemap.xml');
+
+    return response(
+        "User-agent: *\nAllow: /\nDisallow: /admin\n\nSitemap: {$sitemap}\n",
+        200,
+        ['Content-Type' => 'text/plain']
+    );
+});
+
+Route::get('/sitemap.xml', function () {
+    $path = public_path('sitemap.xml');
+    if (! file_exists($path)) {
+        Artisan::call('sitemap:generate');
+    }
+
+    return response()->file($path, ['Content-Type' => 'application/xml']);
+});
 
 Route::prefix('{locale}')
     ->whereIn('locale', Locale::SUPPORTED)

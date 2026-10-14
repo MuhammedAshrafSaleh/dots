@@ -30,6 +30,7 @@
     $ctaBg = $media('cta', 'background_image');
 @endphp
 <x-layouts.app :title="$field('hero', 'title') ?: __('ui.about')">
+<x-seo :title="$field('hero', 'title') ?: __('ui.about')" :description="$field('hero', 'lede')" />
 
     {{-- ========== 1. HERO ========== --}}
     <section class="d-hi" aria-label="{{ $field('hero', 'eyebrow') }}">

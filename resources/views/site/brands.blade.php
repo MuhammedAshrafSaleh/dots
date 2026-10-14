@@ -17,6 +17,7 @@
     ]);
 @endphp
 <x-layouts.app :title="$field('head', 'title') ?: __('ui.brands')">
+<x-seo :title="$field('head', 'title') ?: __('ui.brands')" :description="$field('head', 'lede')" />
 
     {{-- ========== 1. PAGE HEAD ========== --}}
     <section class="d-sec d-sec--subtle">

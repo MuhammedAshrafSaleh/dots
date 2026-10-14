@@ -15,6 +15,11 @@
     $tabUrl = fn (string $id) => request()->fullUrlWithQuery(['cat' => $id, 'page' => 1]);
 @endphp
 <x-layouts.app :title="$brand->getTranslation('meta_title', $locale) ?: $brand->name">
+<x-seo
+    :title="$brand->getTranslation('meta_title', $locale) ?: $brand->name"
+    :description="$brand->getTranslation('meta_description', $locale)"
+    :image="$coverUrl ?: $logoUrl"
+/>
 
     {{-- ========== 1. BRAND HEADER ========== --}}
     <div style="background:var(--bg-subtle);border-bottom:1px solid var(--border-1);">

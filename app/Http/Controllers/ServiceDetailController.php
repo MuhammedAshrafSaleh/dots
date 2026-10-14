@@ -20,6 +20,10 @@ class ServiceDetailController extends Controller
             ->get()
             ->keyBy('key');
 
-        return view('site.service-detail', compact('service', 'sections'));
+        $altLocale = $locale === 'ar' ? 'en' : 'ar';
+        $altSlug = $service->getTranslation('slug', $altLocale);
+        $alternateUrl = $altSlug ? "/{$altLocale}/services/{$altSlug}" : null;
+
+        return view('site.service-detail', compact('service', 'sections', 'alternateUrl'));
     }
 }

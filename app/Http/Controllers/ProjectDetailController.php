@@ -39,6 +39,10 @@ class ProjectDetailController extends Controller
             $related = $related->concat($more);
         }
 
-        return view('site.project-detail', compact('project', 'isCurrent', 'related'));
+        $altLocale = $locale === 'ar' ? 'en' : 'ar';
+        $altSlug = $project->getTranslation('slug', $altLocale);
+        $alternateUrl = $altSlug ? "/{$altLocale}/projects/{$altSlug}" : null;
+
+        return view('site.project-detail', compact('project', 'isCurrent', 'related', 'alternateUrl'));
     }
 }

@@ -19,7 +19,13 @@
         'content' => $faq->getTranslation('answer', $locale),
     ])->all();
 @endphp
-<x-layouts.app :title="$service->getTranslation('title', $locale)">
+<x-layouts.app :title="$service->getTranslation('meta_title', $locale) ?: $service->getTranslation('title', $locale)">
+<x-seo
+    :title="$service->getTranslation('meta_title', $locale) ?: $service->getTranslation('title', $locale)"
+    :description="$service->getTranslation('meta_description', $locale) ?: $service->getTranslation('excerpt', $locale)"
+    :image="$heroImg"
+    :alternate-url="$alternateUrl ?? null"
+/>
 
     {{-- ========== 1. HEADER ========== --}}
     <div style="border-bottom:1px solid var(--border-1);">

@@ -10,6 +10,11 @@
         route('page', [$locale, $p->getTranslation('slug', $locale)]);
 @endphp
 <x-layouts.app :title="$page->getTranslation('meta_title', $locale) ?: $title">
+<x-seo
+    :title="$page->getTranslation('meta_title', $locale) ?: $title"
+    :description="$page->getTranslation('meta_description', $locale) ?: $lede"
+    :alternate-url="$alternateUrl ?? null"
+/>
 
     {{-- ========== 1. PAGE HEAD ========== --}}
     <section class="d-sec d-sec--subtle">

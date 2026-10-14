@@ -19,10 +19,15 @@ class ContentPageController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $altLocale = $locale === 'ar' ? 'en' : 'ar';
+        $altSlug = $record->getTranslation('slug', $altLocale);
+        $alternateUrl = $altSlug ? "/{$altLocale}/p/{$altSlug}" : null;
+
         return view('site.content-page', [
             'page' => $record,
             'navPages' => $navPages,
             'locale' => $locale,
+            'alternateUrl' => $alternateUrl,
         ]);
     }
 }

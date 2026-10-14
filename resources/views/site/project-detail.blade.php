@@ -32,7 +32,13 @@
         $facts->push(['user', __('ui.client_label'), $clientVal]);
     }
 @endphp
-<x-layouts.app :title="$project->getTranslation('title', $locale)">
+<x-layouts.app :title="$project->getTranslation('meta_title', $locale) ?: $project->getTranslation('title', $locale)">
+<x-seo
+    :title="$project->getTranslation('meta_title', $locale) ?: $project->getTranslation('title', $locale)"
+    :description="$project->getTranslation('meta_description', $locale) ?: $project->getTranslation('scope_summary', $locale)"
+    :image="$coverImg"
+    :alternate-url="$alternateUrl ?? null"
+/>
 
     {{-- ========== 1. BREADCRUMB + TITLE ========== --}}
     <div class="d-container" style="padding-top:24px;">

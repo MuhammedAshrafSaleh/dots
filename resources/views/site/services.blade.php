@@ -17,6 +17,7 @@
     ])->all();
 @endphp
 <x-layouts.app :title="$field('head', 'title') ?: __('ui.services')">
+<x-seo :title="$field('head', 'title') ?: __('ui.services')" :description="$field('head', 'lede')" />
 
     {{-- ========== 1. PAGE HEAD ========== --}}
     <section class="d-sec d-sec--subtle">
