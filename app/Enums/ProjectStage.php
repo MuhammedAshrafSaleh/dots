@@ -10,4 +10,14 @@ enum ProjectStage: string
     case Installation = 'installation';
     case Commissioning = 'commissioning';
     case Handover = 'handover';
+
+    public function label(): string
+    {
+        return __('ui.stage_'.$this->value);
+    }
+
+    public function index(): int
+    {
+        return array_search($this, self::cases(), true);
+    }
 }

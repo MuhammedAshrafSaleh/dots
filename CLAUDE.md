@@ -24,7 +24,7 @@ Bilingual (AR RTL default / EN) lighting & electrical catalog + e-commerce. Lara
 - If a push fails (network/auth/conflict): **STOP and report the exact error.** Do not work around it, change credentials, or force-push.
 - Each 2-line task summary must include the commit hash (local).
 - Keep the "Git" line at the top of PROGRESS.md (current branch · last local commit · last tag · push state) updated after every commit.
-- **Before every task commit, run all four gates: `php artisan test`, `composer analyse`, `vendor/bin/pint --test`, `npm run build`. A task is NOT done if any gate fails.**
+- **Before every task commit, run all four gates: `php artisan test` (Unit + Feature + Browser), `composer analyse`, `vendor/bin/pint --test`, `npm run build`. A task is NOT done if any gate fails.**
 
 ## Non-negotiable rules
 - **No hardcoded content in Blade.** Everything in CONTENT_MAP.md comes from the DB. Only UI labels go in `lang/ar|en`.

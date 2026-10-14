@@ -247,7 +247,7 @@ class ContentSeeder extends Seeder
                 'h2' => "<h2>{$text}</h2>",
                 'h3' => "<h3>{$text}</h3>",
                 'p' => "<p>{$text}</p>",
-                'callout' => "<blockquote>{$text}</blockquote>",
+                'callout' => "<div class=\"d-callout\">{$text}</div>",
                 default => '',
             };
         }

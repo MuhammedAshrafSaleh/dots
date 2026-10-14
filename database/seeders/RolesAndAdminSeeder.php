@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
 use Spatie\Permission\Models\Permission;
@@ -20,11 +21,19 @@ class RolesAndAdminSeeder extends Seeder
         /** @var array<int, string> $names */
         $names = config('permissions');
 
-        foreach ($names as $name) {
-            Permission::findOrCreate($name, 'web');
-        }
+        // Single-statement batch insert avoids N individual gap-lock cycles on
+        // the unique index that RefreshDatabase transactions can deadlock on.
+        $now = Carbon::now();
+        Permission::insertOrIgnore(
+            collect($names)->map(fn (string $n) => [
+                'name' => $n,
+                'guard_name' => 'web',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ])->all()
+        );
 
-        $admin = Role::findOrCreate('Admin', 'web');
+        $admin = Role::firstOrCreate(['name' => 'Admin', 'guard_name' => 'web']);
         $admin->syncPermissions($names);
 
         $email = (string) config('dots.admin.email');
