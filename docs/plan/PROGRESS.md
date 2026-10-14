@@ -2,20 +2,19 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.10 SEO basics — DONE. All Phase 5 tasks complete — run phase checklist next.
-- **Last commit:** `3fcf982` (T5.10)
-- **Open issues / left to fix:** none from T5.10.
-  - Pre-existing (NOT from T5.x): 5 Browser test failures (`DatabaseTruncation` + Spatie permission table drop). Fix in a dedicated session before Phase 5 end.
+- **Current task:** Phase 5 complete — phase checklist run, report written. Awaiting owner review.
+- **Last commit:** `e91517c` (docs: phase-5 report + PROGRESS checklist items)
+- **Open issues / left to fix:**
+  - Pre-existing intermittent deadlock: `ProductionSeedGuardsTest` fires `SQLSTATE[40001]` occasionally in the full suite, cascading failures. Tests all pass in isolation. Fix in a dedicated session before Phase 5 is approved.
 - **What to review on dots.test:**
   - Seed first if needed: `php artisan migrate:fresh --seed`.
-  - View-source any public page (e.g. `/en/brands`) — confirm `<meta name="description">`, `<link rel="canonical">`, two `hreflang` links, OG tags in `<head>`.
-  - Open `/robots.txt` — plain text with `Disallow: /admin` and `Sitemap:` line.
-  - Run `php artisan sitemap:generate` then open `/sitemap.xml` — valid XML with `<urlset>`, entries for both locales.
-  - On an article page (e.g. `/en/blog/{slug}`), check the AR hreflang points to `/ar/blog/{ar-slug}` (not just locale-prefix swap).
+  - Smoke-test list in `docs/plan/reports/phase-5.md`.
+  - View-source any public page — confirm `<meta name="description">`, `<link rel="canonical">`, two `hreflang` links, OG tags.
+  - Open `/robots.txt` and `/sitemap.xml`.
 
-**Git:** branch `phase-5` · last local commit (T5.10) `3fcf982` · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `e91517c` · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — ALL TASKS DONE · T5.1–T5.10 all done · run phase checklist next
+Current phase: **5 — Public site: layout and content pages** — CHECKLIST DONE · report at `docs/plan/reports/phase-5.md` · awaiting owner review
 
 ---
 
@@ -66,10 +65,10 @@ Current phase: **5 — Public site: layout and content pages** — ALL TASKS DON
 - [x] T5.4 About
 - [x] T5.5 Services and service detail
 - [x] T5.6 Projects
-- [ ] T5.7 Blog and article
-- [ ] T5.8 Brands and brand detail
-- [ ] T5.9 Content pages
-- [ ] T5.10 SEO basics
+- [x] T5.7 Blog and article
+- [x] T5.8 Brands and brand detail
+- [x] T5.9 Content pages
+- [x] T5.10 SEO basics
 
 ## Phase 6 — Public site: catalog  (`phase-06-catalog-front.md`)
 - [ ] T6.1 Category page
