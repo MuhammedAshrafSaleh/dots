@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
 - **Current task:** Phase 5 complete — checklist done, deadlock fixed, report updated. Awaiting owner review.
-- **Last commit:** `(see below)` fix: RolesAndAdminSeeder — batch insertOrIgnore to eliminate gap-lock deadlock
+- **Last commit:** `a2bcfed` fix: RolesAndAdminSeeder — batch insertOrIgnore to eliminate gap-lock deadlock
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - Seed first if needed: `php artisan migrate:fresh --seed`.
@@ -11,7 +11,7 @@
   - View-source any public page — confirm `<meta name="description">`, `<link rel="canonical">`, two `hreflang` links, OG tags.
   - Open `/robots.txt` and `/sitemap.xml`.
 
-**Git:** branch `phase-5` · last local commit `e91517c` · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit `a2bcfed` · last tag `phase-4-done` · push state: phase-5 not pushed
 
 Current phase: **5 — Public site: layout and content pages** — CHECKLIST DONE · report at `docs/plan/reports/phase-5.md` · awaiting owner review
 
