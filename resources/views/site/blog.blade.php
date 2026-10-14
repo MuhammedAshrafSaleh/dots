@@ -80,10 +80,10 @@
                 @endphp
                 <div class="d-rv" style="margin-bottom:40px;">
                     <a href="{{ route('blog.show', [$locale, $featSlug]) }}" class="d-card d-acard d-acard--wide"
-                       style="display:grid;grid-template-columns:1.2fr 1fr;text-decoration:none;">
-                        <x-image-frame class="d-acard__media" ratio="4 / 3" :src="$featImg ?: null"
+                       style="text-decoration:none;">
+                        <x-image-frame class="d-acard__media" :src="$featImg ?: null"
                                        :alt="$featured->getTranslation('title', $locale)" />
-                        <div class="d-card__body" style="padding:36px;display:grid;gap:10px;align-content:center;">
+                        <div class="d-card__body" style="display:grid;gap:10px;align-content:center;">
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
                                 <x-badge tone="accent">{{ __('ui.featured') }}</x-badge>
                                 @if ($featCat)
