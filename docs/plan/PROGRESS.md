@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
 - **Current task:** T6.2 — Products listing (Livewire) — DONE.
-- **Last commit:** pending (about to commit T6.2)
+- **Last commit:** `8f57db3` T6.2: Products listing (Livewire)
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - `php artisan migrate:fresh --seed` first.
@@ -11,7 +11,7 @@
   - Try `/en/products?cat=<id>` to confirm category pre-filter from category page "Shop All" link.
   - Check AR: `/ar/products` — RTL layout, Arabic labels.
 
-**Git:** branch `phase-6` · last local commit TBD · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last local commit `8f57db3` · last tag `phase-4-done` · push state: phase-6 not pushed
 
 Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done
 
