@@ -40,6 +40,12 @@ final class CacheTags
      * back to plain remember (the cache is still invalidated on any flush,
      * which flushes the whole store on non-taggable drivers).
      *
+     * On non-taggable stores (database, file) we also guard against stale
+     * serialized entries that can no longer be deserialized — e.g. after a
+     * PHP upgrade or a class rename.  When the cached value comes back as an
+     * `__PHP_Incomplete_Class` we evict the key and re-run the callback so
+     * the request completes cleanly.
+     *
      * @template T
      *
      * @param  \Closure(): T  $callback
@@ -51,6 +57,18 @@ final class CacheTags
             return Cache::tags($tag)->remember($key, $seconds, $callback);
         }
 
-        return Cache::remember($key, $seconds, $callback);
+        $value = Cache::get($key);
+
+        if ($value !== null && is_object($value) && get_class($value) === '__PHP_Incomplete_Class') {
+            Cache::forget($key);
+            $value = null;
+        }
+
+        if ($value === null) {
+            $value = $callback();
+            Cache::put($key, $value, $seconds);
+        }
+
+        return $value;
     }
 }
