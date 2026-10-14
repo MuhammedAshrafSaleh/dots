@@ -2,22 +2,21 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.8 Brands — DONE. Next: `start T5.9`.
-- **Last commit:** `9321e06` (T5.8)
-- **Open issues / left to fix:** none from T5.8.
+- **Current task:** T5.9 Content pages — DONE. Next: `start T5.10`.
+- **Last commit:** `230c309` (T5.9)
+- **Open issues / left to fix:** none from T5.9.
   - Pre-existing (NOT from T5.x): 5 Browser test failures (`DatabaseTruncation` + Spatie permission table drop). Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
   - Seed first if needed: `php artisan migrate:fresh --seed`.
-  - Open `/en/brands` — page header (eyebrow/title/lede), search box, A–Z letter bar, featured brand banner (Delta Light or Philips), 4-col brand grid.
-  - Type in search → URL updates `?q=…`, grid filters by brand name.
-  - Click a letter → URL updates `?letter=P`, grid filters.
-  - Click a brand card (e.g. Delta Light) → `/en/brands/delta-light` — breadcrumbs, logo/wordmark, authorised + origin badges, description, WA "Project pricing" button, category tabs (derived from products only), product grid.
-  - Open `/ar/brands` and `/ar/brands/delta-light` — same in Arabic RTL.
-  - Open at 390px — brand grid 2-col, brand header stacks vertically.
+  - Open `/en/p/delivery` — 3-col layout: sticky side nav (all 6 help pages + Track order), article body with d-prose, WhatsApp aside.
+  - Click other pages in the side nav — active state highlights current page.
+  - Open `/ar/p/التوصيل` (or click through the AR nav) — Arabic RTL layout.
+  - Open at 390px — chips bar shows instead of side nav; aside stacks below article.
+  - Check all 6 pages: `/en/p/delivery`, `/en/p/returns`, `/en/p/warranty`, `/en/p/careers`, `/en/p/terms-conditions`, `/en/p/privacy-policy`.
 
-**Git:** branch `phase-5` · last local commit (T5.8) · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit (T5.9) `230c309` · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done · T5.6 done · T5.7 done · T5.8 done
+Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done · T5.6 done · T5.7 done · T5.8 done · T5.9 done
 
 ---
 
