@@ -86,13 +86,13 @@
                     $featText  = $featured->getTranslation('feature_text', $locale)
                                  ?: $featured->getTranslation('description', $locale);
                 @endphp
-                <div class="d-rv" style="display:grid;grid-template-columns:1.2fr 1fr;border:1px solid var(--border-1);border-radius:var(--radius-xl);overflow:hidden;margin-bottom:32px;" class="d-brands-feature">
+                <div class="d-rv d-brands-feature" style="display:grid;grid-template-columns:1.2fr 1fr;border:1px solid var(--border-1);border-radius:var(--radius-xl);overflow:hidden;margin-bottom:32px;">
                     <x-image-frame
                         :src="$featCover ?: null"
                         :alt="$featured->name"
                         style="min-height:320px;"
                     />
-                    <div style="padding:40px;display:grid;gap:14px;align-content:center;">
+                    <div class="d-brands-feature__body" style="padding:40px;display:grid;gap:14px;align-content:center;">
                         <x-badge tone="accent">{{ __('ui.brand_featured') }}</x-badge>
                         <h2 class="t-h3" style="margin:0;">{{ $featured->name }}</h2>
                         @if ($featText)
@@ -110,7 +110,7 @@
 
             {{-- Brand grid --}}
             @if ($brands->isNotEmpty())
-                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;" class="d-brands-grid">
+                <div class="d-brands-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($brands as $i => $brand)
                         @php
                             $logoUrl = $brand->getFirstMediaUrl('logo');

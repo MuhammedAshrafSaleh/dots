@@ -24,9 +24,9 @@
                 ['label' => __('ui.brands'), 'href' => route('brands', $locale)],
                 ['label' => $brand->name],
             ]" />
-            <div class="d-rv" style="display:grid;grid-template-columns:220px 1fr;gap:40px;align-items:center;" class="d-brand-header">
+            <div class="d-rv d-brand-header" style="display:grid;grid-template-columns:220px 1fr;gap:40px;align-items:center;">
                 {{-- Logo / wordmark --}}
-                <div style="aspect-ratio:1/1;background:var(--white);border:1px solid var(--border-1);border-radius:var(--radius-lg);display:grid;place-items:center;padding:24px;">
+                <div class="d-brand-logo-box" style="aspect-ratio:1/1;background:var(--white);border:1px solid var(--border-1);border-radius:var(--radius-lg);display:grid;place-items:center;padding:24px;">
                     @if ($logoUrl)
                         <img src="{{ $logoUrl }}" alt="{{ $brand->name }}"
                              style="max-height:140px;max-width:100%;object-fit:contain;">
@@ -91,7 +91,7 @@
 
             {{-- Product grid --}}
             @if ($products->isNotEmpty())
-                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;" class="d-products-grid">
+                <div class="d-brand-products-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($products as $i => $product)
                         <div style="--rv-d:{{ ($i % 4) * 60 }}ms;">
                             @include('site._product-card', ['product' => $product])
@@ -125,7 +125,7 @@
                     <x-eyebrow>{{ __('ui.projects') }}</x-eyebrow>
                     <h2 class="d-sec__title t-h2" style="margin:0;">{{ __('ui.specified_by_dots') }}</h2>
                 </div>
-                <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;" class="d-projects-grid">
+                <div class="d-brand-projects-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;">
                     @foreach ($projects as $i => $project)
                         @php
                             $pImg  = $project->getFirstMediaUrl('cover');

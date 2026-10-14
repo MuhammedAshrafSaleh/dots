@@ -139,3 +139,14 @@ html:not(.d-preload) .d-pre { display: none; }
 /* Article page — compact overrides. */
 .d-compact .d-article-layout   { grid-template-columns: 1fr !important; gap: 32px !important; }
 .d-compact .d-article-aside    { display: none !important; }
+
+/* Brands list page — compact overrides. */
+.d-compact .d-brands-feature        { grid-template-columns: 1fr !important; }
+.d-compact .d-brands-feature__body  { padding: 24px !important; }
+.d-compact .d-brands-grid           { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+
+/* Brand detail page — compact overrides. */
+.d-compact .d-brand-header          { grid-template-columns: 1fr !important; gap: 20px !important; }
+.d-compact .d-brand-logo-box        { aspect-ratio: 16 / 7 !important; }
+.d-compact .d-brand-products-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+.d-compact .d-brand-projects-grid   { grid-template-columns: 1fr !important; }
