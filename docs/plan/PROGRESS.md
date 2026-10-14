@@ -2,21 +2,20 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** T5.9 Content pages — DONE. Next: `start T5.10`.
-- **Last commit:** `230c309` (T5.9)
-- **Open issues / left to fix:** none from T5.9.
+- **Current task:** T5.10 SEO basics — DONE. All Phase 5 tasks complete — run phase checklist next.
+- **Last commit:** `3fcf982` (T5.10)
+- **Open issues / left to fix:** none from T5.10.
   - Pre-existing (NOT from T5.x): 5 Browser test failures (`DatabaseTruncation` + Spatie permission table drop). Fix in a dedicated session before Phase 5 end.
 - **What to review on dots.test:**
   - Seed first if needed: `php artisan migrate:fresh --seed`.
-  - Open `/en/p/delivery` — 3-col layout: sticky side nav (all 6 help pages + Track order), article body with d-prose, WhatsApp aside.
-  - Click other pages in the side nav — active state highlights current page.
-  - Open `/ar/p/التوصيل` (or click through the AR nav) — Arabic RTL layout.
-  - Open at 390px — chips bar shows instead of side nav; aside stacks below article.
-  - Check all 6 pages: `/en/p/delivery`, `/en/p/returns`, `/en/p/warranty`, `/en/p/careers`, `/en/p/terms-conditions`, `/en/p/privacy-policy`.
+  - View-source any public page (e.g. `/en/brands`) — confirm `<meta name="description">`, `<link rel="canonical">`, two `hreflang` links, OG tags in `<head>`.
+  - Open `/robots.txt` — plain text with `Disallow: /admin` and `Sitemap:` line.
+  - Run `php artisan sitemap:generate` then open `/sitemap.xml` — valid XML with `<urlset>`, entries for both locales.
+  - On an article page (e.g. `/en/blog/{slug}`), check the AR hreflang points to `/ar/blog/{ar-slug}` (not just locale-prefix swap).
 
-**Git:** branch `phase-5` · last local commit (T5.9) `230c309` · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-5` · last local commit (T5.10) `3fcf982` · last tag `phase-4-done` · push state: phase-5 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — IN PROGRESS · T5.1 done · T5.2 done · T5.3 done · T5.4 done · T5.5 done · T5.6 done · T5.7 done · T5.8 done · T5.9 done
+Current phase: **5 — Public site: layout and content pages** — ALL TASKS DONE · T5.1–T5.10 all done · run phase checklist next
 
 ---
 
