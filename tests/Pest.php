@@ -1,5 +1,34 @@
 <?php
 
+// Safety guards wired into beforeEach so they fire after PHPUnit processes <php><env>
+// entries from phpunit.xml — unit tests do not extend TestCase so this is the only
+// coverage for them. Feature/Browser tests also get TestCase::setUpTraits() which
+// adds a post-boot config() check before any DB trait runs.
+pest()->beforeEach(function (): void {
+    if (file_exists(dirname(__DIR__).'/bootstrap/cache/config.php')) {
+        throw new RuntimeException(
+            "SAFETY ABORT: bootstrap/cache/config.php exists.\n".
+            "Run `php artisan config:clear` then retry.\n".
+            'A cached config ignores phpunit.xml env entries and may target the wrong database.'
+        );
+    }
+
+    $appEnv = getenv('APP_ENV') ?: ($_ENV['APP_ENV'] ?? '');
+    if ($appEnv !== 'testing') {
+        throw new RuntimeException(
+            "SAFETY ABORT: APP_ENV is '{$appEnv}', expected 'testing'."
+        );
+    }
+
+    $dbName = getenv('DB_DATABASE') ?: ($_ENV['DB_DATABASE'] ?? '');
+    if (! preg_match('/^dots_testing(_test_\d+)?$/', $dbName)) {
+        throw new RuntimeException(
+            "SAFETY ABORT: DB_DATABASE env is '{$dbName}', expected 'dots_testing'.\n".
+            'Tests must not touch the dev database.'
+        );
+    }
+});
+
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;

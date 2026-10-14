@@ -26,16 +26,21 @@ Bilingual (AR RTL default / EN) lighting & electrical catalog + e-commerce. Lara
 - Keep the "Git" line at the top of PROGRESS.md (current branch · last local commit · last tag · push state) updated after every commit.
 - **Before every task commit, run all four gates: `php artisan test` (Unit + Feature + Browser), `composer analyse`, `vendor/bin/pint --test`, `npm run build`. A task is NOT done if any gate fails.**
 
+## Database safety (strict)
+- Tests must only ever touch dots_testing. A guard in TestCase enforces this. Never remove, weaken or bypass it.
+- NEVER run `php artisan config:cache`, `optimize`, `route:cache` or `event:cache` locally. Production only.
+- NEVER run migrate:fresh, migrate:reset, db:wipe, db:seed or any destructive command on the `dots` database without my explicit approval.
+
 ## Running tests (strict)
-- NEVER run more than one test process at a time. All test runs share the dots_testing database; concurrent runs corrupt each other and deadlock.
-- NEVER start a test run in the background, and never start a new run while another is still running. If a run seems slow, WAIT — the full suite takes several minutes.
-- NEVER pipe test output through `tail`, `head` or `grep`. They hide progress and failures. Use `--compact` instead.
-- For long runs, write output to a log file and read it when done:
+- NEVER run more than one test process at a time. Concurrent runs share dots_testing and corrupt each other.
+- Before any test run, check `pgrep -fl "artisan test|pest"`. If one is already running, stop and tell me.
+- NEVER run tests in the background. If a run is slow, WAIT. The full suite takes several minutes.
+- NEVER pipe test output through tail, head or grep. Use --compact.
+- For long runs, write output to a log, then read it when done:
   `php artisan test --compact > storage/logs/test-run.log 2>&1; tail -40 storage/logs/test-run.log`
-- During a task, run only the related tests: `php artisan test --compact --filter=<Name>` or `--dirty`.
+- During a task, run only the related tests (--filter=<Name> or --dirty).
 - Run the FULL suite exactly ONCE per task, right before the commit, as part of the 4 gates.
-- If the full suite fails, fix it, then re-run only the failing tests with --filter, then the full suite once more.
-- Before starting any test run, check that no other one is running: `pgrep -fl "artisan test|pest"`. If one is running, stop and tell me instead of starting another.
+- If the full suite fails, fix it, re-run only the failing tests with --filter, then run the full suite once more.
 
 ## Non-negotiable rules
 - **No hardcoded content in Blade.** Everything in CONTENT_MAP.md comes from the DB. Only UI labels go in `lang/ar|en`.
