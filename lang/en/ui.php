@@ -203,4 +203,18 @@ return [
     'by_author' => 'By :name',
     'read_article' => 'Read article',
     'featured' => 'Featured',
+
+    // Brands / brand detail
+    'find_brand' => 'Find a brand',
+    'all_letters' => 'All',
+    'brand_featured' => 'Featured brand',
+    'brand_authorised' => 'Authorised distributor',
+    'no_brands_filter' => 'No brands match your search.',
+    'explore_brand' => 'Explore :name',
+    'brand_catalogue_pdf' => ':year catalogue (PDF)',
+    'project_pricing' => 'Project pricing',
+    'brand_products_eyebrow' => 'Products',
+    'specified_by_dots' => 'Specified by Dots',
+    'no_products_brand' => 'No products found for this brand yet.',
+    'view_all_brand_products' => 'View all :count products',
 ];

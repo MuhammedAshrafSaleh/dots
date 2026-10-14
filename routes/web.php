@@ -3,6 +3,8 @@
 use App\Http\Controllers\AboutController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\BlogController;
+use App\Http\Controllers\BrandDetailController;
+use App\Http\Controllers\BrandsController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\ProjectsCurrentController;
@@ -33,7 +35,8 @@ Route::prefix('{locale}')
         $comingSoon = fn () => view('site.coming-soon');
 
         Route::get('/products', $comingSoon)->name('products');
-        Route::get('/brands', $comingSoon)->name('brands');
+        Route::get('/brands', BrandsController::class)->name('brands');
+        Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');
         Route::get('/services/{slug}', ServiceDetailController::class)->name('service.show');
         Route::get('/projects', ProjectsCurrentController::class)->name('projects.current');

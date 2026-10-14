@@ -203,4 +203,18 @@ return [
     'by_author' => 'بقلم :name',
     'read_article' => 'اقرأ المقال',
     'featured' => 'مميز',
+
+    // Brands / brand detail
+    'find_brand' => 'ابحث عن علامة',
+    'all_letters' => 'الكل',
+    'brand_featured' => 'علامة مميزة',
+    'brand_authorised' => 'موزع معتمد',
+    'no_brands_filter' => 'لا توجد علامات مطابقة لبحثك.',
+    'explore_brand' => 'استكشف :name',
+    'brand_catalogue_pdf' => 'كتالوج :year',
+    'project_pricing' => 'أسعار المشروعات',
+    'brand_products_eyebrow' => 'المنتجات',
+    'specified_by_dots' => 'من تنفيذ دوتس',
+    'no_products_brand' => 'لا توجد منتجات لهذه العلامة بعد.',
+    'view_all_brand_products' => 'عرض كل :count منتج',
 ];
