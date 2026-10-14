@@ -38,6 +38,6 @@
                 @endif
             </div>
         </div>
-        <a href="{{ route('products') }}" class="d-card__link" aria-label="{{ $productName }}"></a>
+        <a href="{{ route('products', $locale) }}" class="d-card__link" aria-label="{{ $productName }}"></a>
     </article>
 </div>

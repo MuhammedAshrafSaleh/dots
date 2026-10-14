@@ -2,17 +2,18 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** T6.1 — Category page — DONE pending full test run.
-- **Last commit:** pending (about to commit T6.1)
+- **Current task:** T6.2 — Products listing (Livewire) — DONE.
+- **Last commit:** pending (about to commit T6.2)
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - `php artisan migrate:fresh --seed` first.
-  - Visit `/en/c/<any-category-slug>` (e.g. a slug seeded by DemoSeeder) — confirm hero, subcategory tiles, top picks, buying guide, brand chips.
-  - Check AR: `/ar/c/<arabic-slug>` — RTL gradient and white breadcrumb.
+  - Visit `/en/products` — confirm listing page loads, filter sidebar works, brand/price/stock filters work, sort dropdown works, grid/list toggle works.
+  - Try `/en/products?cat=<id>` to confirm category pre-filter from category page "Shop All" link.
+  - Check AR: `/ar/products` — RTL layout, Arabic labels.
 
 **Git:** branch `phase-6` · last local commit TBD · last tag `phase-4-done` · push state: phase-6 not pushed
 
-Current phase: **6 — Public site: catalog** — T6.1 done
+Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done
 
 ---
 
@@ -70,7 +71,7 @@ Current phase: **6 — Public site: catalog** — T6.1 done
 
 ## Phase 6 — Public site: catalog  (`phase-06-catalog-front.md`)
 - [x] T6.1 Category page
-- [ ] T6.2 Products listing (Livewire)
+- [x] T6.2 Products listing (Livewire)
 - [ ] T6.3 Product card
 - [ ] T6.4 Product detail
 - [ ] T6.5 Search

@@ -157,6 +157,61 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-cat-guide    { grid-template-columns: 1fr !important; }
 .d-compact .d-pgrid        { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 
+/* ── Products listing (T6.2) ─────────────────────────────────────────────── */
+
+/* Page head — subtle-toned banner above the listing. */
+.d-phead { background: var(--bg-subtle); border-bottom: 1px solid var(--border-1); }
+.d-phead__inner { padding-block: 28px 44px; display: grid; gap: 18px; }
+.d-compact .d-phead__inner { padding-block: 20px 28px; gap: 14px; }
+.d-phead__row { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.d-phead__h1 { margin: 0; font: 700 36px/1.2 var(--font-display); letter-spacing: var(--tracking-heading); }
+.d-compact .d-phead__h1 { font-size: var(--fs-h1-m); line-height: var(--lh-h1-m); }
+.d-phead__count { font: 600 15px var(--font-body); color: var(--fg-3); margin-inline-start: 12px; letter-spacing: 0; }
+
+/* Listing layout — sidebar + main grid. */
+.d-listing { display: grid; grid-template-columns: 280px minmax(0, 1fr); gap: 40px; align-items: start; padding-block: 32px; }
+.d-compact .d-listing { grid-template-columns: 1fr; gap: 20px; padding-block: 20px; }
+.d-listing__sidebar { position: sticky; top: 80px; }
+.d-compact .d-listing__sidebar { display: none; }
+
+/* Toolbar row — sort + view toggle. */
+.d-listing__toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+
+/* Product grid. */
+.d-pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.d-compact .d-pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px; }
+.d-pgrid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Product list view — horizontal card. */
+.d-plist { display: grid; gap: 12px; }
+.d-plist .d-card.d-pcard { display: grid; grid-template-columns: 160px 1fr; }
+.d-plist .d-pcard__media { aspect-ratio: 1 / 1; height: 100%; }
+.d-compact .d-plist .d-card.d-pcard { grid-template-columns: 100px 1fr; }
+
+/* Loading overlay — dim content while Livewire is updating. */
+.d-listing__content.is-loading { opacity: .5; pointer-events: none; transition: opacity .1s; }
+
+/* Empty state. */
+.d-listing__empty { text-align: center; padding: 64px 24px; display: grid; gap: 12px; justify-items: center; color: var(--fg-2); }
+.d-compact .d-listing__empty { padding: 40px 16px; }
+
+/* Mobile filter button + drawer. */
+.d-filter-toggle { display: none; }
+.d-compact .d-filter-toggle { display: inline-flex; }
+.d-filter-drawer { position: fixed; inset-block: 0; inset-inline-start: 0; width: min(85vw, 320px); background: var(--white); z-index: var(--z-modal, 400); overflow-y: auto; padding: 24px; box-shadow: var(--shadow-xl); transform: translateX(-100%); transition: transform .25s var(--ease-out); }
+[dir="rtl"] .d-filter-drawer { inset-inline-start: auto; inset-inline-end: 0; transform: translateX(100%); }
+.d-filter-drawer.is-open { transform: translateX(0); }
+[dir="rtl"] .d-filter-drawer.is-open { transform: translateX(0); }
+.d-filter-overlay { position: fixed; inset: 0; background: rgba(24,24,22,.45); z-index: var(--z-modal-backdrop, 399); display: none; }
+.d-filter-overlay.is-open { display: block; }
+
+/* Utility: hide on compact (mobile) viewports. */
+.d-compact .d-compact-hide { display: none !important; }
+
+/* Skeleton shimmer for product cards while loading. */
+@keyframes d-shimmer { to { background-position: -200% 0; } }
+.d-skel { border-radius: var(--radius-md); background: linear-gradient(90deg, var(--ink-100) 25%, var(--ink-50) 50%, var(--ink-100) 75%); background-size: 200% 100%; animation: d-shimmer 1.4s infinite; }
+
 /* Content pages — chips nav + compact overrides. */
 .d-content-chips                    { display: none; gap: 8px; overflow-x: auto; padding-bottom: 24px; scrollbar-width: none; }
 .d-compact .d-content-chips         { display: flex; }

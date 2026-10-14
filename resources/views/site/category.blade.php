@@ -56,7 +56,7 @@
             @endif
 
             <div style="margin-top:4px;">
-                <a href="{{ route('products', $locale) }}" class="d-btn d-btn--dark">
+                <a href="{{ route('products', $locale) }}?cat={{ $category->id }}" class="d-btn d-btn--dark">
                     {{ __('ui.cat_shop_all', ['count' => number_format($totalCount)]) }}
                     <x-icon name="arrow-right" :size="16" />
                 </a>

@@ -8,6 +8,7 @@ use App\Http\Controllers\BrandsController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\ProjectsCurrentController;
 use App\Http\Controllers\ProjectsPreviousController;
@@ -57,7 +58,7 @@ Route::prefix('{locale}')
         // these; each is replaced by its real screen in a later Phase 5/6 task.
         $comingSoon = fn () => view('site.coming-soon');
 
-        Route::get('/products', $comingSoon)->name('products');
+        Route::get('/products', ProductsController::class)->name('products');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');
