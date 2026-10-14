@@ -59,7 +59,7 @@ final class CacheTags
 
         $value = Cache::get($key);
 
-        if ($value !== null && is_object($value) && get_class($value) === '__PHP_Incomplete_Class') {
+        if ($value !== null && str_contains(serialize($value), '__PHP_Incomplete_Class')) {
             Cache::forget($key);
             $value = null;
         }
