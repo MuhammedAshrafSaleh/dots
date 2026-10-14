@@ -2,8 +2,8 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** T6.2 — Products listing (Livewire) — DONE.
-- **Last commit:** `8f57db3` T6.2: Products listing (Livewire)
+- **Current task:** T6.2 — Products listing (Livewire) — DONE. Fixed Redis cache 500 on /products.
+- **Last commit:** `4580f54` fix: allow class unserialization from Redis cache (serializable_classes)
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - `php artisan migrate:fresh --seed` first.
@@ -11,7 +11,7 @@
   - Try `/en/products?cat=<id>` to confirm category pre-filter from category page "Shop All" link.
   - Check AR: `/ar/products` — RTL layout, Arabic labels.
 
-**Git:** branch `phase-6` · last local commit `8f57db3` · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last local commit `4580f54` · last tag `phase-4-done` · push state: phase-6 not pushed
 
 Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done
 
@@ -156,3 +156,4 @@ Legend: [ ] todo · [x] done
   - **No public `wa.me` links anywhere.** Every WhatsApp CTA in a public Blade view must use `<x-whatsapp-button source="...">` (or a plain `<a>` whose `href` is `URL::signedRoute('wa.redirect', …)`). The signed route logs a `quote_requests` row then redirects. `grep -r "wa\.me"` across app/ config/ database/ resources/ routes/ must only hit `app/Http/Controllers/WhatsAppController.php` and `app/Services/WhatsApp.php`. Admin views that build `wa.me` links for staff use (e.g. order update in T7.6) are exempt.
   - **Number normalisation.** `WhatsApp::normalizeNumber(string $raw)` strips non-digits and converts a leading-`0` local Egyptian number to international format (e.g. `01500060828` → `201500060828`). Both `WhatsApp::link()` and `WhatsAppController::redirect()` pass the raw setting through this helper. The setting `contact.whatsapp_number` should store the number in international format (`201xxxxxxxxx`) — the normaliser is a safety net, not the authoritative source.
   - **Client action pending:** set `contact.whatsapp_number` to the real number in international format via admin Settings → Contact.
+- **2026-10-15 — Redis cache serialization (T6.2 fix):** Laravel 13 defaults `config/cache.php` `serializable_classes => false`, which makes `RedisStore` unserialize with `allowed_classes => false` — every cached Eloquent model/collection comes back as `__PHP_Incomplete_Class` (500 on `/products`). Tests never caught it because the test env uses the `array` cache store (no serialization). This app intentionally caches its own Eloquent collections (category tree, brand/attribute facets) in a private Redis store, so set `serializable_classes => env('CACHE_SERIALIZABLE_CLASSES', true)`. Requirement: production Redis must stay non-public (the setting is only safe when the cache store is not attacker-writable).
