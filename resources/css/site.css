@@ -150,3 +150,10 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-brand-logo-box        { aspect-ratio: 16 / 7 !important; }
 .d-compact .d-brand-products-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
 .d-compact .d-brand-projects-grid   { grid-template-columns: 1fr !important; }
+
+/* Content pages — chips nav + compact overrides. */
+.d-content-chips                    { display: none; gap: 8px; overflow-x: auto; padding-bottom: 24px; scrollbar-width: none; }
+.d-compact .d-content-chips         { display: flex; }
+.d-compact .d-content-layout        { grid-template-columns: 1fr !important; gap: 24px !important; }
+.d-compact .d-content-sidenav       { display: none !important; }
+.d-compact .d-content-aside         { position: static !important; }
