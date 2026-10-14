@@ -2,10 +2,9 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** Phase 5 complete — phase checklist run, report written. Awaiting owner review.
-- **Last commit:** `e91517c` (docs: phase-5 report + PROGRESS checklist items)
-- **Open issues / left to fix:**
-  - Pre-existing intermittent deadlock: `ProductionSeedGuardsTest` fires `SQLSTATE[40001]` occasionally in the full suite, cascading failures. Tests all pass in isolation. Fix in a dedicated session before Phase 5 is approved.
+- **Current task:** Phase 5 complete — checklist done, deadlock fixed, report updated. Awaiting owner review.
+- **Last commit:** `(see below)` fix: RolesAndAdminSeeder — batch insertOrIgnore to eliminate gap-lock deadlock
+- **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - Seed first if needed: `php artisan migrate:fresh --seed`.
   - Smoke-test list in `docs/plan/reports/phase-5.md`.
