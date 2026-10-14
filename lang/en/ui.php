@@ -223,4 +223,10 @@ return [
     'specified_by_dots' => 'Specified by Dots',
     'no_products_brand' => 'No products found for this brand yet.',
     'view_all_brand_products' => 'View all :count products',
+
+    // Category page
+    'cat_shop_all' => 'Shop all :count products',
+    'cat_top_picks_eyebrow' => 'Top picks',
+    'cat_top_picks_title' => 'Most specified this season',
+    'cat_buying_guide' => 'Buying guide',
 ];

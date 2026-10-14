@@ -1,19 +1,18 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** Phase 5 complete — checklist done, deadlock fixed, report updated. Awaiting owner review.
-- **Last commit:** `a2bcfed` fix: RolesAndAdminSeeder — batch insertOrIgnore to eliminate gap-lock deadlock
+- **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
+- **Current task:** T6.1 — Category page — DONE pending full test run.
+- **Last commit:** pending (about to commit T6.1)
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
-  - Seed first if needed: `php artisan migrate:fresh --seed`.
-  - Smoke-test list in `docs/plan/reports/phase-5.md`.
-  - View-source any public page — confirm `<meta name="description">`, `<link rel="canonical">`, two `hreflang` links, OG tags.
-  - Open `/robots.txt` and `/sitemap.xml`.
+  - `php artisan migrate:fresh --seed` first.
+  - Visit `/en/c/<any-category-slug>` (e.g. a slug seeded by DemoSeeder) — confirm hero, subcategory tiles, top picks, buying guide, brand chips.
+  - Check AR: `/ar/c/<arabic-slug>` — RTL gradient and white breadcrumb.
 
-**Git:** branch `phase-5` · last local commit `a2bcfed` · last tag `phase-4-done` · push state: phase-5 not pushed
+**Git:** branch `phase-6` · last local commit TBD · last tag `phase-4-done` · push state: phase-6 not pushed
 
-Current phase: **5 — Public site: layout and content pages** — CHECKLIST DONE · report at `docs/plan/reports/phase-5.md` · awaiting owner review
+Current phase: **6 — Public site: catalog** — T6.1 done
 
 ---
 
@@ -70,7 +69,7 @@ Current phase: **5 — Public site: layout and content pages** — CHECKLIST DON
 - [x] T5.10 SEO basics
 
 ## Phase 6 — Public site: catalog  (`phase-06-catalog-front.md`)
-- [ ] T6.1 Category page
+- [x] T6.1 Category page
 - [ ] T6.2 Products listing (Livewire)
 - [ ] T6.3 Product card
 - [ ] T6.4 Product detail

@@ -151,6 +151,12 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-brand-products-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
 .d-compact .d-brand-projects-grid   { grid-template-columns: 1fr !important; }
 
+/* Category page — compact overrides. */
+.d-compact .d-cat-hero  { min-height: 360px !important; }
+.d-compact .d-cat-subcats  { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+.d-compact .d-cat-guide    { grid-template-columns: 1fr !important; }
+.d-compact .d-pgrid        { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+
 /* Content pages — chips nav + compact overrides. */
 .d-content-chips                    { display: none; gap: 8px; overflow-x: auto; padding-bottom: 24px; scrollbar-width: none; }
 .d-compact .d-content-chips         { display: flex; }

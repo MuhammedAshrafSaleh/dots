@@ -5,6 +5,7 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandDetailController;
 use App\Http\Controllers\BrandsController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ProjectDetailController;
@@ -69,7 +70,7 @@ Route::prefix('{locale}')
         Route::get('/about', AboutController::class)->name('about');
         Route::get('/track-order', $comingSoon)->name('track');
         Route::get('/search', $comingSoon)->name('search');
-        Route::get('/c/{category}', $comingSoon)->name('category');
+        Route::get('/c/{category}', CategoryController::class)->name('category');
         Route::get('/p/{page}', ContentPageController::class)->name('page');
 
         // Newsletter subscribe — real handler + dedupe lands in T5.7.

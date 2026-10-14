@@ -34,4 +34,23 @@ final class CacheTags
 
         Cache::flush();
     }
+
+    /**
+     * Tagged remember: uses cache tags when the store supports them, falls
+     * back to plain remember (the cache is still invalidated on any flush,
+     * which flushes the whole store on non-taggable drivers).
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $callback
+     * @return T
+     */
+    public static function remember(string $tag, string $key, int $seconds, \Closure $callback): mixed
+    {
+        if (Cache::getStore() instanceof TaggableStore) {
+            return Cache::tags($tag)->remember($key, $seconds, $callback);
+        }
+
+        return Cache::remember($key, $seconds, $callback);
+    }
 }

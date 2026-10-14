@@ -223,4 +223,10 @@ return [
     'specified_by_dots' => 'من تنفيذ دوتس',
     'no_products_brand' => 'لا توجد منتجات لهذه العلامة بعد.',
     'view_all_brand_products' => 'عرض كل :count منتج',
+
+    // Category page
+    'cat_shop_all' => 'تسوق الكل — :count منتج',
+    'cat_top_picks_eyebrow' => 'الأفضل',
+    'cat_top_picks_title' => 'الأكثر طلباً هذا الموسم',
+    'cat_buying_guide' => 'دليل الشراء',
 ];
