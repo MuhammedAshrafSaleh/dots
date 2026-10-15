@@ -130,7 +130,7 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-project-title-row { align-items: flex-start !important; }
 .d-compact .d-project-share    { flex-wrap: wrap !important; }
 .d-compact .d-related-grid     { grid-template-columns: 1fr !important; }
-.d-compact .d-proj-products    { grid-template-columns: 1fr !important; }
+.d-compact .d-proj-products    { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 
 /* Blog list page — compact overrides. */
 .d-compact .d-blog-grid        { grid-template-columns: 1fr !important; }
@@ -148,14 +148,14 @@ html:not(.d-preload) .d-pre { display: none; }
 /* Brand detail page — compact overrides. */
 .d-compact .d-brand-header          { grid-template-columns: 1fr !important; gap: 20px !important; }
 .d-compact .d-brand-logo-box        { aspect-ratio: 16 / 7 !important; }
-.d-compact .d-brand-products-grid   { grid-template-columns: 1fr !important; gap: 12px !important; }
+.d-compact .d-brand-products-grid   { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
 .d-compact .d-brand-projects-grid   { grid-template-columns: 1fr !important; }
 
 /* Category page — compact overrides. */
 .d-compact .d-cat-hero  { min-height: 360px !important; }
 .d-compact .d-cat-subcats  { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
 .d-compact .d-cat-guide    { grid-template-columns: 1fr !important; }
-.d-compact .d-pgrid        { grid-template-columns: 1fr !important; }
+.d-compact .d-pgrid        { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 
 /* ── Products listing (T6.2) ─────────────────────────────────────────────── */
 
@@ -179,7 +179,7 @@ html:not(.d-preload) .d-pre { display: none; }
 
 /* Product grid. */
 .d-pgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.d-compact .d-pgrid { grid-template-columns: 1fr !important; gap: 12px; }
+.d-compact .d-pgrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px; }
 .d-pgrid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* Product list view — horizontal card. */
@@ -259,17 +259,3 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-pdp__tabs-body { grid-template-columns: 1fr; }
 .d-pdp__tab-panel { background: var(--white); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--border-1); }
 .d-compact .d-pdp__tab-panel { padding: 12px; }
-
-/* Home page — hero body padding, replay controls, section grids. */
-.d-hi__body     { padding-block: 96px; }
-.d-hi__controls { position: absolute; inset-inline-end: var(--page-margin); bottom: 96px; display: flex; gap: 8px; }
-.d-home-cats    { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
-.d-home-prods   { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.d-home-svcs    { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.d-home-brands  { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
-.d-compact .d-hi__body     { padding-block: 48px; }
-.d-compact .d-hi__controls { bottom: 48px; }
-.d-compact .d-home-cats    { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.d-compact .d-home-prods   { grid-template-columns: 1fr; gap: 12px; }
-.d-compact .d-home-svcs    { grid-template-columns: 1fr; gap: 16px; }
-.d-compact .d-home-brands  { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

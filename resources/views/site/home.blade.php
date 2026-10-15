@@ -49,7 +49,7 @@
         </div>
         <div class="d-hi__bulb" aria-hidden="true"><span></span></div>
 
-        <div class="d-container d-hi__body" style="position:relative;width:100%;">
+        <div class="d-container" style="position:relative;width:100%;padding-block:96px;">
             <div style="max-width:760px;display:grid;gap:24px;color:var(--white);">
                 @if ($field('hero', 'eyebrow'))
                     <span class="d-hi__in" style="--hi-d:1700ms;display:inline-flex;align-items:center;gap:10px;font:800 12px/1 var(--font-body);letter-spacing:var(--tracking-overline);text-transform:var(--text-transform-overline);">
@@ -86,7 +86,7 @@
             </div>
 
             {{-- Replay / pause controls --}}
-            <div class="d-hi__in d-hi__controls" style="--hi-d:2600ms;">
+            <div class="d-hi__in" style="--hi-d:2600ms;position:absolute;inset-inline-end:var(--page-margin);bottom:96px;display:flex;gap:8px;">
                 <x-icon-button
                     icon="rotate-ccw"
                     :label="__('ui.replay_intro')"
@@ -140,7 +140,7 @@
                     </x-button>
                 </div>
 
-                <div class="d-home-cats">
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;">
                     @foreach ($categories as $i => $cat)
                         @php $catSlug = $cat->getTranslation('slug', $locale); @endphp
                         <div class="d-rv" style="--rv-d:{{ ($i % 3) * 60 }}ms;">
@@ -191,19 +191,19 @@
                 </div>
 
                 {{-- New arrivals --}}
-                <div x-show="tab === 'new'" x-cloak class="d-home-prods">
+                <div x-show="tab === 'new'" x-cloak style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($newProducts as $product)
                         @include('site._product-card', ['product' => $product])
                     @endforeach
                 </div>
                 {{-- Best sellers --}}
-                <div x-show="tab === 'best'" x-cloak class="d-home-prods">
+                <div x-show="tab === 'best'" x-cloak style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($bestProducts as $product)
                         @include('site._product-card', ['product' => $product])
                     @endforeach
                 </div>
                 {{-- Smart home --}}
-                <div x-show="tab === 'smart'" x-cloak class="d-home-prods">
+                <div x-show="tab === 'smart'" x-cloak style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($smartProducts as $product)
                         @include('site._product-card', ['product' => $product])
                     @endforeach
@@ -230,7 +230,7 @@
                     </x-button>
                 </div>
 
-                <div class="d-home-svcs">
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($services as $i => $service)
                         @php $serviceSlug = $service->getTranslation('slug', $locale); @endphp
                         <div class="d-rv" style="--rv-d:{{ $i * 60 }}ms;">
@@ -319,7 +319,7 @@
                     </x-button>
                 </div>
 
-                <div class="d-home-brands">
+                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($brands as $i => $brand)
                         <div class="d-rv" style="--rv-d:{{ ($i % 4) * 60 }}ms;">
                             <a href="{{ route('brands') }}" class="d-card d-bcard">
