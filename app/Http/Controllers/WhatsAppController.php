@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\QuoteSource;
 use App\Models\QuoteRequest;
+use App\Services\CartManager;
 use App\Services\Settings;
 use App\Services\WhatsApp;
 use Illuminate\Http\RedirectResponse;
@@ -63,7 +64,15 @@ class WhatsAppController extends Controller
             '{product_name}' => $request->query('product_name', ''),
             '{sku}' => $request->query('sku', ''),
             '{customer_name}' => '',
+            '{items}' => '',
+            '{total}' => '',
         ];
+
+        if ($src === QuoteSource::Cart) {
+            $cart = app(CartManager::class);
+            $vars['{items}'] = $cart->whatsappItemsText($locale);
+            $vars['{total}'] = number_format($cart->totals()->total, 0).' '.__('ui.egp');
+        }
 
         return str_replace(array_keys($vars), array_values($vars), $tpl);
     }

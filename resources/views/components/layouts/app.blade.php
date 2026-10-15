@@ -39,6 +39,9 @@
 
     <x-site.motion />
 
+    {{-- Cart drawer (opens on add-to-cart / header cart icon). --}}
+    @livewire('shop.cart-drawer')
+
     {{-- Toasts live-region; populated by Livewire/Alpine events. --}}
     <div class="d-toasts" aria-live="polite" aria-atomic="false">
         {{ $toasts ?? '' }}

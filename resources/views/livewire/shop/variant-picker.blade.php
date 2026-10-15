@@ -158,6 +158,8 @@
 
         @if ($hasPrice)
             <button type="button"
+                wire:click="addToCart"
+                wire:loading.attr="disabled"
                 class="d-btn d-btn--primary d-btn--lg"
                 style="flex:1 1 180px;"
                 @if (! $canAddToCart) disabled aria-disabled="true" @endif

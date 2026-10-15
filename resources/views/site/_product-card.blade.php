@@ -31,6 +31,15 @@
     $stockInfo = $stockMap[$product->stock_status->value] ?? $stockMap[StockStatus::In->value];
 
     $hasPrice = ! $product->price_on_request && $product->min_price !== null;
+
+    // Default variant for quick add-to-cart (full selection lives on the PDP).
+    $defaultVariantId = null;
+    if ($hasPrice) {
+        $dv = $product->variants->firstWhere('is_default', true)
+            ?? $product->variants->first(fn ($v) => $v->is_active && $v->price !== null)
+            ?? $product->variants->first();
+        $defaultVariantId = $dv?->id;
+    }
 @endphp
 
 <article x-data="{ tip: false }" class="d-card d-pcard">
@@ -137,8 +146,12 @@
     {{-- Actions --}}
     <div class="d-pcard__actions">
         @if ($hasPrice)
-            {{-- Add to cart wired in Phase 7; renders as primary action now --}}
-            <button type="button" class="d-btn d-btn--primary d-btn--sm d-card__over">
+            <button type="button" class="d-btn d-btn--primary d-btn--sm d-card__over"
+                @if ($defaultVariantId)
+                    x-on:click.prevent="Livewire.dispatch('cart-add', { variantId: {{ $defaultVariantId }}, qty: 1 })"
+                @else
+                    disabled aria-disabled="true"
+                @endif>
                 <x-icon name="shopping-bag" size="16" />
                 {{ __('ui.pcard_add_to_cart') }}
             </button>

@@ -1,20 +1,21 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** PHASE 6 COMPLETE — all tasks done, gates passed, report written.
-- **Last commit:** see below (phase-6 report commit)
-- **Open issues / left to fix:** none.
-- **What to review on dots.test:**
-  - `php artisan migrate:fresh --seed` first.
-  - See `docs/plan/reports/phase-6.md` for full review checklist.
-  - Awaiting owner approval to push and merge phase-6.
+- **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
+- **Current task:** T7.1 Cart — DONE (gates green). Next: `start T7.2`.
+- **Last commit:** T7.1 (see Git line below).
+- **Open issues / left to fix:** none. (Checkout button links to a `checkout` placeholder route until T7.2 builds it.)
+- **What to review on dots.test** (`php artisan migrate:fresh --seed` first for cart_suggestion relations + a coupon):
+  - PDP: pick a variant → **Add to cart** → drawer slides in with the line, qty stepper, subtotal, VAT note, free-ship progress; header cart count updates.
+  - Product card (listing/home): **Add to cart** opens the drawer with the default variant.
+  - `/{locale}/cart`: edit qty, remove a line, **Quote this cart** (WhatsApp), apply a coupon (try an invalid code → clear error; valid → discount + total update), suggestions grid.
+  - Check both AR (RTL) and EN; no 403/500/JS errors.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-6` · last tag `phase-4-done` · push state: phase-6 not pushed — awaiting owner approval
+**Git:** branch `phase-7` · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-Current phase: **6 — Public site: catalog** — ALL DONE ✓
+Current phase: **7 — Cart, checkout, payments, orders** — T7.1 done
 
 ---
 
@@ -78,7 +79,7 @@ Current phase: **6 — Public site: catalog** — ALL DONE ✓
 - [x] T6.5 Search
 
 ## Phase 7 — Cart, checkout, payments, orders  (`phase-07-commerce.md`)
-- [ ] T7.1 Cart
+- [x] T7.1 Cart
 - [ ] T7.2 Checkout
 - [ ] T7.3 Confirmation, payment failed, track order
 - [ ] T7.4 InstaPay via WhatsApp
