@@ -13,6 +13,7 @@ use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\ProjectsCurrentController;
 use App\Http\Controllers\ProjectsPreviousController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceDetailController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
@@ -72,7 +73,7 @@ Route::prefix('{locale}')
         Route::get('/blog/{slug}', ArticleController::class)->name('blog.show');
         Route::get('/about', AboutController::class)->name('about');
         Route::get('/track-order', $comingSoon)->name('track');
-        Route::get('/search', $comingSoon)->name('search');
+        Route::get('/search', SearchController::class)->name('search');
         Route::get('/c/{category}', CategoryController::class)->name('category');
         Route::get('/p/{page}', ContentPageController::class)->name('page');
 

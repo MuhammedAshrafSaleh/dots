@@ -8,18 +8,25 @@
      */
     $locale    = app()->getLocale();
     $totalCount = $products->total();
-    $pageTitle  = $currentCat
+    $pageTitle = $currentCat
         ? $currentCat->getTranslation('name', $locale)
-        : __('ui.all_products');
+        : ($search ? __('ui.search_results') : __('ui.all_products'));
 
-    $breadcrumbs = array_values(array_filter([
-        ['label' => __('ui.home'), 'url' => route('home', $locale)],
-        $currentCat?->parent ? [
-            'label' => $currentCat->parent->getTranslation('name', $locale),
-            'url'   => route('products', $locale).'?cat='.$currentCat->parent_id,
-        ] : null,
-        ['label' => $pageTitle],
-    ]));
+    if ($search && ! $currentCat) {
+        $breadcrumbs = [
+            ['label' => __('ui.home'), 'url' => route('home', $locale)],
+            ['label' => __('ui.search_results')],
+        ];
+    } else {
+        $breadcrumbs = array_values(array_filter([
+            ['label' => __('ui.home'), 'url' => route('home', $locale)],
+            $currentCat?->parent ? [
+                'label' => $currentCat->parent->getTranslation('name', $locale),
+                'url'   => route('products', $locale).'?cat='.$currentCat->parent_id,
+            ] : null,
+            ['label' => $pageTitle],
+        ]));
+    }
 
     $brands    = $facets['brands']    ?? [];
     $attributes = $facets['attributes'] ?? [];
@@ -64,7 +71,11 @@
         <x-breadcrumbs :items="$breadcrumbs" />
         <div class="d-phead__row">
             <h1 class="d-phead__h1">
-                {{ $pageTitle }}
+                @if ($search && ! $currentCat)
+                    {{ __('ui.search_results_for', ['q' => $search]) }}
+                @else
+                    {{ $pageTitle }}
+                @endif
                 <span class="d-phead__count">{{ number_format($totalCount) }}</span>
             </h1>
         </div>
@@ -178,7 +189,9 @@
                 <div class="d-listing__empty">
                     <x-icon name="search-x" :size="48" />
                     <p class="t-body-lg" style="margin:0;">{{ __('ui.listing_no_results') }}</p>
-                    <p class="t-body" style="margin:0;color:var(--fg-3);">{{ __('ui.listing_no_results_hint') }}</p>
+                    <p class="t-body" style="margin:0;color:var(--fg-3);">
+                        {{ $search ? __('ui.search_no_results_hint') : __('ui.listing_no_results_hint') }}
+                    </p>
                     @if ($activeCount > 0)
                         <button type="button" class="d-btn d-btn--outline" wire:click="clearAll">
                             {{ __('ui.listing_clear_all') }}

@@ -8,6 +8,7 @@ use App\Models\AttributeValue;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Support\ArabicNorm;
 use App\Support\CacheTags;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -61,6 +62,17 @@ class ProductListing extends Component
     #[Url(as: 'view', except: 'grid')]
     public string $view = 'grid';
 
+    /** Full-text search term (from header search bar `q` param). */
+    #[Url(as: 'q', except: null)]
+    public ?string $search = null;
+
+    /**
+     * Search scope from header bar: '' (all) | 'c:{locale-slug}' | 'brands'.
+     * Applied as a category pre-filter or brand-name filter.
+     */
+    #[Url(as: 'scope', except: null)]
+    public ?string $scope = null;
+
     /** Brand search box value (sidebar only, not URL-bound). */
     public string $brandSearch = '';
 
@@ -105,6 +117,16 @@ class ProductListing extends Component
     }
 
     public function updatedSort(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedSearch(): void
+    {
+        $this->resetPage();
+    }
+
+    public function updatedScope(): void
     {
         $this->resetPage();
     }
@@ -221,6 +243,36 @@ class ProductListing extends Component
 
         if ($this->ships24h) {
             $q->where('ships_24h', true);
+        }
+
+        if ($this->search) {
+            if ($this->scope === 'brands') {
+                // scope=brands: restrict to products from brands whose name matches the query
+                $brandIds = Brand::active()
+                    ->where('name', 'like', '%'.$this->search.'%')
+                    ->pluck('id');
+                $q->whereIn('brand_id', $brandIds->isEmpty() ? [0] : $brandIds->all());
+            } else {
+                $normalized = ArabicNorm::sanitizeQuery($this->search);
+                if (mb_strlen(trim($normalized)) >= 2) {
+                    $q->whereRaw('MATCH(search_text) AGAINST (? IN BOOLEAN MODE)', [$normalized]);
+                }
+            }
+        }
+
+        // scope=c:{locale-slug}: restrict to that root category and its descendants.
+        // Search both locale columns so the lookup works regardless of active locale.
+        if ($this->scope && str_starts_with($this->scope, 'c:') && ! in_array('scope', $except)) {
+            $slug = substr($this->scope, 2);
+            $scopeCatId = Category::active()
+                ->where(fn ($cq) => $cq
+                    ->whereJsonContains('slug->en', $slug)
+                    ->orWhereJsonContains('slug->ar', $slug)
+                )
+                ->value('id');
+            if ($scopeCatId) {
+                $q->whereIn('category_id', $this->categoryScope($scopeCatId));
+            }
         }
 
         return $sort ? $this->applySort($q) : $q;
@@ -408,6 +460,8 @@ class ProductListing extends Component
             'max' => $this->priceMax,
             'instock' => $this->inStock,
             'fast' => $this->ships24h,
+            'q' => $this->search,
+            'scope' => $this->scope,
         ]));
     }
 }
