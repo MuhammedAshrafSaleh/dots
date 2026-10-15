@@ -167,7 +167,7 @@ it('places a pickup order with no delivery address', function () {
         ->and($order->address)->toBeNull();
 });
 
-it('never lets stock go negative when ordering more than available', function () {
+it('rejects an order that exceeds available stock instead of overselling', function () {
     $variant = coVariant('D', 100, stock: 3);
     $delivery = coPickup();
     coPayment(PaymentMethodCode::Cod);
@@ -177,9 +177,13 @@ it('never lets stock go negative when ordering more than available', function ()
     Livewire::test(CheckoutForm::class)
         ->set(coForm(['deliveryMethodId' => $delivery->id, 'paymentCode' => 'cod']))
         ->call('place')
-        ->assertRedirect();
+        ->assertHasErrors('name')
+        ->assertNoRedirect();
 
-    expect($variant->fresh()->stock_qty)->toBe(0);
+    // The whole transaction rolls back: no order, no sale, stock untouched
+    // (never negative, never oversold).
+    expect(Order::count())->toBe(0)
+        ->and($variant->fresh()->stock_qty)->toBe(3);
 });
 
 it('redeems a coupon and increments its used count', function () {

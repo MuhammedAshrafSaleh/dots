@@ -128,10 +128,17 @@ class PlaceOrder
             $variant = $item->productVariant;
             $product = $variant->product;
 
-            // Lock the row, then floor the decrement so stock_qty never goes below 0.
-            ProductVariant::whereKey($variant->id)->lockForUpdate()->first();
+            // Lock the row inside the transaction so concurrent checkouts of the
+            // same variant serialise. If the locked stock can't cover this line,
+            // reject the whole order (rolls back) rather than silently overselling
+            // or flooring to a phantom sale — zero-stock variants aren't buyable.
+            $locked = ProductVariant::whereKey($variant->id)->lockForUpdate()->first();
+            if ($locked === null || $locked->stock_qty < $item->qty) {
+                throw CheckoutException::unavailable();
+            }
+
             ProductVariant::whereKey($variant->id)
-                ->update(['stock_qty' => DB::raw('GREATEST(stock_qty - '.(int) $item->qty.', 0)')]);
+                ->update(['stock_qty' => DB::raw('stock_qty - '.(int) $item->qty)]);
 
             $order->items()->create([
                 'product_id' => $product->id,
