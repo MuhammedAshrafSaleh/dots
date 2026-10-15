@@ -2,22 +2,18 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** T7.1–T7.3 browser-verified end to end (real Chromium vs dots.test, AR + EN). All 18 checklist items pass; 2 root-cause bugs found and fixed. Next: `start T7.4`.
-- **Last commit:** verification fixes (see Git line below).
-- **Fixes made this session:**
-  1. **Double Alpine on the public site** — `resources/js/app.js` imported + started its own Alpine, but Livewire 4 already ships/starts Alpine, and the site layout always mounts a Livewire component (cart drawer). The duplicate instance has no `$wire` magic → `$wire is not defined` JS errors on `x-show="$wire.open"` and a flaky drawer (the qty-decrease click was dropped after a morph). Fixed by removing the standalone Alpine (now mirrors `admin.js`). Public `app.js` bundle dropped to 3.4 kB.
-  2. **Silent overselling in `PlaceOrder`** — `createItems` decremented with `GREATEST(stock-qty,0)`, flooring instead of rejecting, so two concurrent checkouts of the last unit both succeeded. Now it checks the row-locked stock and throws the already-defined `CheckoutException::unavailable()` when insufficient → one order succeeds, the other is rejected gracefully ("item no longer available"), stock never negative, no oversell. Updated the `CheckoutTest` case that encoded the old flooring behavior.
-- **Open issues / observations (not changed):** cart-page "delivery estimate" shows **Free** because the zero-price *Project / site delivery* method is the cheapest address-based method and `deliveryEstimate()` just picks the cheapest — governorate-based delivery filtering/fees are correct on **checkout** (verified). Flag for owner: is a flat "Free" estimate on the cart intended, or should it use Standard? The cart/drawer show no separate VAT amount line, only the "Prices include 14% VAT" note (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). InstaPay "Continue on WhatsApp" still uses generic `wa.redirect` until T7.4. Payment-failed "Retry card" is a placeholder toast until T7.5; "switch to COD / InstaPay" works.
+- **Current task:** 3 public-site fixes applied (filter drawer, checkout mobile, cart estimate). Next: `start T7.4`.
+- **Last commit:** `0de82a6` (3 public-site fixes).
+- **Open issues / observations:** The cart/drawer show no separate VAT amount line, only the "Prices include 14% VAT" note (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). InstaPay "Continue on WhatsApp" still uses generic `wa.redirect` until T7.4. Payment-failed "Retry card" is a placeholder toast until T7.5; "switch to COD / InstaPay" works.
 - **What to review on dots.test** (`php artisan migrate:fresh --seed` first):
-  - Place a **COD** order (see T7.2 steps) → confirmation shows: success tick, "Order placed", order number + placed date + "Pay on delivery" badge, a 3-step "What happens next", delivery/address/payment cells, order summary on the right, and Track / Continue / WhatsApp buttons. No "SMS" anywhere.
-  - Place an **InstaPay** order → confirmation shows the clock icon, "Order reserved", "Awaiting payment" badge, the WhatsApp-bordered next-steps box with a **Continue on WhatsApp** button.
-  - Click **Track this order** → `/{locale}/track-order?number=DT-xxxxx` prefilled → enter the mobile you ordered with → timeline + items + total. Wrong mobile (or wrong number) → "No order matches" empty state.
-  - Visit `/{locale}/order/DT-xxxxx/payment-failed` for an order you placed → pick "Switch to cash on delivery" → it updates and returns to the confirmation as COD.
-  - Check both AR (RTL) and EN; no 403/500/JS errors.
+  - **Fix 1** — `/ar/products` at ~1440px: only sidebar filters visible, no floating drawer with "الفلاتر" heading. At ~390px: sidebar gone, filter button visible, clicking it opens the drawer, X closes it. Check EN too.
+  - **Fix 2** — `/ar/checkout` at ~390px: all form fields visible and fillable, Place Order button reachable, order summary flows below the form (not overlapping). Check EN too.
+  - **Fix 3** — Add items to cart, go to `/ar/cart`: "Delivery (estimate)" row shows **150 EGP** (Standard delivery), not Free. Check EN too.
+  - Previous T7.1–T7.3 flows (COD/InstaPay order, track order, payment-failed) still work.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `b3bff3a` (T7.1–7.3 verification fixes) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `0de82a6` (3 public-site fixes) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
 Current phase: **7 — Cart, checkout, payments, orders** — T7.3 done
 
