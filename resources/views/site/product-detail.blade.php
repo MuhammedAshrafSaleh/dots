@@ -23,7 +23,7 @@
         ] : null,
         $product->category ? [
             'label' => $product->category->getTranslation('name', $locale),
-            'url'   => route('c.category', [$locale, $product->category->getTranslation('slug', $locale)]),
+            'url'   => route('category', [$locale, $product->category->getTranslation('slug', $locale)]),
         ] : null,
         ['label' => $productName],
     ]));
