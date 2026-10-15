@@ -259,3 +259,10 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-compact .d-pdp__tabs-body { grid-template-columns: 1fr; }
 .d-pdp__tab-panel { background: var(--white); border-radius: var(--radius-lg); padding: 20px; border: 1px solid var(--border-1); }
 .d-compact .d-pdp__tab-panel { padding: 12px; }
+
+/* Order confirmation, payment-failed and track-order two-column grids
+   collapse to a single column in compact (mobile) mode. */
+.d-compact .d-confirm-grid,
+.d-compact .d-pay-grid,
+.d-compact .d-track-grid { grid-template-columns: 1fr !important; }
+.d-compact .d-confirm-cells { grid-template-columns: 1fr !important; }

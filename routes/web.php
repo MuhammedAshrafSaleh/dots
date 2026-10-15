@@ -68,6 +68,7 @@ Route::prefix('{locale}')
         Route::get('/cart', CartController::class)->name('cart');
         Route::get('/checkout', CheckoutController::class)->name('checkout');
         Route::get('/order/{number}/confirmation', OrderConfirmationController::class)->name('order.confirmation');
+        Route::get('/order/{number}/payment-failed', fn (string $locale, string $number) => view('site.payment-failed', compact('locale', 'number')))->name('order.payment-failed');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');
@@ -78,7 +79,7 @@ Route::prefix('{locale}')
         Route::get('/blog', BlogController::class)->name('blog');
         Route::get('/blog/{slug}', ArticleController::class)->name('blog.show');
         Route::get('/about', AboutController::class)->name('about');
-        Route::get('/track-order', $comingSoon)->name('track');
+        Route::get('/track-order', fn (string $locale) => view('site.track', compact('locale')))->name('track');
         Route::get('/search', SearchController::class)->name('search');
         Route::get('/c/{category}', CategoryController::class)->name('category');
         Route::get('/p/{page}', ContentPageController::class)->name('page');
