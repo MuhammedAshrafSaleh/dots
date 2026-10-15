@@ -202,6 +202,7 @@ html:not(.d-preload) .d-pre { display: none; }
 [dir="rtl"] .d-filter-drawer { inset-inline-start: auto; inset-inline-end: 0; transform: translateX(100%); }
 .d-filter-drawer.is-open { transform: translateX(0); }
 [dir="rtl"] .d-filter-drawer.is-open { transform: translateX(0); }
+html:not(.d-compact) .d-filter-drawer { display: none; }
 .d-filter-overlay { position: fixed; inset: 0; background: rgba(24,24,22,.45); z-index: var(--z-modal-backdrop, 399); display: none; }
 .d-filter-overlay.is-open { display: block; }
 

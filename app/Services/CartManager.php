@@ -272,7 +272,8 @@ class CartManager
     {
         $method = DeliveryMethod::active()
             ->where('requires_address', true)
-            ->orderBy('price')
+            ->where('price_is_from', false)
+            ->orderBy('sort_order')
             ->first();
 
         if ($method === null) {

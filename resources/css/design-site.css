@@ -652,6 +652,8 @@ textarea.d-input { height: auto; min-height: 104px; padding-block: 12px; resize:
 .d-co__grid .span-2 { grid-column: 1 / -1; }
 .d-compact .d-co__grid { grid-template-columns: minmax(0, 1fr); }
 .d-compact .d-co__sec { padding: 18px; }
+.d-compact .d-cart-grid { grid-template-columns: 1fr !important; }
+.d-compact .d-cart-grid > aside { position: static !important; }
 .d-summary { border: 1px solid var(--border-1); border-radius: var(--radius-lg); background: var(--ink-50); padding: 24px; display: grid; gap: 18px; }
 .d-summary h3 { margin: 0; font: 600 20px/1.2 var(--font-display); }
 .d-summary .d-line { grid-template-columns: 56px minmax(0, 1fr) auto; padding-block: 10px; }
