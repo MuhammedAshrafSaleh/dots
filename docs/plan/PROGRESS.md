@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
 - **Current task:** T7.5 (Paymob driver — Intention/Unified Checkout) **done**. Next: `start T7.6` (Admin: orders).
-- **Last commit:** `<pending>` (T7.5 — fill after commit).
+- **Last commit:** `6cbc949` (T7.5).
 - **Decision reused, not re-asked:** T7.5 says "ASK owner Intention vs legacy" but the Decisions log already fixed it (2026-10-07 Q1 → Intention/Unified Checkout). Implemented that.
 - **Open issues / observations:** The cart/drawer show no separate VAT amount line (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). Payment-failed "Retry card" now re-initiates a Paymob checkout (was a placeholder toast). Paymob card flow is **unverifiable locally without sandbox keys** — card method is hidden at checkout until `PAYMOB_SECRET_KEY/PUBLIC_KEY/INTEGRATION_ID_CARD` are set in `.env`; webhook + return + HMAC are covered by feature tests with recorded payloads. Webhook route `POST /payments/paymob/webhook` is CSRF-exempt (HMAC-authenticated). Return redirect also records the txn (idempotent) so confirmation reflects paid even if the webhook is slow. Order↔txn link is `special_reference` = order number → webhook `obj.order.merchant_order_id`.
 - **What to review on dots.test** (`php artisan migrate:fresh --seed` first):
@@ -13,7 +13,7 @@
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `<pending>` (T7.5) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `6cbc949` (T7.5) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
 Current phase: **7 — Cart, checkout, payments, orders** — T7.5 done
 
