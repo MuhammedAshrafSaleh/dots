@@ -10,11 +10,15 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 use Spatie\Translatable\HasTranslations;
 
 /**
  * @property OrderStatus $status
  * @property OrderPaymentStatus $payment_status
+ * @property ?Carbon $placed_at
+ * @property ?Carbon $expected_delivery_at
+ * @property ?Carbon $reserved_until
  */
 class Order extends Model
 {

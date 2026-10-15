@@ -15,6 +15,8 @@ use App\Livewire\Admin\Categories\Index as CategoryIndex;
 use App\Livewire\Admin\ContentPages\Edit as ContentPageEdit;
 use App\Livewire\Admin\ContentPages\Index as ContentPageIndex;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\Orders\Detail as OrderDetail;
+use App\Livewire\Admin\Orders\Index as OrderIndex;
 use App\Livewire\Admin\PageContent\Edit as PageContentEdit;
 use App\Livewire\Admin\Products\Edit as ProductEdit;
 use App\Livewire\Admin\Products\Index as ProductIndex;
@@ -106,6 +108,10 @@ Route::prefix('admin')
             // Settings and users (T4.6).
             Route::get('settings', SettingsEdit::class)->middleware('can:settings.view')->name('settings');
             Route::get('users', UsersIndex::class)->middleware('can:users.view')->name('users');
+
+            // Commerce — Orders (T7.6).
+            Route::get('orders', OrderIndex::class)->middleware('can:orders.view')->name('orders');
+            Route::get('orders/{order}', OrderDetail::class)->middleware('can:orders.view')->name('orders.show');
 
             // Catalog — Products (T3.6).
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');

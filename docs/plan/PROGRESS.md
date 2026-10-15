@@ -2,20 +2,22 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** T7.5 (Paymob driver — Intention/Unified Checkout) **done**. Next: `start T7.6` (Admin: orders).
-- **Last commit:** `6cbc949` (T7.5).
-- **Decision reused, not re-asked:** T7.5 says "ASK owner Intention vs legacy" but the Decisions log already fixed it (2026-10-07 Q1 → Intention/Unified Checkout). Implemented that.
-- **Open issues / observations:** The cart/drawer show no separate VAT amount line (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). Payment-failed "Retry card" now re-initiates a Paymob checkout (was a placeholder toast). Paymob card flow is **unverifiable locally without sandbox keys** — card method is hidden at checkout until `PAYMOB_SECRET_KEY/PUBLIC_KEY/INTEGRATION_ID_CARD` are set in `.env`; webhook + return + HMAC are covered by feature tests with recorded payloads. Webhook route `POST /payments/paymob/webhook` is CSRF-exempt (HMAC-authenticated). Return redirect also records the txn (idempotent) so confirmation reflects paid even if the webhook is slow. Order↔txn link is `special_reference` = order number → webhook `obj.order.merchant_order_id`.
-- **What to review on dots.test** (`php artisan migrate:fresh --seed` first):
-  - **T7.5a — card hidden without keys:** with empty `PAYMOB_*` env, at checkout the Card method must not appear. COD + InstaPay unaffected.
-  - **T7.5b — card shown with keys (if owner has sandbox):** set `PAYMOB_SECRET_KEY/PUBLIC_KEY/INTEGRATION_ID_CARD` (+ `HMAC_SECRET`) in `.env`, place a card order → browser should redirect to `accept.paymob.com/unifiedcheckout/...`. (Full settle needs Paymob's webhook hitting a public URL.)
-  - Previous T7.1–T7.4 flows (COD/InstaPay order, track, payment-failed switch-to-COD/InstaPay) still work.
+- **Current task:** T7.6 (Admin: orders) **done**. Next: `start T7.7` (Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard).
+- **Last commit:** `<fill after commit>` (T7.6).
+- **ERD change (owner-approved):** added `order_status_histories.internal_note` (text, nullable, admin-only — never shown to the customer; the translatable `note` stays customer-visible). Migration `2026_10_16_000000_add_internal_note_to_order_status_histories_table.php`; ERD.md updated. **Owner must `php artisan migrate` (or `migrate:fresh --seed`) on the dev `dots` DB before reviewing.**
+- **What's new:** AOrders list (`/admin/orders`) — tabs by status + filters (payment status/method, date from/to, search by order no./name/mobile) + CSV export (streamed, UTF-8 BOM, respects active filters). AOrderDetail (`/admin/orders/{id}`) — items + totals (coupon + VAT note), Paymob transaction log (card orders), status-history timeline, and an update card (order status, payment status, expected delivery, customer-visible bilingual note, internal note, "Update order", "Send update on WhatsApp"). `App\Actions\UpdateOrderStatus` writes ONE history row per update and, when an order moves into `cancelled` from a live state, restores reserved stock exactly once (mirrors ReleaseExpiredReservations). Admin WhatsApp links are staff-only wa.me (not logged) — exempt per CLAUDE.md.
+- **Open issues / observations:** Pre-existing FLAKY test unrelated to T7.6 — `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` `assertDontSee('cct')` intermittently fails when the random Livewire component id happens to contain the substring `cct`. Passes on re-run; left untouched (not this task's scope). The uncommitted `database/seeders/SiteSeeder.php` change (whatsapp number) is the owner's, left unstaged.
+- **What to review on dots.test** (run `php artisan migrate` or `migrate:fresh --seed` first for the new column; DemoSeeder already seeds 8 orders incl. a card + guest + InstaPay):
+  - **T7.6a — list:** open `/admin/orders`. Tabs (All + 6 statuses) show counts; search by order number/name/mobile; filter by payment status, method, and date range; "Export CSV" downloads `orders-YYYY-MM-DD.csv` honoring the active filters (open in Excel — Arabic readable). WhatsApp icon per row opens a chat (staff-only). No 403/500/JS errors.
+  - **T7.6b — detail:** click a row → `/admin/orders/{id}`. Items + totals (coupon line + "Includes VAT" note), status-history timeline, customer/delivery/payment cards. For the card order, a "Paymob transaction log" card appears.
+  - **T7.6c — update:** change order status to e.g. "Confirmed", add a customer note (EN+AR) and an internal note, set expected delivery → "Update order". A new timeline row appears with "Customer sees"/"Internal" badges; confirm the customer note shows on the public `/track-order` for that order but the internal note does NOT.
+  - **T7.6d — cancel restores stock:** note a product's stock, set one of its orders to "Cancelled" → stock increases by the ordered qty; re-saving cancelled does not double-restore.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `6cbc949` (T7.5) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `<fill after commit>` (T7.6) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-Current phase: **7 — Cart, checkout, payments, orders** — T7.5 done
+Current phase: **7 — Cart, checkout, payments, orders** — T7.6 done
 
 ---
 
@@ -84,7 +86,7 @@ Current phase: **7 — Cart, checkout, payments, orders** — T7.5 done
 - [x] T7.3 Confirmation, payment failed, track order
 - [x] T7.4 InstaPay via WhatsApp
 - [x] T7.5 Paymob driver
-- [ ] T7.6 Admin: orders
+- [x] T7.6 Admin: orders
 - [ ] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard
 - [ ] T7.8 Notifications
 
