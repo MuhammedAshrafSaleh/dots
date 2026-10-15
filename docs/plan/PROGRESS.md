@@ -2,24 +2,19 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** T6.5 — Search — DONE.
-- **Last commit:** `c62bb08` T6.5: Search — FULLTEXT with Arabic normalisation, search results page
+- **Current task:** PHASE 6 COMPLETE — all tasks done, gates passed, report written.
+- **Last commit:** see below (phase-6 report commit)
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - `php artisan migrate:fresh --seed` first.
-  - Type in the header search bar → press Enter → lands on `/en/search?q=...` (or `/ar/search?q=...`).
-  - Heading shows "Results for '...'" with product count. Sidebar filters all work.
-  - Use scope dropdown: select a category → results restricted to that category.
-  - Select "Brands" scope + brand name → products from matching brands only.
-  - Arabic search: type "اضاءة" (alef without hamza + taa marbuta → haa) and "إضاءة" → both should find the same lighting products (normalisation working).
-  - No results → shows "Try different keywords or browse by category."
-  - `/ar/search?q=...` — RTL, Arabic labels.
+  - See `docs/plan/reports/phase-6.md` for full review checklist.
+  - Awaiting owner approval to push and merge phase-6.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-6` · last local commit `c62bb08` · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last tag `phase-4-done` · push state: phase-6 not pushed — awaiting owner approval
 
-Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 done, T6.4 done, T6.5 done
+Current phase: **6 — Public site: catalog** — ALL DONE ✓
 
 ---
 
@@ -80,7 +75,7 @@ Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 don
 - [x] T6.2 Products listing (Livewire)
 - [x] T6.3 Product card
 - [x] T6.4 Product detail
-- [ ] T6.5 Search
+- [x] T6.5 Search
 
 ## Phase 7 — Cart, checkout, payments, orders  (`phase-07-commerce.md`)
 - [ ] T7.1 Cart
