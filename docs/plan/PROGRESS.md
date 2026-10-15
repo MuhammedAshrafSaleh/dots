@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
 - **Current task:** T7.4 (InstaPay via WhatsApp) **done**. Next: `start T7.5` (Paymob driver — ASK owner: Intention API or legacy first).
-- **Last commit:** `<fill after commit>` (T7.4).
+- **Last commit:** `c354d98` (T7.4).
 - **Open issues / observations:** The cart/drawer show no separate VAT amount line, only the "Prices include 14% VAT" note (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). Payment-failed "Retry card" is a placeholder toast until T7.5; "switch to COD / InstaPay" works. T7.4 leaves `payment_status` as `awaiting_transfer` when a reservation is auto-released (status → cancelled); this is intentional per spec (spec lists only cancel + restore stock + history note). Release command is scheduled every 15 min — not triggered by a queue worker; relies on `php artisan schedule:run` (cron in prod).
 - **What to review on dots.test** (`php artisan migrate:fresh --seed` first):
   - **T7.4a — InstaPay WhatsApp message:** place an InstaPay order, on the confirmation page click "Continue on WhatsApp". The wa.me text must contain the real order number and total (e.g. "Order DT-10001 … 2,500 EGP"), no literal `{order_number}` / `{total}` left in it. Check EN + AR.
@@ -12,7 +12,7 @@
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `<fill after commit>` (T7.4) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `c354d98` (T7.4) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
 Current phase: **7 — Cart, checkout, payments, orders** — T7.4 done
 
