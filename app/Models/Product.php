@@ -81,6 +81,28 @@ class Product extends Model implements HasMedia
         return $this->hasMany(ProductVariant::class)->orderBy('sort_order');
     }
 
+    /**
+     * Unique swatch hex values for card color dots, drawn from already-loaded
+     * variants. Returns [] when 'variants' is not eager-loaded (no lazy query).
+     *
+     * @return list<string>
+     */
+    public function cardSwatches(int $max = 5): array
+    {
+        if (! $this->relationLoaded('variants')) {
+            return [];
+        }
+
+        return $this->variants
+            ->flatMap->swatchAttributeValues
+            ->whereNotNull('swatch')
+            ->unique('swatch')
+            ->take($max)
+            ->pluck('swatch')
+            ->values()
+            ->all();
+    }
+
     /** @return HasMany<ProductSpec, $this> */
     public function specs(): HasMany
     {

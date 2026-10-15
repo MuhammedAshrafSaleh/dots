@@ -230,6 +230,17 @@ return [
     'cat_top_picks_title' => 'Most specified this season',
     'cat_buying_guide' => 'Buying guide',
 
+    // Product card (T6.3)
+    'pcard_in_stock' => 'In stock',
+    'pcard_low_stock' => 'Only a few left',
+    'pcard_on_order' => 'On order · 2–3 wks',
+    'pcard_add_to_cart' => 'Add to cart',
+    'pcard_save_wishlist' => 'Save to wishlist',
+    'pcard_remove_wishlist' => 'Remove from wishlist',
+    'pcard_wishlist_title' => 'Save it for later',
+    'pcard_wishlist_body' => 'Log in to keep a wishlist on all your devices.',
+    'pcard_sale_off' => ':pct% off',
+
     // Products listing (T6.2)
     'listing_filters' => 'Filters',
     'listing_clear_all' => 'Clear all',

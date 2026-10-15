@@ -59,6 +59,7 @@ Route::prefix('{locale}')
         $comingSoon = fn () => view('site.coming-soon');
 
         Route::get('/products', ProductsController::class)->name('products');
+        Route::get('/products/{product}', $comingSoon)->name('product.show');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');

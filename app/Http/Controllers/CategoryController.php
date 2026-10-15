@@ -43,7 +43,7 @@ class CategoryController extends Controller
         // Top picks: featured products configured in admin (up to 4).
         $featuredProducts = $category->featuredProducts()
             ->active()
-            ->with(['media', 'brand'])
+            ->with(['media', 'brand', 'variants' => fn ($q) => $q->active()->with('swatchAttributeValues')])
             ->take(4)
             ->get();
 

@@ -230,6 +230,17 @@ return [
     'cat_top_picks_title' => 'الأكثر طلباً هذا الموسم',
     'cat_buying_guide' => 'دليل الشراء',
 
+    // Product card (T6.3)
+    'pcard_in_stock' => 'متوفر',
+    'pcard_low_stock' => 'كمية محدودة',
+    'pcard_on_order' => 'بالطلب · 2–3 أسابيع',
+    'pcard_add_to_cart' => 'أضف للسلة',
+    'pcard_save_wishlist' => 'أضف للمفضلة',
+    'pcard_remove_wishlist' => 'إزالة من المفضلة',
+    'pcard_wishlist_title' => 'احفظه لوقت لاحق',
+    'pcard_wishlist_body' => 'سجّل الدخول لتحتفظ بالمفضلة على كل أجهزتك.',
+    'pcard_sale_off' => 'خصم :pct%',
+
     // Products listing (T6.2)
     'listing_filters' => 'الفلاتر',
     'listing_clear_all' => 'مسح الكل',

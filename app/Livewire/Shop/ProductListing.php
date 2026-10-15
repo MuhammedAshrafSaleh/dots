@@ -167,7 +167,11 @@ class ProductListing extends Component
 
     public function render(): View
     {
-        $products = $this->buildQuery()->with(['media', 'brand'])->paginate(12);
+        $products = $this->buildQuery()->with([
+            'media',
+            'brand',
+            'variants' => fn ($q) => $q->active()->with('swatchAttributeValues'),
+        ])->paginate(12);
         $facets = $this->getFacets();
         $catTree = $this->getCategoryTree();
         $activeCount = $this->activeFilterCount();

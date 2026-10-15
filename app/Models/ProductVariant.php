@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\AttributeDisplay;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -40,6 +41,18 @@ class ProductVariant extends Model
     public function attributeValues(): BelongsToMany
     {
         return $this->belongsToMany(AttributeValue::class, 'product_variant_values');
+    }
+
+    /**
+     * Only the swatch-display attribute values (for card color dots).
+     *
+     * @return BelongsToMany<AttributeValue, $this>
+     */
+    public function swatchAttributeValues(): BelongsToMany
+    {
+        return $this->belongsToMany(AttributeValue::class, 'product_variant_values')
+            ->whereHas('attribute', fn ($q) => $q->where('display', AttributeDisplay::Swatch->value))
+            ->whereNotNull('swatch');
     }
 
     /** @param  Builder<ProductVariant>  $query */
