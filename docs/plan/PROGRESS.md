@@ -2,21 +2,29 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** T6.3 — Product card — DONE.
-- **Last commit:** `a35a12d` T6.3: Product card — badges, swatches, stock, actions, wishlist
+- **Current task:** T6.4 — Product detail — DONE.
+- **Last commit:** `3cf30ad` T6.4: Product detail — gallery, VariantPicker, tabs, related
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - `php artisan migrate:fresh --seed` first.
-  - `/en/products` — each card: brand, title, SKU, stock label, price or POR, add-to-cart + WhatsApp (priced) or full-width WhatsApp (POR), wishlist heart.
-  - Click wishlist heart when logged out → prompt with "Log in / Create account", auto-dismisses after 6 s.
-  - Product with `is_new`/`is_best_seller` → badge. Product with `max_compare_at > min_price` → "X% off" badge.
-  - `/ar/products` — RTL, Arabic labels.
+  - `/en/products` → click any product card → product detail page.
+  - Gallery: main image + side thumbnails (desktop), dot indicators (mobile). Click thumbs to switch.
+  - Brand link in header → brand detail page. SKU, stock badge, dimmable badge shown.
+  - Variant pickers (buttons / swatches) — click a value → price, SKU, stock badge update via Livewire.
+  - Disabled combos (values with no matching variant) shown as disabled/strikethrough — cannot be clicked.
+  - Qty stepper — + and − buttons update count.
+  - Add-to-cart button disabled when no variant selected or combo has no match.
+  - WhatsApp quote button opens WA with product/variant/qty context.
+  - Wishlist heart when logged out → tooltip with Log in / Create account, auto-dismisses in 6s.
+  - Tabs below: Overview / Specifications / Downloads (N) / Delivery & returns — all switch correctly.
+  - Related products grid at the bottom (if product has `relatedProducts` seeded).
+  - `/ar/products/<slug>` — RTL, Arabic labels.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-6` · last local commit `a35a12d` · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last local commit `3cf30ad` · last tag `phase-4-done` · push state: phase-6 not pushed
 
-Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 done
+Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 done, T6.4 done
 
 ---
 
@@ -76,7 +84,7 @@ Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 don
 - [x] T6.1 Category page
 - [x] T6.2 Products listing (Livewire)
 - [x] T6.3 Product card
-- [ ] T6.4 Product detail
+- [x] T6.4 Product detail
 - [ ] T6.5 Search
 
 ## Phase 7 — Cart, checkout, payments, orders  (`phase-07-commerce.md`)
