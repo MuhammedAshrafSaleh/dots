@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
 - **Current task:** T7.6 (Admin: orders) **done**. Next: `start T7.7` (Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard).
-- **Last commit:** `<fill after commit>` (T7.6).
+- **Last commit:** `a3b297d` (T7.6).
 - **ERD change (owner-approved):** added `order_status_histories.internal_note` (text, nullable, admin-only — never shown to the customer; the translatable `note` stays customer-visible). Migration `2026_10_16_000000_add_internal_note_to_order_status_histories_table.php`; ERD.md updated. **Owner must `php artisan migrate` (or `migrate:fresh --seed`) on the dev `dots` DB before reviewing.**
 - **What's new:** AOrders list (`/admin/orders`) — tabs by status + filters (payment status/method, date from/to, search by order no./name/mobile) + CSV export (streamed, UTF-8 BOM, respects active filters). AOrderDetail (`/admin/orders/{id}`) — items + totals (coupon + VAT note), Paymob transaction log (card orders), status-history timeline, and an update card (order status, payment status, expected delivery, customer-visible bilingual note, internal note, "Update order", "Send update on WhatsApp"). `App\Actions\UpdateOrderStatus` writes ONE history row per update and, when an order moves into `cancelled` from a live state, restores reserved stock exactly once (mirrors ReleaseExpiredReservations). Admin WhatsApp links are staff-only wa.me (not logged) — exempt per CLAUDE.md.
 - **Open issues / observations:** Pre-existing FLAKY test unrelated to T7.6 — `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` `assertDontSee('cct')` intermittently fails when the random Livewire component id happens to contain the substring `cct`. Passes on re-run; left untouched (not this task's scope). The uncommitted `database/seeders/SiteSeeder.php` change (whatsapp number) is the owner's, left unstaged.
@@ -15,7 +15,7 @@
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `<fill after commit>` (T7.6) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `a3b297d` (T7.6) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
 Current phase: **7 — Cart, checkout, payments, orders** — T7.6 done
 
