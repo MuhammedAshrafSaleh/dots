@@ -1,6 +1,9 @@
 <?php
 
+use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderStatus;
 use App\Enums\QuoteSource;
+use App\Models\Order;
 use App\Models\PageSection;
 use App\Models\QuoteRequest;
 use App\Models\Setting;
@@ -62,6 +65,42 @@ it('passes model_type and model_id through to the logged row', function () {
 
     expect($row->sourceable_type)->toBe('product')
         ->and($row->sourceable_id)->toBe(42);
+});
+
+it('substitutes order_number and total into the instapay_order message', function () {
+    Setting::query()->updateOrCreate(
+        ['group' => 'whatsapp', 'key' => 'tpl_instapay_order'],
+        ['value' => ['ar' => 'طلب {order_number} — {total}', 'en' => 'Order {order_number} — {total}']],
+    );
+    cache()->forget('settings:whatsapp.tpl_instapay_order');
+
+    $order = Order::create([
+        'contact_name' => 'Mona',
+        'contact_mobile' => '01000000000',
+        'is_company' => false,
+        'locale' => 'ar',
+        'status' => OrderStatus::New,
+        'payment_status' => OrderPaymentStatus::AwaitingTransfer,
+        'payment_method_code' => 'instapay_whatsapp',
+        'subtotal' => 2500,
+        'discount_total' => 0,
+        'delivery_fee' => 0,
+        'total' => 2500,
+        'vat_rate' => 14,
+        'vat_amount' => 0,
+        'placed_at' => now(),
+    ]);
+
+    $url = waUrl('instapay_order', ['model_type' => 'order', 'model_id' => $order->id]);
+
+    $response = $this->get($url)->assertRedirect();
+    $target = rawurldecode($response->headers->get('Location'));
+
+    expect($target)
+        ->toContain($order->number)
+        ->toContain('2,500')
+        ->not->toContain('{order_number}')
+        ->not->toContain('{total}');
 });
 
 it('rejects an unsigned wa redirect with 403', function () {

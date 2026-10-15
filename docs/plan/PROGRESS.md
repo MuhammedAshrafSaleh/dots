@@ -2,20 +2,19 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** 3 public-site fixes applied (filter drawer, checkout mobile, cart estimate). Next: `start T7.4`.
-- **Last commit:** `0de82a6` (3 public-site fixes).
-- **Open issues / observations:** The cart/drawer show no separate VAT amount line, only the "Prices include 14% VAT" note (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). InstaPay "Continue on WhatsApp" still uses generic `wa.redirect` until T7.4. Payment-failed "Retry card" is a placeholder toast until T7.5; "switch to COD / InstaPay" works.
+- **Current task:** T7.4 (InstaPay via WhatsApp) **done**. Next: `start T7.5` (Paymob driver — ASK owner: Intention API or legacy first).
+- **Last commit:** `<fill after commit>` (T7.4).
+- **Open issues / observations:** The cart/drawer show no separate VAT amount line, only the "Prices include 14% VAT" note (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). Payment-failed "Retry card" is a placeholder toast until T7.5; "switch to COD / InstaPay" works. T7.4 leaves `payment_status` as `awaiting_transfer` when a reservation is auto-released (status → cancelled); this is intentional per spec (spec lists only cancel + restore stock + history note). Release command is scheduled every 15 min — not triggered by a queue worker; relies on `php artisan schedule:run` (cron in prod).
 - **What to review on dots.test** (`php artisan migrate:fresh --seed` first):
-  - **Fix 1** — `/ar/products` at ~1440px: only sidebar filters visible, no floating drawer with "الفلاتر" heading. At ~390px: sidebar gone, filter button visible, clicking it opens the drawer, X closes it. Check EN too.
-  - **Fix 2** — `/ar/checkout` at ~390px: all form fields visible and fillable, Place Order button reachable, order summary flows below the form (not overlapping). Check EN too.
-  - **Fix 3** — Add items to cart, go to `/ar/cart`: "Delivery (estimate)" row shows **150 EGP** (Standard delivery), not Free. Check EN too.
+  - **T7.4a — InstaPay WhatsApp message:** place an InstaPay order, on the confirmation page click "Continue on WhatsApp". The wa.me text must contain the real order number and total (e.g. "Order DT-10001 … 2,500 EGP"), no literal `{order_number}` / `{total}` left in it. Check EN + AR.
+  - **T7.4b — Reservation release (manual):** place an InstaPay order; in DB set its `reserved_until` to a past time; run `php artisan orders:release-reservations`. The order status becomes `cancelled`, its variant stock is restored, and a timeline note "InstaPay transfer window expired …" appears. Running the command again does nothing (no double-restore).
   - Previous T7.1–T7.3 flows (COD/InstaPay order, track order, payment-failed) still work.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `0de82a6` (3 public-site fixes) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `<fill after commit>` (T7.4) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-Current phase: **7 — Cart, checkout, payments, orders** — T7.3 done
+Current phase: **7 — Cart, checkout, payments, orders** — T7.4 done
 
 ---
 
@@ -82,7 +81,7 @@ Current phase: **7 — Cart, checkout, payments, orders** — T7.3 done
 - [x] T7.1 Cart
 - [x] T7.2 Checkout
 - [x] T7.3 Confirmation, payment failed, track order
-- [ ] T7.4 InstaPay via WhatsApp
+- [x] T7.4 InstaPay via WhatsApp
 - [ ] T7.5 Paymob driver
 - [ ] T7.6 Admin: orders
 - [ ] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard

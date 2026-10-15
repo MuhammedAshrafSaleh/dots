@@ -9,3 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('sitemap:generate')->weekly();
+
+// Release InstaPay reservations whose transfer window has elapsed: cancel the
+// order, restore its stock and note it on the timeline (T7.4).
+Schedule::command('orders:release-reservations')->everyFifteenMinutes();

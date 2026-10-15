@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuoteSource;
+use App\Models\Order;
 use App\Models\QuoteRequest;
 use App\Services\CartManager;
 use App\Services\Settings;
@@ -66,12 +67,21 @@ class WhatsAppController extends Controller
             '{customer_name}' => '',
             '{items}' => '',
             '{total}' => '',
+            '{order_number}' => '',
         ];
 
         if ($src === QuoteSource::Cart) {
             $cart = app(CartManager::class);
             $vars['{items}'] = $cart->whatsappItemsText($locale);
             $vars['{total}'] = number_format($cart->totals()->total, 0).' '.__('ui.egp');
+        }
+
+        if ($src === QuoteSource::InstapayOrder) {
+            $order = Order::find($request->query('model_id'));
+            if ($order !== null) {
+                $vars['{order_number}'] = (string) $order->number;
+                $vars['{total}'] = number_format((float) $order->total, 0).' '.__('ui.egp');
+            }
         }
 
         return str_replace(array_keys($vars), array_values($vars), $tpl);
