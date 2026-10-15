@@ -5,11 +5,15 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandDetailController;
 use App\Http\Controllers\BrandsController;
+use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductDetailController;
+use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\ProjectsCurrentController;
 use App\Http\Controllers\ProjectsPreviousController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceDetailController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
@@ -56,7 +60,8 @@ Route::prefix('{locale}')
         // these; each is replaced by its real screen in a later Phase 5/6 task.
         $comingSoon = fn () => view('site.coming-soon');
 
-        Route::get('/products', $comingSoon)->name('products');
+        Route::get('/products', ProductsController::class)->name('products');
+        Route::get('/products/{product}', ProductDetailController::class)->name('product.show');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');
@@ -68,8 +73,8 @@ Route::prefix('{locale}')
         Route::get('/blog/{slug}', ArticleController::class)->name('blog.show');
         Route::get('/about', AboutController::class)->name('about');
         Route::get('/track-order', $comingSoon)->name('track');
-        Route::get('/search', $comingSoon)->name('search');
-        Route::get('/c/{category}', $comingSoon)->name('category');
+        Route::get('/search', SearchController::class)->name('search');
+        Route::get('/c/{category}', CategoryController::class)->name('category');
         Route::get('/p/{page}', ContentPageController::class)->name('page');
 
         // Newsletter subscribe — real handler + dedupe lands in T5.7.

@@ -26,6 +26,7 @@ class WhatsappButton extends Component
         public ?int $qty = null,
         public string $label = '',
         public string $class = '',
+        public bool $iconOnly = false,
     ) {
         $locale = app()->getLocale();
 

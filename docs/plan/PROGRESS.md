@@ -1,19 +1,20 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-5` (local only, not pushed; branched from main after phase-4 merge).
-- **Current task:** Phase 5 complete — checklist done, deadlock fixed, report updated. Awaiting owner review.
-- **Last commit:** `a2bcfed` fix: RolesAndAdminSeeder — batch insertOrIgnore to eliminate gap-lock deadlock
+- **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
+- **Current task:** PHASE 6 COMPLETE — all tasks done, gates passed, report written.
+- **Last commit:** see below (phase-6 report commit)
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
-  - Seed first if needed: `php artisan migrate:fresh --seed`.
-  - Smoke-test list in `docs/plan/reports/phase-5.md`.
-  - View-source any public page — confirm `<meta name="description">`, `<link rel="canonical">`, two `hreflang` links, OG tags.
-  - Open `/robots.txt` and `/sitemap.xml`.
+  - `php artisan migrate:fresh --seed` first.
+  - See `docs/plan/reports/phase-6.md` for full review checklist.
+  - Awaiting owner approval to push and merge phase-6.
 
-**Git:** branch `phase-5` · last local commit `a2bcfed` · last tag `phase-4-done` · push state: phase-5 not pushed
+**Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-Current phase: **5 — Public site: layout and content pages** — CHECKLIST DONE · report at `docs/plan/reports/phase-5.md` · awaiting owner review
+**Git:** branch `phase-6` · last tag `phase-4-done` · push state: phase-6 not pushed — awaiting owner approval
+
+Current phase: **6 — Public site: catalog** — ALL DONE ✓
 
 ---
 
@@ -70,11 +71,11 @@ Current phase: **5 — Public site: layout and content pages** — CHECKLIST DON
 - [x] T5.10 SEO basics
 
 ## Phase 6 — Public site: catalog  (`phase-06-catalog-front.md`)
-- [ ] T6.1 Category page
-- [ ] T6.2 Products listing (Livewire)
-- [ ] T6.3 Product card
-- [ ] T6.4 Product detail
-- [ ] T6.5 Search
+- [x] T6.1 Category page
+- [x] T6.2 Products listing (Livewire)
+- [x] T6.3 Product card
+- [x] T6.4 Product detail
+- [x] T6.5 Search
 
 ## Phase 7 — Cart, checkout, payments, orders  (`phase-07-commerce.md`)
 - [ ] T7.1 Cart
@@ -156,3 +157,5 @@ Legend: [ ] todo · [x] done
   - **No public `wa.me` links anywhere.** Every WhatsApp CTA in a public Blade view must use `<x-whatsapp-button source="...">` (or a plain `<a>` whose `href` is `URL::signedRoute('wa.redirect', …)`). The signed route logs a `quote_requests` row then redirects. `grep -r "wa\.me"` across app/ config/ database/ resources/ routes/ must only hit `app/Http/Controllers/WhatsAppController.php` and `app/Services/WhatsApp.php`. Admin views that build `wa.me` links for staff use (e.g. order update in T7.6) are exempt.
   - **Number normalisation.** `WhatsApp::normalizeNumber(string $raw)` strips non-digits and converts a leading-`0` local Egyptian number to international format (e.g. `01500060828` → `201500060828`). Both `WhatsApp::link()` and `WhatsAppController::redirect()` pass the raw setting through this helper. The setting `contact.whatsapp_number` should store the number in international format (`201xxxxxxxxx`) — the normaliser is a safety net, not the authoritative source.
   - **Client action pending:** set `contact.whatsapp_number` to the real number in international format via admin Settings → Contact.
+- **2026-10-15 — Browser tests paused (owner decision):** Browser tests (`tests/Browser`) are excluded from all per-task and phase-end gates. The default test run (`composer test` / `php artisan test`) runs Unit + Feature only (via `phpunit.xml`). Browser tests live in `phpunit.browser.xml` and run only via `composer test:browser`, explicitly when the owner asks. New behavior is covered by Feature tests instead of new browser tests. Per-task gate is now `composer gates` = `composer test` + `composer analyse` + `vendor/bin/pint --test` + `npm run build`. **Re-run `composer test:browser` before Phase 7, before Phase 8, and before deploy.**
+- **2026-10-15 — Redis cache serialization (T6.2 fix):** Laravel 13 defaults `config/cache.php` `serializable_classes => false`, which makes `RedisStore` unserialize with `allowed_classes => false` — every cached Eloquent model/collection comes back as `__PHP_Incomplete_Class` (500 on `/products`). Tests never caught it because the test env uses the `array` cache store (no serialization). This app intentionally caches its own Eloquent collections (category tree, brand/attribute facets) in a private Redis store, so set `serializable_classes => env('CACHE_SERIALIZABLE_CLASSES', true)`. Requirement: production Redis must stay non-public (the setting is only safe when the cache store is not attacker-writable).

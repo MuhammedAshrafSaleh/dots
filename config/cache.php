@@ -129,8 +129,13 @@ return [
     | storage. By default, no PHP classes will be unserialized from your
     | cache to prevent gadget chain attacks if your APP_KEY is leaked.
     |
+    | This app deliberately caches Eloquent models/collections (category tree,
+    | brand and attribute lists, etc.) in a private Redis store. With `false`
+    | every cached object comes back as __PHP_Incomplete_Class, so we allow
+    | class unserialization from our own cache. Keep Redis non-public.
+    |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => env('CACHE_SERIALIZABLE_CLASSES', true),
 
 ];

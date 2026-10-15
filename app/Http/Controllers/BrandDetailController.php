@@ -41,7 +41,7 @@ class BrandDetailController extends Controller
                     )->orWhere('id', (int) $catFilter)
                 )
             )
-            ->with(['media', 'brand'])
+            ->with(['media', 'brand', 'variants' => fn ($q) => $q->active()->with('swatchAttributeValues')])
             ->orderByDesc('sort_weight')
             ->paginate(8)
             ->withQueryString();

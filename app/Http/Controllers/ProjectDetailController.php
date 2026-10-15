@@ -11,7 +11,7 @@ class ProjectDetailController extends Controller
     public function __invoke(string $locale, string $slug): View
     {
         $project = Project::active()
-            ->with(['media', 'products.media', 'services'])
+            ->with(['media', 'products.media', 'products.brand', 'products.variants' => fn ($q) => $q->active()->with('swatchAttributeValues'), 'services'])
             ->where("slug_{$locale}", $slug)
             ->firstOrFail();
 

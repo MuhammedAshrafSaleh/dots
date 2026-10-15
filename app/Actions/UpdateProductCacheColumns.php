@@ -7,6 +7,7 @@ use App\Models\Brand;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\Settings;
+use App\Support\ArabicNorm;
 use Illuminate\Support\Collection;
 
 /**
@@ -71,12 +72,14 @@ class UpdateProductCacheColumns
         // brand_id is a required FK, so there is always a brand to look up.
         $brandName = Brand::query()->whereKey($product->brand_id)->value('name');
 
-        return collect([
+        $raw = collect([
             $product->getTranslation('name', 'ar'),
             $product->getTranslation('name', 'en'),
             $product->sku,
             ...$variants->pluck('sku')->all(),
             $brandName,
         ])->filter()->map(fn ($v) => trim((string) $v))->filter()->unique()->implode(' ');
+
+        return ArabicNorm::normalize($raw);
     }
 }

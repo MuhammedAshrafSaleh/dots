@@ -58,8 +58,18 @@
             "@php artisan dev"
         ],
         "test": [
-            "@php artisan config:clear --ansi @no_additional_args",
-            "@php artisan test"
+            "@php artisan config:clear --ansi",
+            "@php artisan test --parallel --compact"
+        ],
+        "test:browser": [
+            "@php artisan config:clear --ansi",
+            "@php artisan test --compact -c phpunit.browser.xml"
+        ],
+        "gates": [
+            "@test",
+            "@analyse",
+            "vendor/bin/pint --test",
+            "npm run build"
         ],
         "lint": [
             "pint"

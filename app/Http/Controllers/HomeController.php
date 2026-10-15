@@ -25,23 +25,25 @@ class HomeController extends Controller
             ->orderBy('sort_order')
             ->get();
 
+        $cardWith = ['media', 'brand', 'variants' => fn ($q) => $q->active()->with('swatchAttributeValues')];
+
         $newProducts = Product::active()
             ->where('is_new', true)
-            ->with(['media', 'brand'])
+            ->with($cardWith)
             ->orderByDesc('sort_weight')
             ->limit(4)
             ->get();
 
         $bestProducts = Product::active()
             ->where('is_best_seller', true)
-            ->with(['media', 'brand'])
+            ->with($cardWith)
             ->orderByDesc('sort_weight')
             ->limit(4)
             ->get();
 
         $smartProducts = Product::active()
             ->where('is_smart_pick', true)
-            ->with(['media', 'brand'])
+            ->with($cardWith)
             ->orderByDesc('sort_weight')
             ->limit(4)
             ->get();
