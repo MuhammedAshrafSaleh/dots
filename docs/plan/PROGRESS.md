@@ -2,29 +2,24 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** T6.4 — Product detail — DONE.
-- **Last commit:** `ff2adb7` fix: cast translatable caption array to locale string in gallery
+- **Current task:** T6.5 — Search — DONE.
+- **Last commit:** `c62bb08` T6.5: Search — FULLTEXT with Arabic normalisation, search results page
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:**
   - `php artisan migrate:fresh --seed` first.
-  - `/en/products` → click any product card → product detail page.
-  - Gallery: main image + side thumbnails (desktop), dot indicators (mobile). Click thumbs to switch.
-  - Brand link in header → brand detail page. SKU, stock badge, dimmable badge shown.
-  - Variant pickers (buttons / swatches) — click a value → price, SKU, stock badge update via Livewire.
-  - Disabled combos (values with no matching variant) shown as disabled/strikethrough — cannot be clicked.
-  - Qty stepper — + and − buttons update count.
-  - Add-to-cart button disabled when no variant selected or combo has no match.
-  - WhatsApp quote button opens WA with product/variant/qty context.
-  - Wishlist heart when logged out → tooltip with Log in / Create account, auto-dismisses in 6s.
-  - Tabs below: Overview / Specifications / Downloads (N) / Delivery & returns — all switch correctly.
-  - Related products grid at the bottom (if product has `relatedProducts` seeded).
-  - `/ar/products/<slug>` — RTL, Arabic labels.
+  - Type in the header search bar → press Enter → lands on `/en/search?q=...` (or `/ar/search?q=...`).
+  - Heading shows "Results for '...'" with product count. Sidebar filters all work.
+  - Use scope dropdown: select a category → results restricted to that category.
+  - Select "Brands" scope + brand name → products from matching brands only.
+  - Arabic search: type "اضاءة" (alef without hamza + taa marbuta → haa) and "إضاءة" → both should find the same lighting products (normalisation working).
+  - No results → shows "Try different keywords or browse by category."
+  - `/ar/search?q=...` — RTL, Arabic labels.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-6` · last local commit `ff2adb7` · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last local commit `c62bb08` · last tag `phase-4-done` · push state: phase-6 not pushed
 
-Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 done, T6.4 done
+Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 done, T6.4 done, T6.5 done
 
 ---
 
