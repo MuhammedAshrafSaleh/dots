@@ -3,13 +3,13 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
 - **Current task:** Chore — disable browser tests from gates (done). Next: T6.3 Product card.
-- **Last commit:** see git log — chore: exclude browser tests from default gates
+- **Last commit:** `d80bd64` chore: exclude browser tests from default gates, add composer gates script
 - **Open issues / left to fix:** none.
 - **What to review on dots.test:** n/a (infra-only chore).
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-6` · last local commit TBD (post-commit) · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last local commit `d80bd64` · last tag `phase-4-done` · push state: phase-6 not pushed
 
 Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done
 
