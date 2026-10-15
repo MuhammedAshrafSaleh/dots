@@ -10,6 +10,8 @@ use App\Models\DeliveryMethod;
 use App\Models\Governorate;
 use App\Models\PaymentMethod;
 use App\Services\CartManager;
+use App\Services\Payments\PaymentException;
+use App\Services\Payments\PaymentGateway;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -157,6 +159,22 @@ class CheckoutForm extends Component
         }
 
         session()->push('orders.placed', $order->id);
+
+        // Card orders detour to Paymob's hosted checkout; the gateway settles
+        // the order via webhook/return. Everything else lands on confirmation.
+        if ($payment->code === PaymentMethodCode::Card) {
+            try {
+                $url = app(PaymentGateway::class)->createCheckout($order);
+            } catch (PaymentException $e) {
+                $this->redirectRoute('order.payment-failed', [app()->getLocale(), $order->number], navigate: true);
+
+                return;
+            }
+
+            $this->redirect($url);
+
+            return;
+        }
 
         $this->redirectRoute('order.confirmation', [app()->getLocale(), $order->number], navigate: true);
     }

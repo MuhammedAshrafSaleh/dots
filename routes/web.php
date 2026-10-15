@@ -11,6 +11,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderConfirmationController;
+use App\Http\Controllers\PaymobReturnController;
+use App\Http\Controllers\PaymobWebhookController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
@@ -50,6 +52,9 @@ Route::get('/sitemap.xml', function () {
     return response()->file($path, ['Content-Type' => 'application/xml']);
 });
 
+// Paymob server→server webhook — not locale-prefixed, CSRF-exempt (see bootstrap/app.php).
+Route::post('/payments/paymob/webhook', PaymobWebhookController::class)->name('paymob.webhook');
+
 Route::prefix('{locale}')
     ->whereIn('locale', Locale::SUPPORTED)
     ->middleware('setlocale')
@@ -69,6 +74,7 @@ Route::prefix('{locale}')
         Route::get('/checkout', CheckoutController::class)->name('checkout');
         Route::get('/order/{number}/confirmation', OrderConfirmationController::class)->name('order.confirmation');
         Route::get('/order/{number}/payment-failed', fn (string $locale, string $number) => view('site.payment-failed', compact('locale', 'number')))->name('order.payment-failed');
+        Route::get('/payments/paymob/return', PaymobReturnController::class)->name('paymob.return');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');

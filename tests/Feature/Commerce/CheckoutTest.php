@@ -17,6 +17,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CartManager;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
 function coVariant(string $sku, float $price = 1000, int $stock = 10): ProductVariant
@@ -254,6 +255,30 @@ it('hides the card method until Paymob is configured', function () {
 
     config()->set('services.paymob.secret_key', 'sk_test_123');
     Livewire::test(CheckoutForm::class)->assertSee('Credit card');
+});
+
+it('sends a card order to the Paymob hosted checkout', function () {
+    config()->set('services.paymob.base_url', 'https://pay.test');
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', '55555');
+    config()->set('services.paymob.hmac_secret', 'hmac');
+    Http::fake(['pay.test/v1/intention/*' => Http::response(['id' => 'int_7', 'client_secret' => 'cs_1'], 200)]);
+
+    $variant = coVariant('CARD', 1000);
+    $pickup = coPickup();
+    coPayment(PaymentMethodCode::Card);
+    app(CartManager::class)->add($variant->id, 1);
+
+    Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $pickup->id, 'paymentCode' => 'card']))
+        ->call('place')
+        ->assertRedirect('https://pay.test/unifiedcheckout/?publicKey=pk_test&clientSecret=cs_1');
+
+    $order = Order::first();
+    expect($order->payment_method_code)->toBe('card')
+        ->and($order->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and($order->payments()->count())->toBe(1);
 });
 
 it('only offers delivery methods serving the chosen governorate', function () {

@@ -6,6 +6,8 @@ use App\Enums\OrderPaymentStatus;
 use App\Enums\PaymentMethodCode;
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Services\Payments\PaymentException;
+use App\Services\Payments\PaymentGateway;
 use App\Services\Settings;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
@@ -42,8 +44,15 @@ class PaymentFailed extends Component
     public function proceed(): void
     {
         if ($this->option === 'retry') {
-            // Re-initiating the Paymob card payment is wired in T7.5.
-            $this->dispatch('toast', type: 'info', title: __('ui.pf_retry_soon'));
+            try {
+                $url = app(PaymentGateway::class)->createCheckout($this->order());
+            } catch (PaymentException $e) {
+                $this->dispatch('toast', type: 'error', title: __('ui.pf_gateway_error'));
+
+                return;
+            }
+
+            $this->redirect($url);
 
             return;
         }

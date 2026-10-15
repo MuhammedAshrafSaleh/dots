@@ -33,6 +33,12 @@ return Application::configure(basePath: dirname(__DIR__))
             before: Authorize::class,
             prepend: AdminAuth::class,
         );
+
+        // Paymob's server→server webhook cannot carry a CSRF token; it is
+        // authenticated by HMAC in PaymobWebhookController instead.
+        $middleware->validateCsrfTokens(except: [
+            'payments/paymob/webhook',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

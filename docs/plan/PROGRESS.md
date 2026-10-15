@@ -2,19 +2,20 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** T7.4 (InstaPay via WhatsApp) **done**. Next: `start T7.5` (Paymob driver — ASK owner: Intention API or legacy first).
-- **Last commit:** `c354d98` (T7.4).
-- **Open issues / observations:** The cart/drawer show no separate VAT amount line, only the "Prices include 14% VAT" note (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). Payment-failed "Retry card" is a placeholder toast until T7.5; "switch to COD / InstaPay" works. T7.4 leaves `payment_status` as `awaiting_transfer` when a reservation is auto-released (status → cancelled); this is intentional per spec (spec lists only cancel + restore stock + history note). Release command is scheduled every 15 min — not triggered by a queue worker; relies on `php artisan schedule:run` (cron in prod).
+- **Current task:** T7.5 (Paymob driver — Intention/Unified Checkout) **done**. Next: `start T7.6` (Admin: orders).
+- **Last commit:** `<pending>` (T7.5 — fill after commit).
+- **Decision reused, not re-asked:** T7.5 says "ASK owner Intention vs legacy" but the Decisions log already fixed it (2026-10-07 Q1 → Intention/Unified Checkout). Implemented that.
+- **Open issues / observations:** The cart/drawer show no separate VAT amount line (VAT-inclusive by design). Guest "save your details" card still intentionally not rendered (Phase 8). Payment-failed "Retry card" now re-initiates a Paymob checkout (was a placeholder toast). Paymob card flow is **unverifiable locally without sandbox keys** — card method is hidden at checkout until `PAYMOB_SECRET_KEY/PUBLIC_KEY/INTEGRATION_ID_CARD` are set in `.env`; webhook + return + HMAC are covered by feature tests with recorded payloads. Webhook route `POST /payments/paymob/webhook` is CSRF-exempt (HMAC-authenticated). Return redirect also records the txn (idempotent) so confirmation reflects paid even if the webhook is slow. Order↔txn link is `special_reference` = order number → webhook `obj.order.merchant_order_id`.
 - **What to review on dots.test** (`php artisan migrate:fresh --seed` first):
-  - **T7.4a — InstaPay WhatsApp message:** place an InstaPay order, on the confirmation page click "Continue on WhatsApp". The wa.me text must contain the real order number and total (e.g. "Order DT-10001 … 2,500 EGP"), no literal `{order_number}` / `{total}` left in it. Check EN + AR.
-  - **T7.4b — Reservation release (manual):** place an InstaPay order; in DB set its `reserved_until` to a past time; run `php artisan orders:release-reservations`. The order status becomes `cancelled`, its variant stock is restored, and a timeline note "InstaPay transfer window expired …" appears. Running the command again does nothing (no double-restore).
-  - Previous T7.1–T7.3 flows (COD/InstaPay order, track order, payment-failed) still work.
+  - **T7.5a — card hidden without keys:** with empty `PAYMOB_*` env, at checkout the Card method must not appear. COD + InstaPay unaffected.
+  - **T7.5b — card shown with keys (if owner has sandbox):** set `PAYMOB_SECRET_KEY/PUBLIC_KEY/INTEGRATION_ID_CARD` (+ `HMAC_SECRET`) in `.env`, place a card order → browser should redirect to `accept.paymob.com/unifiedcheckout/...`. (Full settle needs Paymob's webhook hitting a public URL.)
+  - Previous T7.1–T7.4 flows (COD/InstaPay order, track, payment-failed switch-to-COD/InstaPay) still work.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-7` · last commit `c354d98` (T7.4) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `<pending>` (T7.5) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-Current phase: **7 — Cart, checkout, payments, orders** — T7.4 done
+Current phase: **7 — Cart, checkout, payments, orders** — T7.5 done
 
 ---
 
@@ -82,7 +83,7 @@ Current phase: **7 — Cart, checkout, payments, orders** — T7.4 done
 - [x] T7.2 Checkout
 - [x] T7.3 Confirmation, payment failed, track order
 - [x] T7.4 InstaPay via WhatsApp
-- [ ] T7.5 Paymob driver
+- [x] T7.5 Paymob driver
 - [ ] T7.6 Admin: orders
 - [ ] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard
 - [ ] T7.8 Notifications

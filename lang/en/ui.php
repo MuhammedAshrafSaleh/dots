@@ -444,4 +444,5 @@ return [
     'pf_instapay_cta' => 'Pay with InstaPay on WhatsApp',
     'pf_get_help' => 'Get help on WhatsApp',
     'pf_retry_soon' => 'Card payment will be available shortly.',
+    'pf_gateway_error' => 'We couldn’t reach the card payment provider. Please try again or choose another method.',
 ];
