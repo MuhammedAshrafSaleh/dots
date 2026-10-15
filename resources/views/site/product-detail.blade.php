@@ -57,14 +57,18 @@
                 @if ($gallery->count() > 1)
                     <div class="d-pdp__thumbs">
                         @foreach ($gallery as $i => $media)
+                            @php
+                                $cap = $media->getCustomProperty('caption');
+                                $captionStr = is_array($cap) ? ($cap[$locale] ?? $cap['en'] ?? '') : (string) ($cap ?? '');
+                            @endphp
                             <button type="button"
                                 class="d-pdp__thumb"
                                 :class="img === {{ $i }} ? 'is-active' : ''"
                                 @click="img = {{ $i }}"
-                                aria-label="{{ $media->getCustomProperty('caption') ?: ($productName.' '.($i+1)) }}">
+                                aria-label="{{ $captionStr ?: ($productName.' '.($i+1)) }}">
                                 <x-image-frame
                                     :src="$media->getUrl('thumb')"
-                                    :alt="$media->getCustomProperty('caption') ?: $productName"
+                                    :alt="$captionStr ?: $productName"
                                     ratio="1 / 1" />
                             </button>
                         @endforeach
@@ -78,14 +82,18 @@
                     <div class="d-pdp__main">
                         @if ($gallery->isNotEmpty())
                             @foreach ($gallery as $i => $media)
+                                @php
+                                    $cap = $media->getCustomProperty('caption');
+                                    $captionStr = is_array($cap) ? ($cap[$locale] ?? $cap['en'] ?? '') : (string) ($cap ?? '');
+                                @endphp
                                 <div x-show="img === {{ $i }}"
                                     @if ($i > 0) x-cloak @endif
                                     style="animation: d-fade-in 240ms var(--ease-out)">
                                     <x-image-frame
                                         :src="$media->getUrl()"
-                                        :alt="$media->getCustomProperty('caption') ?: $productName"
+                                        :alt="$captionStr ?: $productName"
                                         ratio="1 / 1"
-                                        :label="$media->getCustomProperty('caption') ?: ''" />
+                                        :label="$captionStr" />
                                 </div>
                             @endforeach
 
