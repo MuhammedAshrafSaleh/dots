@@ -2,20 +2,21 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** T7.1 Cart — DONE (gates green). Next: `start T7.2`.
-- **Last commit:** T7.1 (see Git line below).
-- **Open issues / left to fix:** none. (Checkout button links to a `checkout` placeholder route until T7.2 builds it.)
-- **What to review on dots.test** (`php artisan migrate:fresh --seed` first for cart_suggestion relations + a coupon):
-  - PDP: pick a variant → **Add to cart** → drawer slides in with the line, qty stepper, subtotal, VAT note, free-ship progress; header cart count updates.
-  - Product card (listing/home): **Add to cart** opens the drawer with the default variant.
-  - `/{locale}/cart`: edit qty, remove a line, **Quote this cart** (WhatsApp), apply a coupon (try an invalid code → clear error; valid → discount + total update), suggestions grid.
+- **Current task:** T7.2 Checkout — DONE (gates green). Next: `start T7.3`.
+- **Last commit:** T7.2 (see Git line below).
+- **Open issues / left to fix:** none. The order-confirmation page is a minimal placeholder (order number + totals + InstaPay hold note); the full 3-variant KOrderConfirm screen is T7.3. Card payment is hidden until Paymob env keys are set (`config/services.php` → `paymob.secret_key`); full driver is T7.5. InstaPay WhatsApp redirect + release job are T7.4 (order is already set to `awaiting_transfer` + `reserved_until` at placement).
+- **What to review on dots.test** (`php artisan migrate:fresh --seed` first for delivery/payment methods + governorates):
+  - Add an item to the cart → **Checkout** → `/{locale}/checkout`: fill contact (invalid mobile → error; valid `01xxxxxxxxx`), tick company → tax ID appears + required, pick governorate → delivery methods filter (Express is Cairo/Giza only), pick a delivery method → summary fee/total updates, pick COD → **Place order** → lands on the confirmation page with an order number; cart is now empty.
+  - Repeat with **InstaPay via WhatsApp** → confirmation shows the hold note (payment status `awaiting_transfer`).
+  - Showroom pickup → no address fields required.
+  - Card option should be absent (Paymob not configured locally).
   - Check both AR (RTL) and EN; no 403/500/JS errors.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
 **Git:** branch `phase-7` · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-Current phase: **7 — Cart, checkout, payments, orders** — T7.1 done
+Current phase: **7 — Cart, checkout, payments, orders** — T7.2 done
 
 ---
 
@@ -80,7 +81,7 @@ Current phase: **7 — Cart, checkout, payments, orders** — T7.1 done
 
 ## Phase 7 — Cart, checkout, payments, orders  (`phase-07-commerce.md`)
 - [x] T7.1 Cart
-- [ ] T7.2 Checkout
+- [x] T7.2 Checkout
 - [ ] T7.3 Confirmation, payment failed, track order
 - [ ] T7.4 InstaPay via WhatsApp
 - [ ] T7.5 Paymob driver

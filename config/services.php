@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    // Paymob (Intention / Unified Checkout). Card payment is hidden at checkout
+    // while `secret_key` is empty; the full driver lands in T7.5.
+    'paymob' => [
+        'secret_key' => env('PAYMOB_SECRET_KEY'),
+        'public_key' => env('PAYMOB_PUBLIC_KEY'),
+        'api_key' => env('PAYMOB_API_KEY'),
+        'integration_id_card' => env('PAYMOB_INTEGRATION_ID_CARD'),
+        'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
+        'iframe_id' => env('PAYMOB_IFRAME_ID'),
+    ],
+
 ];

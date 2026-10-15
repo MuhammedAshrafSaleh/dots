@@ -7,8 +7,10 @@ use App\Http\Controllers\BrandDetailController;
 use App\Http\Controllers\BrandsController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderConfirmationController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
@@ -64,8 +66,8 @@ Route::prefix('{locale}')
         Route::get('/products', ProductsController::class)->name('products');
         Route::get('/products/{product}', ProductDetailController::class)->name('product.show');
         Route::get('/cart', CartController::class)->name('cart');
-        // Checkout lands in T7.2 — placeholder keeps the layout/cart links valid.
-        Route::get('/checkout', $comingSoon)->name('checkout');
+        Route::get('/checkout', CheckoutController::class)->name('checkout');
+        Route::get('/order/{number}/confirmation', OrderConfirmationController::class)->name('order.confirmation');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\ProductRelationType;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Coupon;
 use App\Models\DeliveryMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -140,6 +141,32 @@ class CartManager
 
     public function totals(): CartTotals
     {
+        [$fee, $free, $threshold] = $this->deliveryEstimate($this->subtotal());
+
+        return $this->buildTotals($fee, $free, $threshold);
+    }
+
+    /**
+     * Totals for a specific delivery method (its own fee + free-over rule),
+     * used on the checkout page where the customer picks the method.
+     */
+    public function totalsForDelivery(?DeliveryMethod $method): CartTotals
+    {
+        $subtotal = $this->subtotal();
+
+        if ($method === null) {
+            return $this->buildTotals(0.0, false, null);
+        }
+
+        $threshold = $method->free_over_amount !== null ? (float) $method->free_over_amount : null;
+        $free = $threshold !== null && $subtotal >= $threshold;
+
+        return $this->buildTotals($free ? 0.0 : (float) $method->price, $free, $threshold);
+    }
+
+    /** Builds the money snapshot from the current items + session coupon. */
+    private function buildTotals(float $deliveryFee, bool $deliveryFree, ?float $freeThreshold): CartTotals
+    {
         $subtotal = 0.0;
         $count = 0;
         foreach ($this->items() as $item) {
@@ -148,21 +175,7 @@ class CartManager
         }
         $subtotal = round($subtotal, 2);
 
-        $discount = 0.0;
-        $couponCode = null;
-        $code = session(self::COUPON_KEY);
-        if (is_string($code) && $code !== '') {
-            $result = app(Coupons::class)->resolve($code, $subtotal, $this->customerId());
-            if ($result->error !== null) {
-                // Became invalid (e.g. items removed below the minimum) — drop it.
-                session()->forget(self::COUPON_KEY);
-            } elseif ($result->coupon !== null) {
-                $discount = $result->discount;
-                $couponCode = $result->coupon->code;
-            }
-        }
-
-        [$deliveryFee, $deliveryFree, $freeThreshold] = $this->deliveryEstimate($subtotal);
+        [$discount, $couponCode] = $this->sessionDiscount($subtotal);
 
         $total = round($subtotal - $discount + $deliveryFee, 2);
         $vatRate = (float) $this->settings->get('commerce.vat_rate', 14);
@@ -180,6 +193,74 @@ class CartManager
             itemCount: $count,
             couponCode: $couponCode,
         );
+    }
+
+    /**
+     * Resolves the session coupon against a subtotal. Drops it from the session
+     * when it is no longer valid (e.g. items removed below the minimum).
+     *
+     * @return array{0: float, 1: string|null}
+     */
+    private function sessionDiscount(float $subtotal): array
+    {
+        $code = session(self::COUPON_KEY);
+        if (! is_string($code) || $code === '') {
+            return [0.0, null];
+        }
+
+        $result = app(Coupons::class)->resolve($code, $subtotal, $this->customerId());
+        if ($result->error !== null) {
+            session()->forget(self::COUPON_KEY);
+
+            return [0.0, null];
+        }
+
+        if ($result->coupon !== null) {
+            return [$result->discount, $result->coupon->code];
+        }
+
+        return [0.0, null];
+    }
+
+    /** The coupon currently held in the session, if still valid for the subtotal. */
+    public function activeCoupon(): ?Coupon
+    {
+        $code = session(self::COUPON_KEY);
+        if (! is_string($code) || $code === '') {
+            return null;
+        }
+
+        $result = app(Coupons::class)->resolve($code, $this->subtotal(), $this->customerId());
+
+        return $result->error === null ? $result->coupon : null;
+    }
+
+    /**
+     * Active delivery methods, keeping address-based methods only when they
+     * serve the given governorate (empty pivot = everywhere). Pickup methods
+     * (no address) are always available.
+     *
+     * @return Collection<int, DeliveryMethod>
+     */
+    public function availableDeliveryMethods(?int $governorateId = null): Collection
+    {
+        return DeliveryMethod::active()
+            ->with('governorates:id')
+            ->orderBy('sort_order')
+            ->get()
+            ->filter(function (DeliveryMethod $method) use ($governorateId): bool {
+                if (! $method->requires_address) {
+                    return true;
+                }
+
+                $served = $method->governorates;
+                if ($served->isEmpty()) {
+                    return true;
+                }
+
+                return $governorateId !== null && $served->contains('id', $governorateId);
+            })
+            ->values();
     }
 
     /**
@@ -202,6 +283,12 @@ class CartManager
         $free = $threshold !== null && $subtotal >= $threshold;
 
         return [$free ? 0.0 : (float) $method->price, $free, $threshold];
+    }
+
+    public function clear(): void
+    {
+        $this->currentOrNull()?->items()->delete();
+        $this->removeCoupon();
     }
 
     /** @return Collection<int, Product> */
