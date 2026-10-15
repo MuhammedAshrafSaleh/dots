@@ -2,16 +2,21 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** Chore — disable browser tests from gates (done). Next: T6.3 Product card.
-- **Last commit:** `d80bd64` chore: exclude browser tests from default gates, add composer gates script
+- **Current task:** T6.3 — Product card — DONE.
+- **Last commit:** `a35a12d` T6.3: Product card — badges, swatches, stock, actions, wishlist
 - **Open issues / left to fix:** none.
-- **What to review on dots.test:** n/a (infra-only chore).
+- **What to review on dots.test:**
+  - `php artisan migrate:fresh --seed` first.
+  - `/en/products` — each card: brand, title, SKU, stock label, price or POR, add-to-cart + WhatsApp (priced) or full-width WhatsApp (POR), wishlist heart.
+  - Click wishlist heart when logged out → prompt with "Log in / Create account", auto-dismisses after 6 s.
+  - Product with `is_new`/`is_best_seller` → badge. Product with `max_compare_at > min_price` → "X% off" badge.
+  - `/ar/products` — RTL, Arabic labels.
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
 
-**Git:** branch `phase-6` · last local commit `d80bd64` · last tag `phase-4-done` · push state: phase-6 not pushed
+**Git:** branch `phase-6` · last local commit `a35a12d` · last tag `phase-4-done` · push state: phase-6 not pushed
 
-Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done
+Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done, T6.3 done
 
 ---
 
@@ -70,7 +75,7 @@ Current phase: **6 — Public site: catalog** — T6.1 done, T6.2 done
 ## Phase 6 — Public site: catalog  (`phase-06-catalog-front.md`)
 - [x] T6.1 Category page
 - [x] T6.2 Products listing (Livewire)
-- [ ] T6.3 Product card
+- [x] T6.3 Product card
 - [ ] T6.4 Product detail
 - [ ] T6.5 Search
 
