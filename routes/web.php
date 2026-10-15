@@ -8,6 +8,7 @@ use App\Http\Controllers\BrandsController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
 use App\Http\Controllers\ProjectsCurrentController;
@@ -59,7 +60,7 @@ Route::prefix('{locale}')
         $comingSoon = fn () => view('site.coming-soon');
 
         Route::get('/products', ProductsController::class)->name('products');
-        Route::get('/products/{product}', $comingSoon)->name('product.show');
+        Route::get('/products/{product}', ProductDetailController::class)->name('product.show');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');
