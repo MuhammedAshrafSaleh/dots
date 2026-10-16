@@ -47,7 +47,7 @@
                             $catName  = $cat->getTranslation('name', $locale);
                             $catCount = $catCounts[$cat->id] ?? 0;
                         @endphp
-                        <li x-show="showAllCats || {{ $catIdx }} < 3">
+                        <li x-show="showAllCats || {{ $catIdx }} < 1">
                             <button type="button"
                                     wire:click="$set('categoryId', {{ $cat->id }})"
                                     aria-current="{{ $categoryId === $cat->id ? 'true' : 'false' }}">
@@ -90,7 +90,7 @@
                         </li>
                     @endforeach
                 </ul>
-                @if ($catTree->count() > 3)
+                @if ($catTree->count() > 1)
                     <button type="button" class="d-fsec__more" @click="showAllCats = !showAllCats">
                         <span x-show="!showAllCats">{{ __('ui.listing_show_all', ['count' => $catTree->count()]) }}</span>
                         <span x-show="showAllCats">{{ __('ui.listing_show_less') }}</span>
