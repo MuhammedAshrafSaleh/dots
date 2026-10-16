@@ -3,10 +3,10 @@
      * Filter sidebar — shared between desktop sidebar and mobile drawer.
      * @var bool $embedded  true = inside mobile drawer
      */
-    $locale = app()->getLocale();
-
-    $brands      = $facets['brands']     ?? [];
-    $attributes  = $facets['attributes'] ?? [];
+    $locale     = app()->getLocale();
+    $brands     = $facets['brands']      ?? [];
+    $attributes = $facets['attributes']  ?? [];
+    $catCounts  = $facets['categories']  ?? [];
 
     $filteredBrands = $brandSearch
         ? array_values(array_filter($brands, fn ($b) => stripos($b['name'], $brandSearch) !== false))
@@ -43,31 +43,41 @@
                         </button>
                     </li>
                     @foreach ($catTree as $cat)
-                        @php $catName = $cat->getTranslation('name', $locale); @endphp
+                        @php
+                            $catName  = $cat->getTranslation('name', $locale);
+                            $catCount = $catCounts[$cat->id] ?? 0;
+                        @endphp
                         <li>
                             <button type="button"
                                     wire:click="$set('categoryId', {{ $cat->id }})"
                                     aria-current="{{ $categoryId === $cat->id ? 'true' : 'false' }}">
                                 <span>{{ $catName }}</span>
+                                @if ($catCount > 0)<span class="d-tree__count">{{ number_format($catCount) }}</span>@endif
                             </button>
                             @if ($cat->children->isNotEmpty())
                                 <ul class="d-tree">
                                     @foreach ($cat->children as $child)
-                                        @php $childName = $child->getTranslation('name', $locale); @endphp
+                                        @php
+                                            $childName  = $child->getTranslation('name', $locale);
+                                            $childCount = $catCounts[$child->id] ?? 0;
+                                        @endphp
                                         <li>
                                             <button type="button"
                                                     wire:click="$set('categoryId', {{ $child->id }})"
                                                     aria-current="{{ $categoryId === $child->id ? 'true' : 'false' }}">
                                                 <span>{{ $childName }}</span>
+                                                @if ($childCount > 0)<span class="d-tree__count">{{ number_format($childCount) }}</span>@endif
                                             </button>
                                             @if ($child->children->isNotEmpty())
                                                 <ul class="d-tree">
                                                     @foreach ($child->children as $leaf)
+                                                        @php $leafCount = $catCounts[$leaf->id] ?? 0; @endphp
                                                         <li>
                                                             <button type="button"
                                                                     wire:click="$set('categoryId', {{ $leaf->id }})"
                                                                     aria-current="{{ $categoryId === $leaf->id ? 'true' : 'false' }}">
                                                                 <span>{{ $leaf->getTranslation('name', $locale) }}</span>
+                                                                @if ($leafCount > 0)<span class="d-tree__count">{{ number_format($leafCount) }}</span>@endif
                                                             </button>
                                                         </li>
                                                     @endforeach
