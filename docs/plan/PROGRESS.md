@@ -2,22 +2,15 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** T7.8 (Notifications) **done**. Phase 7 all tasks complete — next: phase-end check + report.
-- **Last commit:** `3ea86db` (T7.8).
-- **What's new (T7.8):**
-  - `app/Mail/NewOrderMail.php` — queued `Mailable implements ShouldQueue`; receives the `Order` model; subject "New order {number}".
-  - `resources/views/emails/new-order.blade.php` — markdown mail (uses `<x-mail::message>`): customer name/mobile, payment method/status, total, items table, "View order in admin" button.
-  - `PlaceOrder::dispatchNewOrderMail()` — called after the DB transaction commits; reads `contact.email` from `Settings`; skips silently if empty; queues `NewOrderMail` via `Mail::to($to)->queue(...)`.
-  - `resources/views/vendor/mail/` — published Laravel mail scaffold (html + text partials) so the `mail::` component namespace resolves in tests.
-  - `tests/Feature/Commerce/NewOrderMailTest.php` — two tests: (1) `Mail::assertQueued` finds the mailable with the right order id and recipient; (2) no mail queued when contact email is blank.
-- **Open issues / observations:** Pre-existing FLAKY test `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` unchanged. Owner's unstaged `database/seeders/SiteSeeder.php` change left unstaged.
-- **What to review on dots.test:** No new UI. To verify manually: set `contact.email` in `/admin/settings`, place a test order, check `storage/logs/laravel.log` for the queued mail entry (MAIL_MAILER=log).
+- **Current task:** Phase 7 **complete**. Phase-end check done; report written. Awaiting owner review + approval to push/merge.
+- **Last commit:** `b6908a2` (Phase 7 report).
+- **Phase-end gate result:** 492 tests passed / 2 skipped · PHPStan 0 errors · Pint clean · Vite build OK.
+- **Open issues:** Pre-existing FLAKY test `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` unchanged. Owner's unstaged `database/seeders/SiteSeeder.php` change left unstaged (not part of phase 7).
+- **What to review on dots.test:** See `docs/plan/reports/phase-7.md` for the full checklist. Key paths: end-to-end COD/InstaPay purchase, `/admin/orders`, `/admin/coupons`, `/admin/delivery`, `/admin/payments`, `/admin/leads`, `/admin/newsletter`, `/admin/dashboard`.
 
-**Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests). T7.8 gate: 492 passed / 2 skipped, phpstan 0, pint clean, build ok.
+**Git:** branch `phase-7` · last commit `b6908a2` (phase-7 report) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-**Git:** branch `phase-7` · last commit `3ea86db` (T7.8) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
-
-Current phase: **7 — Cart, checkout, payments, orders** — T7.8 done (all tasks complete)
+Current phase: **7 — Cart, checkout, payments, orders** — ALL TASKS DONE, phase-end check passed, report committed. Next: owner says "approved, push phase 7".
 
 ---
 
