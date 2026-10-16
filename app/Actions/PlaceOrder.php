@@ -6,6 +6,7 @@ use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethodCode;
 use App\Exceptions\CheckoutException;
+use App\Mail\NewOrderMail;
 use App\Models\CartItem;
 use App\Models\CouponRedemption;
 use App\Models\DeliveryMethod;
@@ -16,6 +17,7 @@ use App\Services\CartManager;
 use App\Services\Settings;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Places an order from the current cart inside a single DB transaction:
@@ -46,7 +48,7 @@ class PlaceOrder
         $totals = $this->cart->totalsForDelivery($delivery);
         $customerId = $this->cart->customerId();
 
-        return DB::transaction(function () use ($items, $delivery, $payment, $contact, $address, $locale, $coupon, $totals, $customerId): Order {
+        $order = DB::transaction(function () use ($items, $delivery, $payment, $contact, $address, $locale, $coupon, $totals, $customerId): Order {
             $instapay = $payment->code === PaymentMethodCode::InstapayWhatsapp;
 
             $order = Order::create([
@@ -112,6 +114,20 @@ class PlaceOrder
 
             return $order->refresh();
         });
+
+        $this->dispatchNewOrderMail($order);
+
+        return $order;
+    }
+
+    private function dispatchNewOrderMail(Order $order): void
+    {
+        $to = (string) ($this->settings->get('contact.email') ?? '');
+        if ($to === '') {
+            return;
+        }
+
+        Mail::to($to)->queue(new NewOrderMail($order->load('items')));
     }
 
     /**
