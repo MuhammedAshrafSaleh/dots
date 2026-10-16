@@ -2,22 +2,32 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** T7.6 (Admin: orders) **done**. Next: `start T7.7` (Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard).
-- **Last commit:** `a3b297d` (T7.6).
-- **ERD change (owner-approved):** added `order_status_histories.internal_note` (text, nullable, admin-only — never shown to the customer; the translatable `note` stays customer-visible). Migration `2026_10_16_000000_add_internal_note_to_order_status_histories_table.php`; ERD.md updated. **Owner must `php artisan migrate` (or `migrate:fresh --seed`) on the dev `dots` DB before reviewing.**
-- **What's new:** AOrders list (`/admin/orders`) — tabs by status + filters (payment status/method, date from/to, search by order no./name/mobile) + CSV export (streamed, UTF-8 BOM, respects active filters). AOrderDetail (`/admin/orders/{id}`) — items + totals (coupon + VAT note), Paymob transaction log (card orders), status-history timeline, and an update card (order status, payment status, expected delivery, customer-visible bilingual note, internal note, "Update order", "Send update on WhatsApp"). `App\Actions\UpdateOrderStatus` writes ONE history row per update and, when an order moves into `cancelled` from a live state, restores reserved stock exactly once (mirrors ReleaseExpiredReservations). Admin WhatsApp links are staff-only wa.me (not logged) — exempt per CLAUDE.md.
-- **Open issues / observations:** Pre-existing FLAKY test unrelated to T7.6 — `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` `assertDontSee('cct')` intermittently fails when the random Livewire component id happens to contain the substring `cct`. Passes on re-run; left untouched (not this task's scope). The uncommitted `database/seeders/SiteSeeder.php` change (whatsapp number) is the owner's, left unstaged.
-- **What to review on dots.test** (run `php artisan migrate` or `migrate:fresh --seed` first for the new column; DemoSeeder already seeds 8 orders incl. a card + guest + InstaPay):
-  - **T7.6a — list:** open `/admin/orders`. Tabs (All + 6 statuses) show counts; search by order number/name/mobile; filter by payment status, method, and date range; "Export CSV" downloads `orders-YYYY-MM-DD.csv` honoring the active filters (open in Excel — Arabic readable). WhatsApp icon per row opens a chat (staff-only). No 403/500/JS errors.
-  - **T7.6b — detail:** click a row → `/admin/orders/{id}`. Items + totals (coupon line + "Includes VAT" note), status-history timeline, customer/delivery/payment cards. For the card order, a "Paymob transaction log" card appears.
-  - **T7.6c — update:** change order status to e.g. "Confirmed", add a customer note (EN+AR) and an internal note, set expected delivery → "Update order". A new timeline row appears with "Customer sees"/"Internal" badges; confirm the customer note shows on the public `/track-order` for that order but the internal note does NOT.
-  - **T7.6d — cancel restores stock:** note a product's stock, set one of its orders to "Cancelled" → stock increases by the ordered qty; re-saving cancelled does not double-restore.
+- **Current task:** T7.7 (Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard) **done**. Next: `start T7.8` (Notifications — new-order email to settings contact, queued).
+- **Last commit:** `<pending>` (T7.7).
+- **What's new (T7.7):** seven admin screens, all behind named `can:` permissions, each with a feature test for its main action:
+  - **Coupons** (`/admin/coupons`) — table + create/edit drawer (code/generate, percent-or-fixed radio, value, min order, start/end, usage limit, once-per-customer, active), toggle active inline, delete (keeps redemptions). Percentage > 100 rejected.
+  - **Delivery** (`/admin/delivery`) — drag-to-reorder list + drawer (icon pick, bilingual name/description/note, price, "from" price, free-over, requires-address, governorate chips with select-all/clear, active). Empty govs = serves everywhere.
+  - **Payments** (`/admin/payments`) — read-only Paymob status (reads `PaymentGateway::isConfigured()` from env) + read-only webhook URL; InstaPay address + hold hours saved to `settings` (`commerce.instapay_address` / `commerce.instapay_hold_hours`); edit name/description/instructions/order; drag reorder. **Card cannot be enabled while Paymob is unconfigured** (toggle + save both guard).
+  - **Leads** (`/admin/leads`) — QuoteRequests: tabs by LeadStatus + source/date filters + search + CSV export; drawer edits name/mobile/status/internal-notes; staff-only wa.me per row.
+  - **Consultations** (`/admin/consultations`) — ConsultationRequests: same shell, type filter; drawer edits name/mobile/status/internal-notes; CSV export.
+  - **Newsletter** (`/admin/newsletter`) — subscribers: subscribed/unsubscribed tabs + source/language filters + search; unsubscribe/resubscribe/delete; CSV export gated behind `newsletter.export`.
+  - **Dashboard** (`/admin`) — KPIs (today's orders, month revenue from paid orders, WhatsApp clicks today, new consultations) + recent orders, low-stock products, latest leads; quick links retained.
+- **Notes:** CSV exports stream with UTF-8 BOM and honour active filters (same pattern as AOrders). Added `@property` docblocks to QuoteRequest / ConsultationRequest / NewsletterSubscriber for enum casts (larastan). The `<x-admin.switch>` component (not `<x-switch>`) is the toggle. DemoSeeder already seeds coupons, delivery/payment methods, leads (one per QuoteSource), consultations, and newsletter subscribers, so every screen has data.
+- **Open issues / observations:** Pre-existing FLAKY test unrelated to T7.7 — `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` `assertDontSee('cct')` intermittently fails when the random Livewire component id contains `cct`. Passes on re-run; untouched. The uncommitted `database/seeders/SiteSeeder.php` change (whatsapp number) is the owner's, left unstaged. (T7.6's `order_status_histories.internal_note` migration still needs `php artisan migrate` on the dev DB if not already run.)
+- **What to review on dots.test** (run `php artisan migrate:fresh --seed` first for demo data, or at least `php artisan migrate`):
+  - Open each of `/admin/coupons`, `/admin/delivery`, `/admin/payments`, `/admin/leads`, `/admin/consultations`, `/admin/newsletter`, and `/admin` (dashboard). No 403/500/JS errors.
+  - **Coupons:** "New coupon" → fill + save; toggle a coupon's active switch; delete one. Edit an existing coupon (drawer prefilled).
+  - **Delivery:** drag rows to reorder (order persists on reload); open a method, toggle governorate chips + "Select all"/"Clear", save; toggle active inline.
+  - **Payments:** card row shows "Not configured" badge + warning (empty Paymob env); try to enable card → it refuses with a toast. Open InstaPay → change address/hold hours, save; reopen to confirm persisted. Webhook URL is read-only.
+  - **Leads / Consultations:** tabs + filters + search; open a row → change status, edit name/mobile, add internal note, save; "Export CSV" downloads a filtered, Arabic-readable file; wa.me icon opens a chat.
+  - **Newsletter:** subscribed/unsubscribed tabs + source/language filters; unsubscribe then resubscribe a row; "Export CSV".
+  - **Dashboard:** KPI cards show live counts; recent orders / low stock / latest leads lists link through.
 
-**Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
+**Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests). T7.7 gate: 488 passed / 2 skipped, phpstan 0, pint clean, build ok.
 
-**Git:** branch `phase-7` · last commit `a3b297d` (T7.6) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `<pending>` (T7.7) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
-Current phase: **7 — Cart, checkout, payments, orders** — T7.6 done
+Current phase: **7 — Cart, checkout, payments, orders** — T7.7 done
 
 ---
 
@@ -87,7 +97,7 @@ Current phase: **7 — Cart, checkout, payments, orders** — T7.6 done
 - [x] T7.4 InstaPay via WhatsApp
 - [x] T7.5 Paymob driver
 - [x] T7.6 Admin: orders
-- [ ] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard
+- [x] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard
 - [ ] T7.8 Notifications
 
 ## Phase 8 — Customer accounts  (`phase-08-accounts.md`)

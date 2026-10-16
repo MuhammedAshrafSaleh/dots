@@ -12,12 +12,18 @@ use App\Livewire\Admin\Blog\TaxIndex as BlogTaxIndex;
 use App\Livewire\Admin\Brands\Edit as BrandEdit;
 use App\Livewire\Admin\Brands\Index as BrandIndex;
 use App\Livewire\Admin\Categories\Index as CategoryIndex;
+use App\Livewire\Admin\Consultations\Index as ConsultationIndex;
 use App\Livewire\Admin\ContentPages\Edit as ContentPageEdit;
 use App\Livewire\Admin\ContentPages\Index as ContentPageIndex;
+use App\Livewire\Admin\Coupons\Index as CouponIndex;
 use App\Livewire\Admin\Dashboard;
+use App\Livewire\Admin\Delivery\Index as DeliveryIndex;
+use App\Livewire\Admin\Leads\Index as LeadIndex;
+use App\Livewire\Admin\Newsletter\Index as NewsletterIndex;
 use App\Livewire\Admin\Orders\Detail as OrderDetail;
 use App\Livewire\Admin\Orders\Index as OrderIndex;
 use App\Livewire\Admin\PageContent\Edit as PageContentEdit;
+use App\Livewire\Admin\Payments\Index as PaymentIndex;
 use App\Livewire\Admin\Products\Edit as ProductEdit;
 use App\Livewire\Admin\Products\Index as ProductIndex;
 use App\Livewire\Admin\Projects\Edit as ProjectEdit;
@@ -112,6 +118,18 @@ Route::prefix('admin')
             // Commerce — Orders (T7.6).
             Route::get('orders', OrderIndex::class)->middleware('can:orders.view')->name('orders');
             Route::get('orders/{order}', OrderDetail::class)->middleware('can:orders.view')->name('orders.show');
+
+            // Commerce — Coupons (T7.7).
+            Route::get('coupons', CouponIndex::class)->middleware('can:coupons.view')->name('coupons');
+
+            // Leads — WhatsApp leads, consultations, newsletter (T7.7).
+            Route::get('leads', LeadIndex::class)->middleware('can:leads.view')->name('leads');
+            Route::get('consultations', ConsultationIndex::class)->middleware('can:consultations.view')->name('consultations');
+            Route::get('newsletter', NewsletterIndex::class)->middleware('can:newsletter.view')->name('newsletter');
+
+            // Settings — Delivery and payment methods (T7.7).
+            Route::get('delivery', DeliveryIndex::class)->middleware('can:delivery_methods.view')->name('delivery');
+            Route::get('payments', PaymentIndex::class)->middleware('can:payment_methods.view')->name('payments');
 
             // Catalog — Products (T3.6).
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');

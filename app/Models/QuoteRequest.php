@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property QuoteSource $source
+ * @property LeadStatus $status
+ */
 class QuoteRequest extends Model
 {
     protected $guarded = ['id'];
