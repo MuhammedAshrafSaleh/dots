@@ -22,7 +22,7 @@
     x-init="window.matchMedia('(max-width: 960px)').addEventListener('change', e => compact = e.matches)"
     :class="{ 'd-compact': compact }"
     class="d-root"
-    style="height: 100vh;"
+    style="height: 100vh; overflow: hidden;"
 >
     <div class="a-shell">
         <nav class="a-side" aria-label="{{ __('admin.nav.dashboard') }}" x-show="!compact || menu" @click.outside="menu = false" x-cloak>
