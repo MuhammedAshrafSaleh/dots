@@ -267,3 +267,15 @@ html:not(.d-compact) .d-filter-drawer { display: none; }
 .d-compact .d-pay-grid,
 .d-compact .d-track-grid { grid-template-columns: 1fr !important; }
 .d-compact .d-confirm-cells { grid-template-columns: 1fr !important; }
+
+/* Home page — section grids. Defined as classes (not inline styles) so that
+   (a) .d-compact overrides apply on mobile and
+   (b) Alpine x-show tab switching does not destroy display:grid. */
+.d-home-cats   { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.d-home-prods  { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.d-home-svcs   { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.d-home-brands { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+.d-compact .d-home-cats   { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.d-compact .d-home-prods  { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.d-compact .d-home-svcs   { grid-template-columns: 1fr; gap: 16px; }
+.d-compact .d-home-brands { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
