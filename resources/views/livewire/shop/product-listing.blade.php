@@ -137,7 +137,7 @@
                     <span class="d-control__trail"><x-icon name="chevron-down" :size="18" /></span>
                 </div>
 
-                {{-- Grid / list toggle (desktop) --}}
+                {{-- Grid view toggle (desktop) --}}
                 <div style="margin-inline-start:auto;display:flex;gap:4px;" class="d-compact-hide">
                     <button type="button"
                             wire:click="$set('view', 'grid')"
@@ -145,13 +145,6 @@
                             aria-pressed="{{ $view === 'grid' ? 'true' : 'false' }}"
                             aria-label="{{ __('ui.listing_view_grid') }}">
                         <x-icon name="grid-2x2" :size="18" />
-                    </button>
-                    <button type="button"
-                            wire:click="$set('view', 'list')"
-                            class="d-icon-btn"
-                            aria-pressed="{{ $view === 'list' ? 'true' : 'false' }}"
-                            aria-label="{{ __('ui.listing_view_list') }}">
-                        <x-icon name="list" :size="18" />
                     </button>
                 </div>
             </div>
