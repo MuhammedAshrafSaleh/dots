@@ -26,7 +26,7 @@ class NewOrderMail extends Mailable implements ShouldQueue
     public function content(): Content
     {
         return new Content(
-            view: 'emails.new-order',
+            markdown: 'emails.new-order',
         );
     }
 }
