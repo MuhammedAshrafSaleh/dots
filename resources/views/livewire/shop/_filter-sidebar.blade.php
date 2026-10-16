@@ -33,7 +33,7 @@
                 {{ __('ui.listing_category_filter') }}
                 <x-icon name="chevron-down" :size="18" />
             </button>
-            <div class="d-fsec__body" x-show="catOpen">
+            <div class="d-fsec__body" x-show="catOpen" x-data="{ showAllCats: false }">
                 <ul class="d-tree">
                     <li>
                         <button type="button"
@@ -42,12 +42,12 @@
                             <span>{{ __('ui.listing_all_cats') }}</span>
                         </button>
                     </li>
-                    @foreach ($catTree as $cat)
+                    @foreach ($catTree as $catIdx => $cat)
                         @php
                             $catName  = $cat->getTranslation('name', $locale);
                             $catCount = $catCounts[$cat->id] ?? 0;
                         @endphp
-                        <li>
+                        <li x-show="showAllCats || {{ $catIdx }} < 3">
                             <button type="button"
                                     wire:click="$set('categoryId', {{ $cat->id }})"
                                     aria-current="{{ $categoryId === $cat->id ? 'true' : 'false' }}">
@@ -90,6 +90,12 @@
                         </li>
                     @endforeach
                 </ul>
+                @if ($catTree->count() > 3)
+                    <button type="button" class="d-fsec__more" @click="showAllCats = !showAllCats">
+                        <span x-show="!showAllCats">{{ __('ui.listing_show_all', ['count' => $catTree->count()]) }}</span>
+                        <span x-show="showAllCats">{{ __('ui.listing_show_less') }}</span>
+                    </button>
+                @endif
             </div>
         </div>
     @endif
