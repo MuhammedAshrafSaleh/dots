@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
 - **Current task:** T7.7 (Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard) **done**. Next: `start T7.8` (Notifications — new-order email to settings contact, queued).
-- **Last commit:** `<pending>` (T7.7).
+- **Last commit:** `b5a5899` (T7.7).
 - **What's new (T7.7):** seven admin screens, all behind named `can:` permissions, each with a feature test for its main action:
   - **Coupons** (`/admin/coupons`) — table + create/edit drawer (code/generate, percent-or-fixed radio, value, min order, start/end, usage limit, once-per-customer, active), toggle active inline, delete (keeps redemptions). Percentage > 100 rejected.
   - **Delivery** (`/admin/delivery`) — drag-to-reorder list + drawer (icon pick, bilingual name/description/note, price, "from" price, free-over, requires-address, governorate chips with select-all/clear, active). Empty govs = serves everywhere.
@@ -25,7 +25,7 @@
 
 **Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests). T7.7 gate: 488 passed / 2 skipped, phpstan 0, pint clean, build ok.
 
-**Git:** branch `phase-7` · last commit `<pending>` (T7.7) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `b5a5899` (T7.7) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
 
 Current phase: **7 — Cart, checkout, payments, orders** — T7.7 done
 
