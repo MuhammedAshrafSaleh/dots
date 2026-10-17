@@ -626,7 +626,8 @@ Indexes: `order_id unique`
 | `id` | bigint PK |  |
 | `order_id` | FK → orders |  |
 | `status` | string | حالة الطلب أو الدفع |
-| `note` | json · translatable | ملاحظة اختيارية من الأدمن تظهر في الخط الزمني |
+| `note` | json · translatable | ملاحظة اختيارية من الأدمن تظهر في الخط الزمني (يراها العميل) |
+| `internal_note` | text · nullable | ملاحظة داخلية للإدارة فقط — لا تظهر للعميل |
 | `user_id` | FK → users | الأدمن اللي غيّر |
 | `created_at` | timestamp | الوقت في الخط الزمني |
 

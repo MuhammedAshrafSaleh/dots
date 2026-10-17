@@ -353,7 +353,7 @@ class ProductListing extends Component
      * filter state. Brand counts exclude the brand filter (isolation); attribute
      * counts exclude all attribute filters.
      *
-     * @return array{brands: array<int, array{id:int,name:string,count:int}>, attributes: list<array{id:int,name:string,display:string,values:list<array{id:int,label:string,swatch:string|null,count:int}>}>}
+     * @return array{brands: list<array{id:int,name:string,count:int}>, attributes: list<array<string,mixed>>, categories: array<int,int>}
      */
     protected function getFacets(): array
     {
@@ -419,7 +419,35 @@ class ProductListing extends Component
                     ->values()
                     ->all();
 
-                return compact('brands', 'attributes');
+                // ── Category counts (exclude category filter; include brand/attr/price/stock) ──
+                $catRaw = $this->buildQuery(['category'], false)
+                    ->groupBy('category_id')
+                    ->selectRaw('category_id, COUNT(*) as cnt')
+                    ->pluck('cnt', 'category_id')
+                    ->all();
+
+                // Build a parent→children map to accumulate descendant counts.
+                $catParents = Category::active()->get(['id', 'parent_id']);
+                $catChildren = [];
+                foreach ($catParents as $c) {
+                    if ($c->parent_id) {
+                        $catChildren[$c->parent_id][] = $c->id;
+                    }
+                }
+                $accumulate = function (int $id) use (&$accumulate, $catChildren, $catRaw): int {
+                    $total = (int) ($catRaw[$id] ?? 0);
+                    foreach ($catChildren[$id] ?? [] as $child) {
+                        $total += $accumulate($child);
+                    }
+
+                    return $total;
+                };
+                $categories = [];
+                foreach ($catParents as $c) {
+                    $categories[$c->id] = $accumulate($c->id);
+                }
+
+                return compact('brands', 'attributes', 'categories');
             }
         );
     }

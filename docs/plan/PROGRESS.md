@@ -1,20 +1,16 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-6` (local only; branched from main after phase-5 merge).
-- **Current task:** PHASE 6 COMPLETE — all tasks done, gates passed, report written.
-- **Last commit:** see below (phase-6 report commit)
-- **Open issues / left to fix:** none.
-- **What to review on dots.test:**
-  - `php artisan migrate:fresh --seed` first.
-  - See `docs/plan/reports/phase-6.md` for full review checklist.
-  - Awaiting owner approval to push and merge phase-6.
+- **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
+- **Current task:** Phase 7 **complete**. Phase-end check done; report written. Awaiting owner review + approval to push/merge.
+- **Last commit:** `b6908a2` (Phase 7 report).
+- **Phase-end gate result:** 492 tests passed / 2 skipped · PHPStan 0 errors · Pint clean · Vite build OK.
+- **Open issues:** Pre-existing FLAKY test `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` unchanged. Owner's unstaged `database/seeders/SiteSeeder.php` change left unstaged (not part of phase 7).
+- **What to review on dots.test:** See `docs/plan/reports/phase-7.md` for the full checklist. Key paths: end-to-end COD/InstaPay purchase, `/admin/orders`, `/admin/coupons`, `/admin/delivery`, `/admin/payments`, `/admin/leads`, `/admin/newsletter`, `/admin/dashboard`.
 
-**Gate command:** `composer gates` (unit+feature+larastan+pint+build; no browser tests).
+**Git:** branch `phase-7` · last commit `4fb68c3` (livewire config + section collapse fix) · last tag `phase-6-done` · push state: **phase-7 pushed to origin**
 
-**Git:** branch `phase-6` · last tag `phase-4-done` · push state: phase-6 not pushed — awaiting owner approval
-
-Current phase: **6 — Public site: catalog** — ALL DONE ✓
+Current phase: **7 — Cart, checkout, payments, orders** — ALL TASKS DONE, phase-end check passed, branch pushed. Next: owner approves → merge to main.
 
 ---
 
@@ -78,14 +74,14 @@ Current phase: **6 — Public site: catalog** — ALL DONE ✓
 - [x] T6.5 Search
 
 ## Phase 7 — Cart, checkout, payments, orders  (`phase-07-commerce.md`)
-- [ ] T7.1 Cart
-- [ ] T7.2 Checkout
-- [ ] T7.3 Confirmation, payment failed, track order
-- [ ] T7.4 InstaPay via WhatsApp
-- [ ] T7.5 Paymob driver
-- [ ] T7.6 Admin: orders
-- [ ] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard
-- [ ] T7.8 Notifications
+- [x] T7.1 Cart
+- [x] T7.2 Checkout
+- [x] T7.3 Confirmation, payment failed, track order
+- [x] T7.4 InstaPay via WhatsApp
+- [x] T7.5 Paymob driver
+- [x] T7.6 Admin: orders
+- [x] T7.7 Admin: coupons, delivery, payments, leads, consultations, newsletter, dashboard
+- [x] T7.8 Notifications
 
 ## Phase 8 — Customer accounts  (`phase-08-accounts.md`)
 - [ ] T8.1 Auth screens

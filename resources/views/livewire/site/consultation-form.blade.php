@@ -1,4 +1,5 @@
-<div class="d-co__sec" id="k-book">
+<div class="d-co__sec" id="k-book"
+     x-on:consultation-submitted.window="$el.scrollIntoView({behavior:'smooth',block:'start'})">
     @if ($submitted)
         <div style="display:grid;gap:12px;padding:8px 0;">
             <span style="width:48px;height:48px;border-radius:50%;background:var(--green-100,#dcfce7);display:grid;place-items:center;">

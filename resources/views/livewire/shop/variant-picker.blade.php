@@ -91,17 +91,27 @@
     </div>
 
     {{-- Variant pickers --}}
+    @php
+        $optAxisCount = collect($axes)->filter(fn($a) => $a['display'] !== 'swatch')->count();
+    @endphp
+    <div class="d-pdp__variants">
     @foreach ($axes as $axis)
-        <div class="d-variant" role="group" aria-label="{{ $axis['name'] }}">
-            <span class="d-variant__head">
-                {{ $axis['name'] }}
-                @php
-                    $curVal = collect($axis['values'])->firstWhere('id', $selected[$axis['id']] ?? null);
-                @endphp
-                @if ($curVal)
-                    <span>{{ $curVal['label'] }}</span>
+        @php
+            $curVal = collect($axis['values'])->firstWhere('id', $selected[$axis['id']] ?? null);
+            $isWide = $axis['display'] === 'swatch' || $optAxisCount <= 1;
+        @endphp
+        <div class="d-variant{{ $isWide ? ' d-variant--wide' : '' }}" role="group" aria-label="{{ $axis['name'] }}">
+            <div class="d-variant__head-row">
+                <span class="d-variant__head">
+                    {{ $axis['name'] }}
+                    @if ($curVal)
+                        <span>{{ $curVal['label'] }}</span>
+                    @endif
+                </span>
+                @if ($axis['display'] === 'swatch' && $curVal && $curVal['swatch'])
+                    <div class="d-variant__preview" style="background:{{ $curVal['swatch'] }};"></div>
                 @endif
-            </span>
+            </div>
             <div class="d-variant__opts">
                 @foreach ($axis['values'] as $val)
                     @php
@@ -130,6 +140,7 @@
             </div>
         </div>
     @endforeach
+    </div>
 
     {{-- Qty stepper + actions --}}
     <div class="d-pdp__actions">
@@ -158,6 +169,8 @@
 
         @if ($hasPrice)
             <button type="button"
+                wire:click="addToCart"
+                wire:loading.attr="disabled"
                 class="d-btn d-btn--primary d-btn--lg"
                 style="flex:1 1 180px;"
                 @if (! $canAddToCart) disabled aria-disabled="true" @endif
@@ -180,7 +193,6 @@
                 :variant="$selectedVariant"
                 :qty="$qty"
                 :label="__('ui.pdp_request_quote')"
-                class="d-btn--block"
                 style="flex:1 1 auto;" />
         @endif
 

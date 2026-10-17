@@ -42,8 +42,7 @@
             <x-site.lang-switch />
             {{-- Account icon: state only for now; auth lands in Phase 8. --}}
             <x-icon-button icon="user" :label="__('ui.login_register')" />
-            {{-- Cart count placeholder; cart lands in Phase 7. --}}
-            <x-icon-button icon="shopping-bag" :label="__('ui.cart')" :count="0" />
+            <livewire:shop.cart-button :key="'cart-btn-full'" />
         </div>
     </div>
     <div class="d-nav__row">
@@ -93,7 +92,7 @@
         <div class="d-nav__actions">
             <x-site.lang-switch />
             <x-icon-button icon="user" :label="__('ui.login_register')" />
-            <x-icon-button icon="shopping-bag" :label="__('ui.cart')" :count="0" />
+            <livewire:shop.cart-button :key="'cart-btn-compact'" />
         </div>
     </div>
     <div class="d-container" style="padding-bottom:12px;">

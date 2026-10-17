@@ -4,7 +4,12 @@ namespace App\Models;
 
 use App\Enums\NewsletterSource;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property NewsletterSource $source
+ * @property Carbon|null $unsubscribed_at
+ */
 class NewsletterSubscriber extends Model
 {
     protected $guarded = ['id'];

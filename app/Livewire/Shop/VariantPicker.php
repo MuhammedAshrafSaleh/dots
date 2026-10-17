@@ -5,6 +5,7 @@ namespace App\Livewire\Shop;
 use App\Enums\StockStatus;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Services\CartManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Collection;
 use Livewire\Component;
@@ -47,6 +48,19 @@ class VariantPicker extends Component
         if (! $this->isDisabled($attrId, $valueId, $variantData)) {
             $this->selected[$attrId] = $valueId;
         }
+    }
+
+    public function addToCart(): void
+    {
+        $variant = $this->resolveSelectedVariant();
+        if ($variant === null || $variant->price === null) {
+            return;
+        }
+
+        app(CartManager::class)->add((int) $variant->id, $this->qty);
+
+        $this->dispatch('cart-updated')->to(CartButton::class);
+        $this->dispatch('open-cart-drawer');
     }
 
     public function incrementQty(): void
@@ -256,6 +270,16 @@ class VariantPicker extends Component
         }
 
         return true;
+    }
+
+    private function resolveSelectedVariant(): ?ProductVariant
+    {
+        $variants = ProductVariant::where('product_id', $this->productId)
+            ->active()
+            ->with(['attributeValues'])
+            ->get();
+
+        return $this->findSelectedVariant($this->buildVariantData($variants), $variants);
     }
 
     /**

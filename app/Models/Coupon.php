@@ -10,6 +10,8 @@ use Illuminate\Support\Carbon;
 
 /**
  * @property CouponType $type
+ * @property Carbon|null $starts_at
+ * @property Carbon|null $ends_at
  */
 class Coupon extends Model
 {

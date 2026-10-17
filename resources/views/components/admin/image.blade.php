@@ -14,8 +14,8 @@
 <div class="d-field">
     @if ($label)<span class="d-label">{{ $label }}</span>@endif
 
-    <input type="file" id="{{ $id }}" accept="{{ $accept }}" wire:model="{{ $model }}"
-           style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); border: 0;">
+    <input type="file" id="{{ $id }}" accept="{{ $accept }}" wire:model="{{ $model }}" tabindex="-1"
+           style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
 
     @if ($url)
         <div class="a-card" style="overflow: hidden;">

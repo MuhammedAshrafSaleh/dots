@@ -50,7 +50,8 @@
                     <span @click.stop style="display: inline-flex; align-items: center; gap: 6px;">
                         <x-admin.switch
                             wire:model="form.{{ $sectionKey }}.is_active"
-                            x-model="on" />
+                            x-model="on"
+                            @change="if (!$event.target.checked) open = false" />
                         <span class="a-count"
                               x-text="on ? '{{ __('admin.page_sections.active') }}' : '{{ __('admin.page_sections.off') }}'"></span>
                     </span>

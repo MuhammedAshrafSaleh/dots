@@ -5,9 +5,14 @@ use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandDetailController;
 use App\Http\Controllers\BrandsController;
+use App\Http\Controllers\CartController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\OrderConfirmationController;
+use App\Http\Controllers\PaymobReturnController;
+use App\Http\Controllers\PaymobWebhookController;
 use App\Http\Controllers\ProductDetailController;
 use App\Http\Controllers\ProductsController;
 use App\Http\Controllers\ProjectDetailController;
@@ -47,6 +52,9 @@ Route::get('/sitemap.xml', function () {
     return response()->file($path, ['Content-Type' => 'application/xml']);
 });
 
+// Paymob server→server webhook — not locale-prefixed, CSRF-exempt (see bootstrap/app.php).
+Route::post('/payments/paymob/webhook', PaymobWebhookController::class)->name('paymob.webhook');
+
 Route::prefix('{locale}')
     ->whereIn('locale', Locale::SUPPORTED)
     ->middleware('setlocale')
@@ -62,6 +70,11 @@ Route::prefix('{locale}')
 
         Route::get('/products', ProductsController::class)->name('products');
         Route::get('/products/{product}', ProductDetailController::class)->name('product.show');
+        Route::get('/cart', CartController::class)->name('cart');
+        Route::get('/checkout', CheckoutController::class)->name('checkout');
+        Route::get('/order/{number}/confirmation', OrderConfirmationController::class)->name('order.confirmation');
+        Route::get('/order/{number}/payment-failed', fn (string $locale, string $number) => view('site.payment-failed', compact('locale', 'number')))->name('order.payment-failed');
+        Route::get('/payments/paymob/return', PaymobReturnController::class)->name('paymob.return');
         Route::get('/brands', BrandsController::class)->name('brands');
         Route::get('/brands/{brand}', BrandDetailController::class)->name('brand.show');
         Route::get('/services', ServicesController::class)->name('services');
@@ -72,7 +85,7 @@ Route::prefix('{locale}')
         Route::get('/blog', BlogController::class)->name('blog');
         Route::get('/blog/{slug}', ArticleController::class)->name('blog.show');
         Route::get('/about', AboutController::class)->name('about');
-        Route::get('/track-order', $comingSoon)->name('track');
+        Route::get('/track-order', fn (string $locale) => view('site.track', compact('locale')))->name('track');
         Route::get('/search', SearchController::class)->name('search');
         Route::get('/c/{category}', CategoryController::class)->name('category');
         Route::get('/p/{page}', ContentPageController::class)->name('page');

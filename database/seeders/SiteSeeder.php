@@ -281,7 +281,7 @@ class SiteSeeder extends Seeder
         $values = [
             // contact — Navbar.jsx strip + Footer.jsx. Phone/email/URLs have no
             // real design value (operational placeholders).
-            'contact.whatsapp_number' => '201000000000',            // placeholder
+            'contact.whatsapp_number' => '1500060828',
             'contact.hotline' => '19XXX',                           // design shows "Hotline 19XXX" placeholder
             'contact.email' => 'hello@example.com',                 // placeholder
             'contact.maps_url' => 'https://maps.google.com',        // placeholder

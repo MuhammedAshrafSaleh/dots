@@ -8,6 +8,11 @@ use App\Enums\LeadStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property ConsultationProjectType $project_type
+ * @property ConsultationAreaRange $area_range
+ * @property LeadStatus $status
+ */
 class ConsultationRequest extends Model
 {
     protected $guarded = ['id'];

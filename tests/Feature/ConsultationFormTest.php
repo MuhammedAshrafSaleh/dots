@@ -56,18 +56,32 @@ it('saves a consultation_request row on valid submission', function () {
         ->and($row->status->value)->toBe('new');
 });
 
-it('strips spaces from mobile before saving', function () {
+it('strips spaces and normalises Egyptian mobile before saving', function () {
     makeService();
 
     Livewire::test(ConsultationForm::class)
         ->set('name', 'Test')
-        ->set('mobile', '010 1234 5678')
+        ->set('mobile', '+20 10 1234 5678')
         ->set('projectType', ConsultationProjectType::Villa->value)
         ->set('areaRange', ConsultationAreaRange::R150To400->value)
         ->call('submit')
         ->assertSet('submitted', true);
 
     expect(ConsultationRequest::first()->mobile)->toBe('01012345678');
+});
+
+it('accepts and normalises a Saudi mobile number', function () {
+    makeService();
+
+    Livewire::test(ConsultationForm::class)
+        ->set('name', 'Test')
+        ->set('mobile', '+966 51 234 5678')
+        ->set('projectType', ConsultationProjectType::Villa->value)
+        ->set('areaRange', ConsultationAreaRange::R150To400->value)
+        ->call('submit')
+        ->assertSet('submitted', true);
+
+    expect(ConsultationRequest::first()->mobile)->toBe('0512345678');
 });
 
 it('rejects an invalid mobile number', function () {

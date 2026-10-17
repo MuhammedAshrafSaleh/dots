@@ -140,7 +140,7 @@
                     </x-button>
                 </div>
 
-                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;">
+                <div class="d-home-cats">
                     @foreach ($categories as $i => $cat)
                         @php $catSlug = $cat->getTranslation('slug', $locale); @endphp
                         <div class="d-rv" style="--rv-d:{{ ($i % 3) * 60 }}ms;">
@@ -191,19 +191,19 @@
                 </div>
 
                 {{-- New arrivals --}}
-                <div x-show="tab === 'new'" x-cloak style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
+                <div x-show="tab === 'new'" x-cloak class="d-home-prods">
                     @foreach ($newProducts as $product)
                         @include('site._product-card', ['product' => $product])
                     @endforeach
                 </div>
                 {{-- Best sellers --}}
-                <div x-show="tab === 'best'" x-cloak style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
+                <div x-show="tab === 'best'" x-cloak class="d-home-prods">
                     @foreach ($bestProducts as $product)
                         @include('site._product-card', ['product' => $product])
                     @endforeach
                 </div>
                 {{-- Smart home --}}
-                <div x-show="tab === 'smart'" x-cloak style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
+                <div x-show="tab === 'smart'" x-cloak class="d-home-prods">
                     @foreach ($smartProducts as $product)
                         @include('site._product-card', ['product' => $product])
                     @endforeach
@@ -230,7 +230,7 @@
                     </x-button>
                 </div>
 
-                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
+                <div class="d-home-svcs">
                     @foreach ($services as $i => $service)
                         @php $serviceSlug = $service->getTranslation('slug', $locale); @endphp
                         <div class="d-rv" style="--rv-d:{{ $i * 60 }}ms;">
@@ -319,7 +319,7 @@
                     </x-button>
                 </div>
 
-                <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
+                <div class="d-home-brands">
                     @foreach ($brands as $i => $brand)
                         <div class="d-rv" style="--rv-d:{{ ($i % 4) * 60 }}ms;">
                             <a href="{{ route('brands') }}" class="d-card d-bcard">
