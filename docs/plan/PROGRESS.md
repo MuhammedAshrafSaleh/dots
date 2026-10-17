@@ -8,9 +8,9 @@
 - **Open issues:** Pre-existing FLAKY test `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` unchanged. Owner's unstaged `database/seeders/SiteSeeder.php` change left unstaged (not part of phase 7).
 - **What to review on dots.test:** See `docs/plan/reports/phase-7.md` for the full checklist. Key paths: end-to-end COD/InstaPay purchase, `/admin/orders`, `/admin/coupons`, `/admin/delivery`, `/admin/payments`, `/admin/leads`, `/admin/newsletter`, `/admin/dashboard`.
 
-**Git:** branch `phase-7` · last commit `b6908a2` (phase-7 report) · last tag `phase-6-done` · push state: phase-7 not pushed (local only)
+**Git:** branch `phase-7` · last commit `4fb68c3` (livewire config + section collapse fix) · last tag `phase-6-done` · push state: **phase-7 pushed to origin**
 
-Current phase: **7 — Cart, checkout, payments, orders** — ALL TASKS DONE, phase-end check passed, report committed. Next: owner says "approved, push phase 7".
+Current phase: **7 — Cart, checkout, payments, orders** — ALL TASKS DONE, phase-end check passed, branch pushed. Next: owner approves → merge to main.
 
 ---
 
