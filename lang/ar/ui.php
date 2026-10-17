@@ -138,7 +138,7 @@ return [
     'request_received' => 'تم استلام طلبك',
     'request_received_lead' => 'سيتصل بك مهندس خلال يوم عمل.',
     'or_whatsapp' => 'أو واتساب',
-    'mobile_invalid' => 'أدخل رقم موبايل مصري صحيح (01XXXXXXXXX).',
+    'mobile_invalid' => 'أدخل رقم موبايل مصري (01XXXXXXXXX) أو سعودي (05XXXXXXXX) صحيح.',
     'too_many_attempts' => 'محاولات كثيرة. يرجى المحاولة مجدداً بعد قليل.',
 
     // أنواع مشروع الاستشارة

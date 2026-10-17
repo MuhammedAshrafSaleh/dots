@@ -5,7 +5,6 @@
         size="sm"
         :placeholder="__('admin.widgets.add_product')"
         :options="$options"
-        wire:model.live="search"
         :aria-label="__('admin.widgets.add_product')"
         wire:change="add($event.target.value)"
     />

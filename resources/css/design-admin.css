@@ -887,7 +887,7 @@ html.d-has-cursor input, html.d-has-cursor textarea { cursor: text !important; }
 .a-side__n { margin-inline-start: auto; min-width: 22px; height: 20px; padding-inline: 6px; border-radius: 10px; background: var(--ink-900); color: var(--white); font: 800 11px/20px var(--font-body); text-align: center; }
 .a-side__foot { margin-top: auto; padding: 16px 20px; border-top: 1px solid var(--border-1); font: 600 12px/1.4 var(--font-body); color: var(--fg-3); display: grid; gap: 8px; }
 
-.a-main { container: amain / inline-size; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; }
+.a-main { container: amain / inline-size; display: flex; flex-direction: column; min-width: 0; min-height: 0; overflow-y: auto; background: var(--bg-subtle); }
 .a-top { flex: none; position: sticky; top: 0; z-index: 40; background: var(--white); border-bottom: 1px solid var(--border-1); display: flex; align-items: center; gap: 12px; min-height: 64px; padding-inline: 24px; flex-wrap: wrap; }
 .d-compact .a-top { padding: 8px 12px; gap: 8px; min-height: 56px; }
 .a-user { position: relative; }

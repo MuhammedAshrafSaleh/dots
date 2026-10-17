@@ -244,14 +244,21 @@ html:not(.d-compact) .d-filter-drawer { display: none; }
 .d-pdp__dot:not(.is-active) { width: 8px; background: var(--ink-200); }
 
 /* Info panel right column. */
-.d-pdp__info { display: grid; gap: 22px; }
-.d-pdp__meta { display: grid; gap: 10px; }
-.d-pdp__badges-row { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-.d-pdp__price-row { display: grid; gap: 4px; padding-block: 16px; border-block: 1px solid var(--border-1); }
+.d-pdp__info { display: grid; gap: 20px; }
+.d-pdp__meta { display: grid; gap: 8px; }
+.d-pdp__badges-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.d-pdp__price-row { display: grid; gap: 6px; padding-block: 14px; border-block: 1px solid var(--border-1); }
 .d-pdp__price-now { font: 800 30px/1 var(--font-body); color: var(--fg-1); }
 .d-compact .d-pdp__price-now { font-size: 24px; }
 .d-pdp__vat { font: 500 13px var(--font-body); color: var(--fg-3); }
-.d-pdp__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.d-pdp__actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.d-pdp__info .d-trust { padding-top: 4px; border-top: 1px solid var(--border-1); }
+
+/* Two-column variant grid: swatch axes span full width, opt axes pair side-by-side. */
+.d-pdp__variants { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+.d-variant--wide { grid-column: 1 / -1; }
+.d-compact .d-pdp__variants { grid-template-columns: 1fr; }
+.d-compact .d-variant--wide { grid-column: auto; }
 
 /* Tabs section below the two-column panel. */
 .d-pdp__tabs-sec { background: var(--bg-subtle); padding-block: 48px; }

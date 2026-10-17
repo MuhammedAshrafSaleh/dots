@@ -138,7 +138,7 @@ return [
     'request_received' => 'Request received',
     'request_received_lead' => 'An engineer will call you within one working day.',
     'or_whatsapp' => 'Or WhatsApp',
-    'mobile_invalid' => 'Enter a valid Egyptian mobile number (01XXXXXXXXX).',
+    'mobile_invalid' => 'Enter a valid Egyptian (01XXXXXXXXX) or Saudi (05XXXXXXXX) mobile number.',
     'too_many_attempts' => 'Too many submissions. Please try again in a few minutes.',
 
     // Consultation project types

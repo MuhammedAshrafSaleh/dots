@@ -324,7 +324,7 @@ class CartManager
         return Product::query()
             ->published()
             ->whereIn('id', $relatedIds)
-            ->with(['brand', 'variants', 'media'])
+            ->with(['brand', 'variants.swatchAttributeValues', 'media'])
             ->get();
     }
 

@@ -36,7 +36,7 @@ class ConsultationForm extends Component
     {
         return [
             'name' => ['required', 'string', 'max:100'],
-            'mobile' => ['required', 'string', 'regex:/^01[0125]\d{8}$/'],
+            'mobile' => ['required', 'string', 'regex:/^(01[0125]\d{8}|05\d{8})$/'],
             'projectType' => ['required', 'string', 'in:'.implode(',', array_column(ConsultationProjectType::cases(), 'value'))],
             'areaRange' => ['required', 'string', 'in:'.implode(',', array_column(ConsultationAreaRange::cases(), 'value'))],
             'notes' => ['nullable', 'string', 'max:1000'],
@@ -67,8 +67,10 @@ class ConsultationForm extends Component
             ]);
         }
 
-        // Strip spaces from mobile before validation
-        $this->mobile = preg_replace('/\s+/', '', $this->mobile) ?? $this->mobile;
+        // Normalise mobile: strip whitespace/dashes/parens, then convert country prefix to local 0
+        $mobile = preg_replace('/[\s\-().]+/', '', $this->mobile) ?? $this->mobile;
+        $mobile = (string) preg_replace('/^(?:\+20|0020|\+966|00966)/', '0', $mobile);
+        $this->mobile = $mobile;
 
         $this->validate();
 
@@ -87,6 +89,7 @@ class ConsultationForm extends Component
         RateLimiter::hit($key, 600);
 
         $this->submitted = true;
+        $this->dispatch('consultation-submitted');
     }
 
     public function render(): View
