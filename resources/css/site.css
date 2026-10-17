@@ -286,3 +286,29 @@ html:not(.d-compact) .d-filter-drawer { display: none; }
 .d-compact .d-home-prods  { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .d-compact .d-home-svcs   { grid-template-columns: 1fr; gap: 16px; }
 .d-compact .d-home-brands { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+
+/* ── Account auth screens (T8.1, mirror of Account.jsx KAAuth) ──────────── */
+.d-auth { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.05fr); background: var(--white); border: 1px solid var(--border-1); border-radius: var(--radius-xl); overflow: hidden; }
+.d-auth__form { padding: 56px 64px; display: grid; align-content: center; }
+.d-auth__form-inner { width: 100%; max-width: 420px; margin-inline: auto; display: grid; gap: 22px; }
+.d-auth__aside { position: relative; min-height: 560px; background: var(--ink-900); display: grid; align-items: end; }
+.d-auth__perks { margin: 24px; background: var(--white); border-radius: var(--radius-lg); padding: 22px; display: grid; gap: 12px; box-shadow: var(--shadow-lg); }
+.d-auth__perks .d-node-list { font: 600 14px/1.4 var(--font-body); color: var(--fg-2); }
+.d-auth__note { font: 500 12px/1.5 var(--font-body); color: var(--fg-3); }
+.d-compact .d-auth { grid-template-columns: 1fr; }
+.d-compact .d-auth__form { padding: 24px 20px 28px; }
+.d-compact .d-auth__aside { display: none; }
+
+/* Auth header block (KAHead) + password reveal toggle (KAPassword). */
+.d-auth__head { display: grid; gap: 10px; }
+.d-auth__icon { width: 56px; height: 56px; border-radius: 50%; background: var(--yellow-100); color: var(--ink-900); display: grid; place-items: center; margin-bottom: 4px; }
+.d-auth__icon--success { background: var(--success-100); color: var(--success-600); }
+.d-auth__lede { margin: 0; font: 500 15px/1.6 var(--font-body); color: var(--fg-2); text-wrap: pretty; }
+.d-auth__alt { font: 600 14px/1.5 var(--font-body); color: var(--fg-2); display: flex; gap: 6px; flex-wrap: wrap; padding-top: 18px; border-top: 1px solid var(--border-1); }
+.d-auth__pw-toggle { pointer-events: auto; border: 0; background: none; padding: 8px; margin: -8px; cursor: pointer; color: var(--fg-2); display: grid; place-items: center; }
+
+/* Auth inline alert (KAAlert). */
+.d-auth__alert { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 12px; padding: 14px; border-radius: var(--radius-md); background: var(--error-100); align-items: start; }
+.d-auth__alert-icon { width: 32px; height: 32px; border-radius: 50%; background: var(--white); color: var(--error-600); display: grid; place-items: center; }
+.d-auth__alert b { font: 800 14px/1.35 var(--font-body); }
+.d-auth__alert span { font: 500 13px/1.5 var(--font-body); color: var(--fg-2); }

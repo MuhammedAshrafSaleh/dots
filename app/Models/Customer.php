@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\CustomerStatus;
+use App\Notifications\CustomerResetPasswordNotification;
 use Database\Factories\CustomerFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -37,6 +38,12 @@ class Customer extends Authenticatable
             'status' => CustomerStatus::class,
             'last_login_at' => 'datetime',
         ];
+    }
+
+    /** Send the locale-aware customer password reset email. */
+    public function sendPasswordResetNotification(mixed $token): void
+    {
+        $this->notify(new CustomerResetPasswordNotification((string) $token));
     }
 
     /** @return HasMany<CustomerAddress, $this> */

@@ -6,6 +6,7 @@ use App\Enums\CustomerStatus;
 use App\Models\Customer;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 /**
  * @extends Factory<Customer>
@@ -27,6 +28,7 @@ class CustomerFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= Hash::make('password'),
             'status' => CustomerStatus::Active,
+            'remember_token' => Str::random(10),
         ];
     }
 
