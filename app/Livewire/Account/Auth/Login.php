@@ -3,6 +3,7 @@
 namespace App\Livewire\Account\Auth;
 
 use App\Enums\CustomerStatus;
+use App\Services\CartManager;
 use App\Support\Auth\LoginThrottle;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
@@ -16,7 +17,8 @@ use Livewire\Component;
  * Storefront login: mobile OR email + password, remember me, 5-attempts /
  * 15-minute lockout. Disabled customers can never log in (PRD §9). When the
  * visitor arrives from checkout (?next=checkout) a "continue as guest" path is
- * offered and a successful login returns them to checkout.
+ * offered and a successful login returns them to checkout. A guest session
+ * cart is folded into the customer's cart on success (PRD §9).
  */
 #[Layout('components.layouts.auth')]
 class Login extends Component
@@ -43,9 +45,13 @@ class Login extends Component
         $this->locale = app()->getLocale();
     }
 
-    public function login(): void
+    public function login(CartManager $cart): void
     {
         $this->validate();
+
+        // Captured before the auth attempt, which migrates the session id and
+        // would otherwise orphan the guest cart keyed to the old id.
+        $guestSessionId = session()->getId();
 
         [$field, $value] = $this->resolveCredential();
 
@@ -72,6 +78,8 @@ class Login extends Component
 
         $customer = Auth::guard('customer')->user();
         $customer?->forceFill(['last_login_at' => now()])->saveQuietly();
+
+        $cart->mergeGuestCartOnLogin($guestSessionId);
 
         session()->regenerate();
 

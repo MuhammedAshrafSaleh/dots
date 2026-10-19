@@ -2,8 +2,10 @@
 
 namespace App\Livewire\Account\Auth;
 
+use App\Actions\LinkGuestOrders;
 use App\Enums\CustomerStatus;
 use App\Models\Customer;
+use App\Services\CartManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -15,9 +17,9 @@ use Livewire\Component;
 /**
  * Create a storefront account (PRD §9): full name (first + last), Egyptian
  * mobile, email, password ≥ 8 chars incl. a number, accept terms. Logs the new
- * customer in and returns them to checkout when they came from there.
- *
- * Linking pre-existing guest orders is handled in T8.2.
+ * customer in and returns them to checkout when they came from there. Any guest
+ * orders that match both mobile and email are attached, and a guest session
+ * cart is folded into the new account (PRD §9).
  */
 #[Layout('components.layouts.auth')]
 class Register extends Component
@@ -43,7 +45,7 @@ class Register extends Component
         $this->locale = app()->getLocale();
     }
 
-    public function register(): void
+    public function register(LinkGuestOrders $linkGuestOrders, CartManager $cart): void
     {
         $this->mobile = preg_replace('/[\s-]/', '', $this->mobile) ?? $this->mobile;
 
@@ -70,7 +72,15 @@ class Register extends Component
 
         $customer->forceFill(['last_login_at' => now()])->saveQuietly();
 
+        // Captured before login, which migrates the session id the guest cart
+        // is keyed to.
+        $guestSessionId = session()->getId();
+
         Auth::guard('customer')->login($customer);
+
+        $linkGuestOrders->handle($customer);
+        $cart->mergeGuestCartOnLogin($guestSessionId);
+
         session()->regenerate();
 
         $this->redirectRoute($this->fromCheckout() ? 'checkout' : 'home', $this->locale, navigate: false);

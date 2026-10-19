@@ -2,21 +2,22 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.1 **done** (auth screens). Awaiting owner browser review. Next task: `start T8.2` (linking & merging).
-- **Last commit:** `T8.1` (see `git log --oneline -1`).
-- **Gate result:** 509 tests passed / 2 skipped · PHPStan 0 errors · Pint clean · Vite build OK.
-- **Open issues:** none for T8.1. Terms/Privacy links in the register form point at content-page slugs via `account.register.terms_slug`/`privacy_slug` lang keys (terms-conditions / privacy-policy); seeded pages exist, controller falls back to the other-locale slug.
-- **What to review on dots.test:** (AR + EN)
-  1. `/ar/login` — log in with a seeded customer by **email** or **mobile** (01…); wrong password shows the error + "attempts left"; 5 wrong tries → 15-min lock.
-  2. `/ar/register` — create an account (full name = first+last, 01X mobile, email, 8+ chars incl. a number, accept terms). Terms/Privacy links open content pages. On success you're logged in and sent home.
-  3. `/ar/forgot-password` — submit an email → "check your email" screen (masked email, 60-s resend countdown). Reset link arrives (mail log).
-  4. Open the reset link `/ar/reset-password/{token}?email=…` → set a new password → success screen → log in with it.
-  5. `/ar/checkout` is unaffected; `/ar/login?next=checkout` shows the "Continue as guest" button and returns to checkout after login.
+- **Current task:** T8.2 **done** (guest-order linking + cart merge). Awaiting owner browser review. Next task: `start T8.3` (account area).
+- **Last commit:** `T8.2` (see `git log --oneline -1`).
+- **Gate result:** 518 tests passed / 2 skipped · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T8.2 added (no new UI yet — verify behaviourally):**
+  - `app/Actions/LinkGuestOrders.php` — attaches guest orders where **both** `contact_mobile` AND (case-insensitive) `contact_email` match the customer; never touches already-owned orders. Called from `Register` (and will be reused by T8.4 "save your details").
+  - `CartManager::mergeGuestCartOnLogin(?string $guestSessionId)` — folds the guest session cart into the customer cart, summing qty (cap 99), deletes the emptied guest cart. **Note:** login migrates the session id, so the components capture `session()->getId()` BEFORE auth and pass it in (`Login` + `Register`).
+- **Open issues:** none.
+- **What to review on dots.test:** (behavioural — no new screens)
+  1. As a **guest**, place an order (COD or InstaPay) with a mobile + email. Then `/ar/register` with the **same** mobile and email → after registering, that order shows under the account (T8.3 adds the orders screen; for now confirm `orders.customer_id` is set, e.g. via admin order detail once T8.5 lands, or DB).
+  2. Guest with a **different** email (same mobile) must **not** get the order linked.
+  3. As a **guest**, add items to the cart, then log in as a customer who already has a cart → the carts merge (quantities add up, cap 99) and the cart count reflects the merge.
   No 403/500/JS errors; check RTL + LTR.
 
-**Git:** branch `phase-8` · last commit `T8.1` · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-8` · last commit `T8.2` · last tag `phase-7-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1 done; T8.2–T8.5 remain.
+Current phase: **8 — Customer accounts.** T8.1–T8.2 done; T8.3–T8.5 remain.
 
 ---
 
@@ -91,7 +92,7 @@ Current phase: **8 — Customer accounts.** T8.1 done; T8.2–T8.5 remain.
 
 ## Phase 8 — Customer accounts  (`phase-08-accounts.md`)
 - [x] T8.1 Auth screens
-- [ ] T8.2 Linking and merging
+- [x] T8.2 Linking and merging
 - [ ] T8.3 Account area
 - [ ] T8.4 Wiring
 - [ ] T8.5 Admin: customers
