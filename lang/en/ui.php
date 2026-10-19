@@ -58,6 +58,8 @@ return [
     'login' => 'Log in',
     'login_register' => 'Log in / Register',
     'create_account' => 'Create account',
+    'my_account' => 'My account',
+    'logout' => 'Log out',
 
     // Nav sections
     'categories' => 'Categories',

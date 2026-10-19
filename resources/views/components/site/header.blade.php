@@ -11,6 +11,7 @@
     $roots = app(Navigation::class)->megaTree();
     $hotline = $settings->get('contact.hotline');
     $showroom = $settings->translated('contact.showroom_address', $locale);
+    $customer = auth()->guard('customer')->user();
     $quoteLink = URL::signedRoute('wa.redirect', [
         'locale'   => $locale,
         'source'   => 'general',
@@ -40,8 +41,29 @@
         <x-site.search-bar class="d-nav__search" />
         <div class="d-nav__actions">
             <x-site.lang-switch />
-            {{-- Account icon: state only for now; auth lands in Phase 8. --}}
-            <x-icon-button icon="user" :label="__('ui.login_register')" />
+            @if ($customer)
+                <div style="position:relative;">
+                    <button type="button" aria-label="{{ __('ui.my_account') }}" title="{{ __('ui.my_account') }}"
+                            class="d-btn d-btn--ghost d-btn--icon" x-on:click="acct = !acct" :aria-expanded="acct">
+                        <x-icon name="user" :size="20" />
+                    </button>
+                    <div x-show="acct" x-cloak x-on:click.outside="acct = false"
+                         style="position:absolute;inset-inline-end:0;top:calc(100% + 8px);background:var(--bg-surface);border:1px solid var(--border-1);border-radius:var(--radius-md);min-width:180px;box-shadow:var(--shadow-md);z-index:200;padding:8px 0;">
+                        <form method="POST" action="{{ route('logout', $locale) }}">
+                            @csrf
+                            <button type="submit"
+                                    style="width:100%;display:flex;align-items:center;gap:10px;padding:10px 16px;font:600 14px/1 var(--font-body);color:var(--fg-1);background:none;border:none;cursor:pointer;text-align:start;">
+                                <x-icon name="log-out" :size="16" />{{ __('ui.logout') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <a href="{{ route('login', $locale) }}" aria-label="{{ __('ui.login_register') }}"
+                   title="{{ __('ui.login_register') }}" class="d-btn d-btn--ghost d-btn--icon">
+                    <x-icon name="user" :size="20" />
+                </a>
+            @endif
             <livewire:shop.cart-button :key="'cart-btn-full'" />
         </div>
     </div>
@@ -91,7 +113,12 @@
         </a>
         <div class="d-nav__actions">
             <x-site.lang-switch />
-            <x-icon-button icon="user" :label="__('ui.login_register')" />
+            <a href="{{ $customer ? '#' : route('login', $locale) }}"
+               aria-label="{{ $customer ? __('ui.my_account') : __('ui.login_register') }}"
+               title="{{ $customer ? __('ui.my_account') : __('ui.login_register') }}"
+               class="d-btn d-btn--ghost d-btn--icon">
+                <x-icon name="user" :size="20" />
+            </a>
             <livewire:shop.cart-button :key="'cart-btn-compact'" />
         </div>
     </div>
@@ -99,10 +126,19 @@
         <x-site.search-bar :scopes="false" size="sm" iconOnly />
     </div>
     <nav x-show="open" x-cloak x-transition style="border-top:1px solid var(--border-1);padding:8px 16px 16px;display:grid;gap:2px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--border-1);">
-            <x-button variant="primary">{{ __('ui.login') }}</x-button>
-            <x-button variant="outline">{{ __('ui.create_account') }}</x-button>
-        </div>
+        @if ($customer)
+            <div style="padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--border-1);">
+                <form method="POST" action="{{ route('logout', $locale) }}">
+                    @csrf
+                    <x-button type="submit" variant="outline" block>{{ __('ui.logout') }}</x-button>
+                </form>
+            </div>
+        @else
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--border-1);">
+                <x-button variant="primary" :href="route('login', $locale)">{{ __('ui.login') }}</x-button>
+                <x-button variant="outline" :href="route('register', $locale)">{{ __('ui.create_account') }}</x-button>
+            </div>
+        @endif
         <a href="{{ route('products') }}" class="d-mega__cat"><x-icon name="layout-grid" :size="20" />{{ __('ui.all_products') }}<x-icon name="chevron-right" :size="16" /></a>
         @foreach ($roots as $root)
             <a href="{{ route('category', ['category' => $root->getTranslation('slug', $locale)]) }}" class="d-mega__cat"><x-icon :name="$root->icon ?? 'layout-grid'" :size="20" />{{ $root->getTranslation('name', $locale) }}<x-icon name="chevron-right" :size="16" /></a>
