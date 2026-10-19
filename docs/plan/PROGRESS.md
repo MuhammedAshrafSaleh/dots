@@ -2,28 +2,26 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.3 (account area) done. Next task: `start T8.4` (wiring: navbar dropdown, wishlist hearts, checkout prefill, confirmation save-account card, coupon once-per-customer).
-- **Last commit:** _(T8.3 — see Git line below)_.
-- **Gate result:** 538 tests (536 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What T8.3 added (customer account area):**
-  - Routes under `/{locale}/account/*` behind `auth:customer`: overview, orders, orders/{order:number}, wishlist, addresses, profile (full-page Livewire in `app/Livewire/Account`).
-  - Shared chrome `<x-site.account.shell>` (desktop side nav + mobile tab bar + WhatsApp help); account CSS appended to `resources/css/site.css`; screens are `noindex`.
-  - Order detail scoped to owner (stranger / guest order → 404); Reorder adds still-available lines to the cart; timeline extracted to `App\Support\Orders\StatusTimeline` (TrackOrder refactored to use it).
-  - Wishlist: remove, add-all-to-cart. Addresses: drawer add/edit, one-default invariant, delete-confirm. Profile: edit details (unique mobile/email), change password (verifies current, rotates remember_token).
-  - Guest-redirect for `auth:customer` added in `bootstrap/app.php` (locale-aware `login` route).
-  - New lang: `account.nav/help/overview/orders/order/wishlist/addresses/profile` (ar+en) + `ui.cancel`.
-- **Open issues:** none. (Wishlist hearts on cards/PDP, navbar account dropdown and checkout prefill are T8.4, not done here.)
-- **What to review on dots.test** (log in first, e.g. `/ar/login`):
-  1. `/ar/account` → overview: welcome, latest-order card (if any), wishlist preview, quick tiles. Side nav highlights the active tab.
-  2. `/ar/account/orders` → list (or empty state); open an order → timeline, items, payment summary, address; click **Reorder** → items land in the cart drawer.
-  3. `/ar/account/wishlist` → remove an item; **Add all to cart** (needs ≥2 priced saved items).
-  4. `/ar/account/addresses` → add/edit via the drawer, set default, delete (confirm dialog); first address auto-default.
-  5. `/ar/account/profile` → save details (try a taken email → error); change password (wrong current → error; correct → success).
-  6. Narrow viewport: side nav collapses to the scrollable tab bar. No 403/500/JS errors; check RTL + LTR.
+- **Current task:** T8.4 (wiring) done. Next task: `start T8.5` (admin customers: ACustomers list + ACustomerDetail; disable logs the customer out).
+- **Last commit:** _(T8.4 — see Git line below)_.
+- **Gate result:** 547 tests (545 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK. (Parallel suite verified green 3×.)
+- **What T8.4 added (wiring):**
+  - **Navbar account dropdown** (`components/site/header.blade.php`): signed-in customers get a full menu — avatar+name+email → overview, then My orders / Wishlist / Addresses / Profile, then Log out — in both the full (desktop) and compact (mobile) headers. Guests still see the login link.
+  - **Wishlist hearts** on product cards + PDP now actually save: new `<x-site.wishlist-heart :product variant="card|pdp">` (replaces the old placeholder markup in `site/_product-card.blade.php` and `livewire/shop/variant-picker.blade.php`). Signed-in → optimistic Alpine toggle dispatching `wishlist-toggle` to the always-mounted `Shop\WishlistSync` Livewire listener (added to the app layout); guests → the login/register prompt (now wired to the real routes). Saved state preloaded once per request via `App\Support\Wishlist` (scoped singleton); filled-heart CSS in `site.css`.
+  - **Confirmation "save your details"** card: new `Account\SaveOrderAccount` Livewire component (mounted in `site/order-confirmation.blade.php`). Guests whose order carries an email (and no account yet exists for that email/mobile) set a password → account created from the order's name/mobile/email, matching guest orders linked (`LinkGuestOrders`), guest cart merged, logged in, redirected to that order's detail with a success flash. Hidden for signed-in customers / orders without email.
+  - Checkout prefill + saved-address cards and coupon once-per-customer were already wired (CheckoutForm mount + `Coupons`/`PlaceOrder` redemption); confirmed, no change needed.
+  - New lang: `account.save_order.{title,body,password_label,created}` (ar+en). Fixed a pre-existing parallel-only flake in `OrdersAdminTest` (status-history lookup now `reorder('id','desc')`, since the relation's default `created_at` order + second-precision timestamps could return the older row).
+- **Open issues:** none.
+- **What to review on dots.test:**
+  1. **Navbar (logged out):** `/ar` → header user icon goes to login; product-card/PDP heart shows the "log in to save" prompt with working Log in / Create account links.
+  2. **Navbar (logged in):** log in, then `/ar` → desktop header shows the avatar+name dropdown (orders/wishlist/addresses/profile/logout). Narrow viewport → the user icon opens the mobile menu with the same account links.
+  3. **Wishlist hearts:** logged in, click the heart on a product card (listing/home) and on a PDP → it fills; reload → stays filled; `/ar/account/wishlist` shows it; click again → removed.
+  4. **Save your details:** as a guest, place an order with an email → on the confirmation page the "Save your details for next time" card shows (name/mobile/email chips); set a password → Create account → lands on your order detail, logged in, with the success banner. (Card does not appear if you were already logged in.)
+  5. Check RTL + LTR; no 403/500/JS errors.
 
-**Git:** branch `phase-8` · last commit _(T8.3, hash below)_ · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-8` · last commit _(T8.4, hash below)_ · last tag `phase-7-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1–T8.3 done; T8.4–T8.5 remain.
+Current phase: **8 — Customer accounts.** T8.1–T8.4 done; T8.5 remains.
 
 ---
 
@@ -100,7 +98,7 @@ Current phase: **8 — Customer accounts.** T8.1–T8.3 done; T8.4–T8.5 remain
 - [x] T8.1 Auth screens
 - [x] T8.2 Linking and merging
 - [x] T8.3 Account area
-- [ ] T8.4 Wiring
+- [x] T8.4 Wiring
 - [ ] T8.5 Admin: customers
 
 ## Phase 9 — Performance and operations  (`phase-09-performance-ops.md`)

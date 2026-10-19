@@ -66,7 +66,8 @@
                         </div>
                     </section>
 
-                    {{-- Save your details (guests): wired in Phase 8. --}}
+                    {{-- Save your details (guests only; hidden once an account exists). --}}
+                    <livewire:account.save-order-account :order="$order" :key="'save-order-'.$order->id" />
 
                     {{-- What happens next --}}
                     <section style="border:1px solid {{ $isInstapay ? 'var(--wa-600)' : 'var(--border-1)' }};border-radius:var(--radius-lg);background:var(--white);padding:24px;display:grid;gap:16px;@if ($isInstapay) box-shadow:inset 0 0 0 1px var(--wa-600);@endif">

@@ -197,49 +197,7 @@
         @endif
 
         {{-- Wishlist heart --}}
-        <span x-data="{ tip: false }" style="position:relative;display:inline-flex;flex:none;">
-            @auth('customer')
-                <button type="button"
-                    class="d-btn d-btn--outline d-btn--icon d-btn--lg"
-                    aria-pressed="false"
-                    aria-label="{{ __('ui.pdp_save_wishlist') }}"
-                    title="{{ __('ui.pdp_save_wishlist') }}">
-                    <x-icon name="heart" size="20" />
-                </button>
-            @else
-                <button type="button"
-                    class="d-btn d-btn--outline d-btn--icon d-btn--lg"
-                    @click.stop="tip = !tip"
-                    :aria-pressed="tip ? 'true' : 'false'"
-                    aria-label="{{ __('ui.pdp_save_wishlist') }}"
-                    title="{{ __('ui.pdp_save_wishlist') }}">
-                    <x-icon name="heart" size="20" />
-                </button>
-                <div x-show="tip"
-                    x-cloak
-                    @click.outside="tip = false"
-                    x-effect="if (tip) { setTimeout(() => tip = false, 6000) }"
-                    class="d-favtip"
-                    style="top:calc(100% + 10px);inset-inline-end:0;max-width:none;"
-                    role="dialog"
-                    aria-label="{{ __('ui.pdp_wishlist_title') }}">
-                    <div class="d-favtip__head">
-                        <x-icon name="heart" size="16" />
-                        <b>{{ __('ui.pdp_wishlist_title') }}</b>
-                        <button type="button" class="d-favtip__x"
-                            @click.stop="tip = false"
-                            aria-label="{{ __('ui.close') }}">
-                            <x-icon name="x" size="16" />
-                        </button>
-                    </div>
-                    <span>{{ __('ui.pdp_wishlist_body') }}</span>
-                    <div class="d-favtip__acts">
-                        <a href="#" class="d-btn d-btn--sm d-btn--primary">{{ __('ui.login') }}</a>
-                        <a href="#" class="d-favtip__link">{{ __('ui.create_account') }}</a>
-                    </div>
-                </div>
-            @endauth
-        </span>
+        <x-site.wishlist-heart :product="$product" variant="pdp" />
 
     </div>
 

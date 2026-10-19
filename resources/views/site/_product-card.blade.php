@@ -42,7 +42,7 @@
     }
 @endphp
 
-<article x-data="{ tip: false }" class="d-card d-pcard">
+<article class="d-card d-pcard">
 
     {{-- Main link --}}
     <a href="{{ $productUrl }}" class="d-card__link" aria-label="{{ $productName }}"></a>
@@ -66,44 +66,8 @@
         </div>
     </div>
 
-    {{-- Wishlist heart (customer guard; Phase 8 wires actual saving) --}}
-    @auth('customer')
-        <button type="button"
-            class="d-pcard__fav"
-            aria-label="{{ __('ui.pcard_save_wishlist') }}"
-            aria-pressed="false">
-            <x-icon name="heart" size="18" />
-        </button>
-    @else
-        <button type="button"
-            class="d-pcard__fav"
-            @click.stop="tip = !tip"
-            :aria-pressed="tip"
-            aria-label="{{ __('ui.pcard_save_wishlist') }}">
-            <x-icon name="heart" size="18" />
-        </button>
-        <div x-show="tip"
-            x-cloak
-            @click.outside="tip = false"
-            x-effect="if (tip) { setTimeout(() => tip = false, 6000) }"
-            class="d-favtip"
-            role="dialog"
-            aria-label="{{ __('ui.pcard_wishlist_title') }}">
-            <div class="d-favtip__head">
-                <x-icon name="heart" size="16" />
-                <b>{{ __('ui.pcard_wishlist_title') }}</b>
-                <button type="button" class="d-favtip__x" @click.stop="tip = false" aria-label="{{ __('ui.close') }}">
-                    <x-icon name="x" size="16" />
-                </button>
-            </div>
-            <span>{{ __('ui.pcard_wishlist_body') }}</span>
-            <div class="d-favtip__acts">
-                {{-- Phase 8 will replace '#' with real customer auth routes --}}
-                <a href="#" class="d-btn d-btn--sm d-btn--primary">{{ __('ui.login') }}</a>
-                <a href="#" class="d-favtip__link">{{ __('ui.create_account') }}</a>
-            </div>
-        </div>
-    @endauth
+    {{-- Wishlist heart (saves for signed-in customers; login prompt for guests) --}}
+    <x-site.wishlist-heart :product="$product" variant="card" />
 
     {{-- Card body --}}
     <div class="d-card__body">

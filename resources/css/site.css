@@ -366,3 +366,12 @@ html:not(.d-compact) .d-filter-drawer { display: none; }
 .d-account__addr-card--def { border: 1.5px solid var(--ink-900); }
 .d-account__addr-add { min-height: 180px; border: 1.5px dashed var(--border-2); border-radius: var(--radius-lg); background: transparent; display: grid; place-items: center; align-content: center; gap: 10px; cursor: pointer; font: 800 14px var(--font-body); color: var(--fg-1); text-decoration: none; }
 .d-compact .d-account__box { padding: 18px; }
+
+/* Wishlist heart — saved state (T8.4). Mirrors the design's filled heart. */
+.d-pcard__fav[aria-pressed="true"] svg,
+.d-wish-btn[aria-pressed="true"] svg { fill: var(--accent); stroke: var(--ink-900); }
+.d-wish-btn[aria-pressed="true"] { border-color: var(--ink-900); }
+
+/* Save-your-details card on the confirmation screen (T8.4). */
+.d-compact .d-save-order__row { grid-template-columns: 1fr !important; }
+.d-compact .d-save-order__btn { margin-top: 0 !important; width: 100%; }

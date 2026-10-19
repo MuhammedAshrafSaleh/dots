@@ -19,6 +19,7 @@ use App\Observers\SettingObserver;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Payments\PaymobGateway;
 use App\Services\Settings;
+use App\Support\Wishlist;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
@@ -31,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(Settings::class);
+        $this->app->scoped(Wishlist::class);
         $this->app->bind(PaymentGateway::class, PaymobGateway::class);
     }
 

@@ -31,6 +31,13 @@ return [
         'guest' => 'Continue as guest',
     ],
 
+    'save_order' => [
+        'title' => 'Save your details for next time',
+        'body' => 'Add a password and we’ll create your account from this order — track it, reorder and check out faster.',
+        'password_label' => 'Choose a password',
+        'created' => 'Account created — your order and address are saved.',
+    ],
+
     'register' => [
         'eyebrow' => 'Create account',
         'title' => 'Join Dots in under a minute',
