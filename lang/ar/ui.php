@@ -55,6 +55,7 @@ return [
     'cart' => 'السلة',
     'menu' => 'القائمة',
     'close' => 'إغلاق',
+    'cancel' => 'إلغاء',
     'login' => 'تسجيل الدخول',
     'login_register' => 'تسجيل الدخول / حساب جديد',
     'create_account' => 'إنشاء حساب',

@@ -2,24 +2,28 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.2 done + header auth fix committed. Next task: `start T8.3` (account area).
-- **Last commit:** `859aa05` fix: wire up header user icon and mobile auth buttons.
-- **Gate result:** 520 tests (518 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What was fixed (header auth UX):**
-  - User icon (desktop) → guest: `<a>` to `/login`; logged-in: dropdown with logout POST form (uses existing `acct` Alpine var).
-  - User icon (compact/mobile) → same guest/auth logic.
-  - Mobile nav login/register buttons now have hrefs (`/login`, `/register`); replaced by a logout button when authenticated.
-  - Added `ui.logout` / `ui.my_account` translations (ar + en).
-- **Open issues:** none.
-- **What to review on dots.test:**
-  1. Click the user icon (top-right) as a guest → should navigate to `/ar/login`.
-  2. Register / log in → user icon now shows dropdown; click it → "Log out" button appears; click it → logs out and returns to home.
-  3. Mobile (narrow viewport): hamburger → Login / Create account buttons now navigate correctly; after login they show "Log out".
-  4. No 403/500/JS errors; check RTL + LTR.
+- **Current task:** T8.3 (account area) done. Next task: `start T8.4` (wiring: navbar dropdown, wishlist hearts, checkout prefill, confirmation save-account card, coupon once-per-customer).
+- **Last commit:** _(T8.3 — see Git line below)_.
+- **Gate result:** 538 tests (536 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T8.3 added (customer account area):**
+  - Routes under `/{locale}/account/*` behind `auth:customer`: overview, orders, orders/{order:number}, wishlist, addresses, profile (full-page Livewire in `app/Livewire/Account`).
+  - Shared chrome `<x-site.account.shell>` (desktop side nav + mobile tab bar + WhatsApp help); account CSS appended to `resources/css/site.css`; screens are `noindex`.
+  - Order detail scoped to owner (stranger / guest order → 404); Reorder adds still-available lines to the cart; timeline extracted to `App\Support\Orders\StatusTimeline` (TrackOrder refactored to use it).
+  - Wishlist: remove, add-all-to-cart. Addresses: drawer add/edit, one-default invariant, delete-confirm. Profile: edit details (unique mobile/email), change password (verifies current, rotates remember_token).
+  - Guest-redirect for `auth:customer` added in `bootstrap/app.php` (locale-aware `login` route).
+  - New lang: `account.nav/help/overview/orders/order/wishlist/addresses/profile` (ar+en) + `ui.cancel`.
+- **Open issues:** none. (Wishlist hearts on cards/PDP, navbar account dropdown and checkout prefill are T8.4, not done here.)
+- **What to review on dots.test** (log in first, e.g. `/ar/login`):
+  1. `/ar/account` → overview: welcome, latest-order card (if any), wishlist preview, quick tiles. Side nav highlights the active tab.
+  2. `/ar/account/orders` → list (or empty state); open an order → timeline, items, payment summary, address; click **Reorder** → items land in the cart drawer.
+  3. `/ar/account/wishlist` → remove an item; **Add all to cart** (needs ≥2 priced saved items).
+  4. `/ar/account/addresses` → add/edit via the drawer, set default, delete (confirm dialog); first address auto-default.
+  5. `/ar/account/profile` → save details (try a taken email → error); change password (wrong current → error; correct → success).
+  6. Narrow viewport: side nav collapses to the scrollable tab bar. No 403/500/JS errors; check RTL + LTR.
 
-**Git:** branch `phase-8` · last commit `859aa05` · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-8` · last commit _(T8.3, hash below)_ · last tag `phase-7-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1–T8.2 done; T8.3–T8.5 remain.
+Current phase: **8 — Customer accounts.** T8.1–T8.3 done; T8.4–T8.5 remain.
 
 ---
 
@@ -95,7 +99,7 @@ Current phase: **8 — Customer accounts.** T8.1–T8.2 done; T8.3–T8.5 remain
 ## Phase 8 — Customer accounts  (`phase-08-accounts.md`)
 - [x] T8.1 Auth screens
 - [x] T8.2 Linking and merging
-- [ ] T8.3 Account area
+- [x] T8.3 Account area
 - [ ] T8.4 Wiring
 - [ ] T8.5 Admin: customers
 

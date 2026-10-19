@@ -55,6 +55,7 @@ return [
     'cart' => 'Cart',
     'menu' => 'Menu',
     'close' => 'Close',
+    'cancel' => 'Cancel',
     'login' => 'Log in',
     'login_register' => 'Log in / Register',
     'create_account' => 'Create account',

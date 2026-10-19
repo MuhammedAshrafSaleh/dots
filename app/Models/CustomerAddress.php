@@ -6,6 +6,10 @@ use App\Enums\AddressLabel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property AddressLabel $label
+ * @property bool $is_default
+ */
 class CustomerAddress extends Model
 {
     protected $guarded = ['id'];

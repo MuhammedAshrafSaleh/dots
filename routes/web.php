@@ -23,10 +23,16 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceDetailController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
+use App\Livewire\Account\Addresses;
 use App\Livewire\Account\Auth\ForgotPassword;
 use App\Livewire\Account\Auth\Login;
 use App\Livewire\Account\Auth\Register;
 use App\Livewire\Account\Auth\ResetPassword;
+use App\Livewire\Account\OrderDetail;
+use App\Livewire\Account\Orders;
+use App\Livewire\Account\Overview;
+use App\Livewire\Account\Profile;
+use App\Livewire\Account\Wishlist;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -78,6 +84,20 @@ Route::prefix('{locale}')
             Route::get('/reset-password/{token}', ResetPassword::class)->name('password.reset');
         });
         Route::post('/logout', [SessionController::class, 'logout'])->name('logout');
+
+        // Signed-in account area (T8.3). Every screen requires the customer
+        // guard; order detail is scoped to the owner inside the component.
+        Route::middleware('auth:customer')
+            ->prefix('account')
+            ->name('account.')
+            ->group(function (): void {
+                Route::get('/', Overview::class)->name('overview');
+                Route::get('/orders', Orders::class)->name('orders');
+                Route::get('/orders/{order:number}', OrderDetail::class)->name('order');
+                Route::get('/wishlist', Wishlist::class)->name('wishlist');
+                Route::get('/addresses', Addresses::class)->name('addresses');
+                Route::get('/profile', Profile::class)->name('profile');
+            });
 
         // Placeholder public pages. The global layout (T5.1) links to all of
         // these; each is replaced by its real screen in a later Phase 5/6 task.
