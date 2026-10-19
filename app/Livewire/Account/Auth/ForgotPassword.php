@@ -13,7 +13,7 @@ use Livewire\Component;
  * email is registered; the "sent" screen offers a resend with a 60-second
  * cooldown (the broker also throttles at 60s server-side).
  */
-#[Layout('components.layouts.auth')]
+#[Layout('components.layouts.auth', ['asideImage' => 'https://images.unsplash.com/photo-1524758631624-e2822e304c36?auto=format&fit=crop&w=1400&q=65'])]
 class ForgotPassword extends Component
 {
     #[Validate('required|string|email')]

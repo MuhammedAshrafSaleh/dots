@@ -21,7 +21,7 @@ use Livewire\Component;
  * orders that match both mobile and email are attached, and a guest session
  * cart is folded into the new account (PRD §9).
  */
-#[Layout('components.layouts.auth')]
+#[Layout('components.layouts.auth', ['asideImage' => 'https://images.unsplash.com/photo-1600566753190-17f0baa2a6c3?auto=format&fit=crop&w=1400&q=65'])]
 class Register extends Component
 {
     public string $name = '';

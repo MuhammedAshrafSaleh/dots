@@ -18,7 +18,7 @@ use Livewire\Component;
  * Rotating remember_token logs the customer out on every other device
  * (PRD §9).
  */
-#[Layout('components.layouts.auth')]
+#[Layout('components.layouts.auth', ['asideImage' => 'https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1400&q=65'])]
 class ResetPassword extends Component
 {
     #[Locked]
