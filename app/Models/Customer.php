@@ -11,10 +11,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
 /**
  * Storefront customer — a separate auth guard from the admin (users).
  *
+ * @property string $name
+ * @property string $mobile
+ * @property string $email
+ * @property CustomerStatus $status
+ * @property string|null $admin_notes
+ * @property Carbon|null $last_login_at
+ * @property Carbon|null $created_at
  * @property string|null $remember_token
  */
 class Customer extends Authenticatable

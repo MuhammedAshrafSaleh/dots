@@ -7,6 +7,15 @@
         @endif
     </div>
 
+    @if (session('status'))
+        <div class="d-auth__alert" role="status">
+            <span class="d-auth__alert-icon"><x-icon name="circle-alert" size="18" /></span>
+            <div style="display:grid;gap:4px;padding-top:5px;">
+                <b>{{ session('status') }}</b>
+            </div>
+        </div>
+    @endif
+
     @if ($attemptsLeft !== null)
         <div class="d-auth__alert" role="alert">
             <span class="d-auth__alert-icon"><x-icon name="circle-alert" size="18" /></span>

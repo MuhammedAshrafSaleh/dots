@@ -2,26 +2,25 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.4 (wiring) done. Next task: `start T8.5` (admin customers: ACustomers list + ACustomerDetail; disable logs the customer out).
-- **Last commit:** _(T8.4 — see Git line below)_.
-- **Gate result:** 547 tests (545 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK. (Parallel suite verified green 3×.)
-- **What T8.4 added (wiring):**
-  - **Navbar account dropdown** (`components/site/header.blade.php`): signed-in customers get a full menu — avatar+name+email → overview, then My orders / Wishlist / Addresses / Profile, then Log out — in both the full (desktop) and compact (mobile) headers. Guests still see the login link.
-  - **Wishlist hearts** on product cards + PDP now actually save: new `<x-site.wishlist-heart :product variant="card|pdp">` (replaces the old placeholder markup in `site/_product-card.blade.php` and `livewire/shop/variant-picker.blade.php`). Signed-in → optimistic Alpine toggle dispatching `wishlist-toggle` to the always-mounted `Shop\WishlistSync` Livewire listener (added to the app layout); guests → the login/register prompt (now wired to the real routes). Saved state preloaded once per request via `App\Support\Wishlist` (scoped singleton); filled-heart CSS in `site.css`.
-  - **Confirmation "save your details"** card: new `Account\SaveOrderAccount` Livewire component (mounted in `site/order-confirmation.blade.php`). Guests whose order carries an email (and no account yet exists for that email/mobile) set a password → account created from the order's name/mobile/email, matching guest orders linked (`LinkGuestOrders`), guest cart merged, logged in, redirected to that order's detail with a success flash. Hidden for signed-in customers / orders without email.
-  - Checkout prefill + saved-address cards and coupon once-per-customer were already wired (CheckoutForm mount + `Coupons`/`PlaceOrder` redemption); confirmed, no change needed.
-  - New lang: `account.save_order.{title,body,password_label,created}` (ar+en). Fixed a pre-existing parallel-only flake in `OrdersAdminTest` (status-history lookup now `reorder('id','desc')`, since the relation's default `created_at` order + second-precision timestamps could return the older row).
+- **Current task:** T8.5 (admin customers) done. **Phase 8 is now code-complete (T8.1–T8.5).** Next: end-of-phase — run `composer gates`, write `docs/plan/reports/phase-8.md`, commit it, then STOP for owner review. (No new feature task pending.)
+- **Last commit:** _(T8.5 — see Git line below)_.
+- **Gate result:** 557 tests (555 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T8.5 added (admin: customers):**
+  - **ACustomers list** — `app/Livewire/Admin/Customers/Index.php` (+ `livewire/admin/customers/index.blade.php`): WithAdminTable list of customers with avatar/name, mobile, email, orders count (`withCount`), total spent (`withSum('orders','total')`), joined date, status badge, WhatsApp link. Filters: status, governorate (via saved addresses `whereHas`), has-orders (y/n), and search (name/mobile/email). CSV export mirrors the orders exporter (UTF-8 BOM).
+  - **ACustomerDetail** — `app/Livewire/Admin/Customers/Detail.php` (+ `detail.blade.php`): KPI strip (orders / total spent / avg order / wishlist count), orders table (links to admin order detail), wishlist list (links to product edit), profile card, addresses card (default badge), internal-notes card (single `admin_notes` textarea — ERD has one text column, not the design's note timeline; guarded by `customers.update`), and the disable/enable button + disabled alert banner.
+  - **Disable logs the customer out:** new `App\Http\Middleware\EnsureCustomerActive` (alias `customer.active`) on the `auth:customer` account group — a disabled customer's next account request is logged out + session-invalidated + redirected to login with the `account.login.account_disabled` flash (now shown in `livewire/account/auth/login.blade.php`). The admin disable action also rotates the customer's remember token so the remember-me cookie can't re-auth.
+  - **Routes:** `admin.customers` + `admin.customers.show` (both `can:customers.view`) in `routes/admin.php` — the sidebar nav item was already wired and now resolves. Permissions `customers.view` / `customers.update` already existed in `config/permissions.php`.
+  - **Model:** added `@property` phpdoc to `Customer` (status enum, admin_notes, timestamps) so Larastan types the enum. New lang: `admin.customers.*` (ar+en) and `account.login.account_disabled` (ar+en).
 - **Open issues:** none.
 - **What to review on dots.test:**
-  1. **Navbar (logged out):** `/ar` → header user icon goes to login; product-card/PDP heart shows the "log in to save" prompt with working Log in / Create account links.
-  2. **Navbar (logged in):** log in, then `/ar` → desktop header shows the avatar+name dropdown (orders/wishlist/addresses/profile/logout). Narrow viewport → the user icon opens the mobile menu with the same account links.
-  3. **Wishlist hearts:** logged in, click the heart on a product card (listing/home) and on a PDP → it fills; reload → stays filled; `/ar/account/wishlist` shows it; click again → removed.
-  4. **Save your details:** as a guest, place an order with an email → on the confirmation page the "Save your details for next time" card shows (name/mobile/email chips); set a password → Create account → lands on your order detail, logged in, with the success banner. (Card does not appear if you were already logged in.)
-  5. Check RTL + LTR; no 403/500/JS errors.
+  1. **Customers list:** `/admin/customers` → list renders with avatars, orders count, total spent, status. Try the status / governorate / has-orders filters, the search box, and Export CSV.
+  2. **Customer detail:** click a row → KPIs, their orders (click one → admin order detail), wishlist (click one → product edit), profile/addresses cards. Add an internal note → Save → toast; reload → it persists.
+  3. **Disable/enable:** on a customer with an active session in another browser, click **Disable account** → banner appears + toast. In the other browser, as that customer, load any `/account` page → bounced to login with the "account disabled" message. Re-enable → they can log in again.
+  4. Check RTL + LTR; no 403/500/JS errors.
 
-**Git:** branch `phase-8` · last commit _(T8.4, hash below)_ · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-8` · last commit _(T8.5, hash below)_ · last tag `phase-7-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1–T8.4 done; T8.5 remains.
+Current phase: **8 — Customer accounts.** T8.1–T8.5 done — phase code-complete; end-of-phase report + owner review next.
 
 ---
 
@@ -99,7 +98,7 @@ Current phase: **8 — Customer accounts.** T8.1–T8.4 done; T8.5 remains.
 - [x] T8.2 Linking and merging
 - [x] T8.3 Account area
 - [x] T8.4 Wiring
-- [ ] T8.5 Admin: customers
+- [x] T8.5 Admin: customers
 
 ## Phase 9 — Performance and operations  (`phase-09-performance-ops.md`)
 - [ ] T9.1 Query and cache review

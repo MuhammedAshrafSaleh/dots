@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AdminAuth;
+use App\Http\Middleware\EnsureCustomerActive;
 use App\Http\Middleware\SetAdminLocale;
 use App\Http\Middleware\SetLocale;
 use App\Support\Locale;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'setlocale' => SetLocale::class,
             'setadminlocale' => SetAdminLocale::class,
             'admin.auth' => AdminAuth::class,
+            'customer.active' => EnsureCustomerActive::class,
             'permission' => PermissionMiddleware::class,
             'role' => RoleMiddleware::class,
         ]);

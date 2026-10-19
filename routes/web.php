@@ -87,7 +87,7 @@ Route::prefix('{locale}')
 
         // Signed-in account area (T8.3). Every screen requires the customer
         // guard; order detail is scoped to the owner inside the component.
-        Route::middleware('auth:customer')
+        Route::middleware(['auth:customer', 'customer.active'])
             ->prefix('account')
             ->name('account.')
             ->group(function (): void {

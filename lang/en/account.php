@@ -29,6 +29,7 @@ return [
         'new_here' => 'New to Dots?',
         'create' => 'Create an account',
         'guest' => 'Continue as guest',
+        'account_disabled' => 'This account has been disabled. Contact us if you think this is a mistake.',
     ],
 
     'save_order' => [
