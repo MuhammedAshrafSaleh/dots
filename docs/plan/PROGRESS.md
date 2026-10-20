@@ -1,24 +1,21 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.3 manual-review fixes (F1, F2, F3) — **DONE.** Next: write `docs/plan/reports/phase-8.md` (end-of-phase report), commit it, then STOP for owner review.
-- **Last commit:** `2a1db85` fix(phase-8): F3 logout design.
+- **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
+- **Current task:** T9.1 Query and cache review — **DONE** (pending owner review). Next task: T9.2 Images.
+- **Last commit:** see Git line below.
 - **Gate result:** 565 tests (563 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What the T8.3 fix commits added:**
-  - **F1** (`0ade3fd`): Removed `Reorder` feature entirely — `reorder()` method + button + lang keys (`account.order.reorder`, `account.order.reordered` ar+en) + feature test. Updated `save_order.body` copy to drop "reorder" reference.
-  - **F2** (`6424ed2`): `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced in `Addresses::create()` (throws `_limit` ValidationException), `Addresses::save()` (belt-and-suspenders guard), `CheckoutForm::persistAddress()` (silently skips at limit). View: hides add button and shows limit hint card when at limit. Added `account.addresses.limit_reached` / `limit_reached_short` lang keys (ar+en). Feature tests: 4th address succeeds, 5th blocked at drawer-open, slot freed by delete.
-  - **F3** (`2a1db85`): Account side nav (`shell.blade.php`): `<form>` wrapper gets `display:contents` so logout button is a direct grid child matching `<a>` siblings. Compact/mobile menu (`header.blade.php`): same `display:contents` + added `<x-icon name="chevron-right">` after text so `.d-mega__cat .d-icon:last-child` rule targets the chevron (trailing side) not the log-out icon, matching all other rows in AR + LTR.
-- **Open issues:** F4 (email verification) — see Decisions log below.
-- **What to review on dots.test:**
-  1. **F1 — Reorder gone:** open any order detail (`/ar/account/orders/…`) → no "إعادة الطلب" button. Check EN too.
-  2. **F2 — Address limit:** log in, go to `/ar/account/addresses`. Add addresses one by one. 4th add should succeed. After 4 exist: "إضافة عنوان" button disappears, a "وصلت إلى الحد الأقصى من 4 عناوين" hint appears in place of the "+" card. Delete one → add button and "+" card come back.
-  3. **F3 — Logout row design:** open account dropdown (desktop, top-right) → logout row must match the other rows (icon on leading side, same height/font, separator above). Open mobile/compact menu → logout row must have log-out icon on leading side and chevron on trailing side matching all other rows. Verify in AR (RTL) and EN (LTR).
-  4. No 403/500/JS errors on any of the above.
+- **What T9.1 changed:**
+  - New migration `2026_10_20_000001_add_listing_sort_indexes_to_products_table` — adds two composite indexes to `products` (raw `ALTER`, DESC columns, MySQL-only): `products_recommended_sort_index (status, sort_weight DESC, is_best_seller DESC, id)` and `products_published_sort_index (status, published_at DESC, id DESC)`.
+  - `docs/ERD.md` products Indexes line updated to document the two new indexes (**ERD index change — flag for owner review**).
+  - Full T9.1 report (10k-product EXPLAIN, before/after timings, cache/N+1 review) is in this file under "T9.1 — Query and cache review report".
+  - No app-code changes; existing eager-loading / cache-tag setup was reviewed and found sound.
+- **Open issues:** none for T9.1. (Carry-over from phase 8: F4 email verification — see Decisions log.)
+- **How to verify on dots.test:** this task is DB-index + docs only; nothing visual changed. To apply the indexes locally run `php artisan migrate` (adds the two indexes to the `dots` DB — safe, additive, no data change). Listing pages (`/ar/products`, category/brand pages) should behave identically, just faster on large catalogs. Optional deep check: re-seed `dots_testing` with `LargeCatalogSeeder` and re-run EXPLAIN (the throwaway probe scripts were removed after use).
 
-**Git:** branch `phase-8` · last commit `2a1db85` · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `<T9.1 commit>` · last tag `phase-8-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manual-review fixes done. Next: end-of-phase report.
+Current phase: **9 — Performance and operations.** T9.1 done (pending review). Next: T9.2 Images.
 
 ---
 
@@ -99,7 +96,8 @@ Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manua
 - [x] T8.5 Admin: customers
 
 ## Phase 9 — Performance and operations  (`phase-09-performance-ops.md`)
-- [ ] T9.1 Query and cache review
+- [x] T9.1 Query and cache review
+      → report below ("T9.1 — Query and cache review report")
 - [ ] T9.2 Images
 - [ ] T9.3 Backups and scheduler
 - [ ] T9.4 Security and errors
@@ -114,6 +112,44 @@ Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manua
 - [ ] T11.2 Google Drive backups
 
 Legend: [ ] todo · [x] done
+
+---
+
+## T9.1 — Query and cache review report
+
+**Dataset:** `LargeCatalogSeeder` on `dots_testing` → 10,012 active products · 10,020 variants · 20,034 variant-values · 65 categories · 8 brands. MySQL 9.6 (tree-format `EXPLAIN`). Dev `dots` DB was left untouched (DB-safety rule); all EXPLAIN work ran on the throwaway test DB. Timings are best-of-3 of the raw SQL (no eager-load / Blade overhead); treat as relative, not absolute.
+
+**Findings — every query already uses an index; no full table scan on `products`.** The one recurring cost was a **filesort over the full active set (~5006 est. rows)** on the uncached listing sorts, which run on every listing page view that has no/weak filters. Filtered variants (category / brand / price) were already fast because the FK / `min_price` indexes shrink the set before the sort.
+
+**Change made (ERD index addition — flagged for owner review):** migration `2026_10_20_000001_add_listing_sort_indexes_to_products_table` adds two composite indexes (raw `ALTER`, DESC columns, MySQL-only like the FULLTEXT one), and `docs/ERD.md` products Indexes line updated:
+- `products_recommended_sort_index (status, sort_weight DESC, is_best_seller DESC, id)` — the "recommended" default sort.
+- `products_published_sort_index (status, published_at DESC, id DESC)` — the "newest" sort.
+
+**Before → after (best-of-3 ms):**
+
+| Query | Before | After | Note |
+|---|---|---|---|
+| Listing, recommended sort, LIMIT 12 | 15.0 | **0.2** | filesort eliminated → index lookup |
+| Listing, newest sort, LIMIT 12 | 10.6 | **0.2** | filesort eliminated |
+| Listing, inStock + recommended sort | 9.8 | **0.2** | sort served by new index, stock filtered on top |
+| Listing, category scope + sort | 0.4 | 0.4 | already fast (FK index) |
+| Listing, brand filter + sort | 1.7 | 1.7 | already fast (FK index) |
+| Listing, price range + sort | 0.7 | 0.7 | already fast (`min_price` range scan) |
+| FACET brand counts (group by brand_id) | 6.7 | 6.7 | aggregate, covered by `(status,category_id)` |
+| FACET category counts (group by category_id) | 1.5 | 1.5 | covering index on `(status,category_id)` |
+| FACET attr counts (pvv⋈pv⋈products) | 18.4 | 18.4 | see rejected index below |
+| SEARCH fulltext MATCH…AGAINST + sort | 32.5 | 32.5 | FULLTEXT index used; `Perf*` matches all 10k (worst case) |
+| CATEGORY page count in scope | 1.7 | 1.7 | FK index |
+| BRAND page products + sort LIMIT 8 | 0.5 | 0.5 | already fast |
+| HOME is_new/best/smart + sort LIMIT 4 | ~8.6 | ~8.6 | worst case: seeder flags none, so it scans the whole sort_weight index finding 0; in prod a handful are flagged near the top → fast. Not worth a per-flag index. |
+
+**Rejected index:** `product_variants (product_id, is_active)` for the attr-facet join — EXPLAIN switched the `pv` table scan to a covering index scan but timing was unchanged (18.4 → 19.1 ms), because the facet inherently needs every active product's variants. Not added (pure write-cost). Attr facets are cached 120 s anyway.
+
+**Cache tags & invalidation:** tags are centralised in `App\Support\CacheTags` (categories · brands · facets · listings · sections · settings) with a driver-safe tagged `remember()` / `flush()` (redis in prod, DB fallback flushes whole store). Facets cached 120 s keyed by locale+filter-hash; category tree / per-category children/total/brands cached 3600 s; invalidated by model observers. No invalidation gaps found for this task's scope.
+
+**N+1:** `Model::shouldBeStrict()` is on outside production (`AppServiceProvider`), so any lazy load throws in dev/tests. Listing / home / category / brand queries all eager-load (`media`, `brand`, `variants.swatchAttributeValues`). Full suite passes under strict mode — no N+1.
+
+**Gate:** 565 tests (563 passed / 2 skipped) · PHPStan 0 · Pint clean · build OK.
 
 ---
 
