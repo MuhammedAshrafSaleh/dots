@@ -9,7 +9,9 @@ use App\Services\CartManager;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -49,6 +51,14 @@ class Register extends Component
 
     public function register(LinkGuestOrders $linkGuestOrders, CartManager $cart): void
     {
+        $key = 'register.'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages([
+                'email' => __('ui.too_many_attempts'),
+            ]);
+        }
+        RateLimiter::hit($key, 600);
+
         $this->mobile = preg_replace('/[\s-]/', '', $this->mobile) ?? $this->mobile;
 
         $data = $this->validate([

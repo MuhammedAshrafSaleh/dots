@@ -2,27 +2,26 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
-- **Current task:** T9.3 Backups and scheduler — **DONE** (pending owner review). Next task: T9.4 Security and errors.
-- **Last commit:** `<pending>` (T9.3: backups and scheduler).
-- **Gate result:** 587 tests (585 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What T9.3 changed:**
-  - Published + configured `config/backup.php`: source = database (`mysql`) + media (`storage/app/public`); destination disk via `BACKUP_DISK` env (default `local`); retention = keep last 7 days only (all longer tiers set to 0); email on failure only (success/healthy notifications set to `[]`), `to` via `BACKUP_NOTIFICATION_EMAIL` (default `admin@dots.test`); monitor disk also env-driven.
-  - `config/filesystems.php`: added a `google` (Google Drive) disk — wired but off; switch on with `BACKUP_DISK=google` once credentials arrive (needs a Drive flysystem adapter + driver registration first).
-  - `routes/console.php` scheduler: `backup:clean` 02:30, `backup:run` 03:00, `backup:monitor` 03:30 (all daily); `sitemap:generate` moved weekly → dailyAt 02:00; existing `orders:release-reservations` every 15 min retained.
-  - `.env.example`: added `BACKUP_DISK`, `BACKUP_NOTIFICATION_EMAIL`, `BACKUP_ARCHIVE_PASSWORD`, `GOOGLE_DRIVE_*` placeholders.
-  - New test `tests/Feature/BackupScheduleTest.php` (6 tests): config correctness, retention, failure-only mail, Google disk wired-but-off, scheduled commands, backup:run at 03:00.
-  - Verified locally: `php artisan backup:run` created a healthy 73 MB zip (DB + media) under `storage/app/private/DOTS/` (gitignored); `backup:list` healthy; `backup:clean` kept the newest. Test archive removed after verification.
+- **Current task:** T9.4 Security and errors — **DONE** (pending owner review). Next task: T9.5 (see phase-09 file).
+- **Last commit:** `<pending>` (T9.4: security and errors) — hash filled after commit.
+- **Gate result:** 592 tests (590 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T9.4 changed:**
+  - New `App\Http\Middleware\SecurityHeaders` appended to the `web` group (in `bootstrap/app.php`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Permitted-Cross-Domain-Policies: none`, `Permissions-Policy` (camera/mic/geolocation/browsing-topics off), `Content-Security-Policy: frame-ancestors 'self'`, and `Strict-Transport-Security` (1y, includeSubDomains) **only over HTTPS**. Strict script-CSP intentionally omitted — would break Livewire/Alpine (see Decisions).
+  - Rate limits added to the remaining public write forms (pattern matches existing Newsletter/Consultation `RateLimiter` usage): Register (5/10min/IP), ResetPassword (5/10min/IP, on top of the broker's own throttle), TrackOrder lookup (10/min/IP — number+mobile is the only auth), CheckoutForm place (10/10min/IP). WhatsApp redirect route now also has `throttle:30,1`. (Login admin+customer already used `LoginThrottle`; WhatsApp redirect was already signed; rich text already sanitised via `App\Support\Html`; Paymob webhook already CSRF-exempt + HMAC.)
+  - Error pages in the design style: self-contained `components/layouts/error.blade.php` (no header/footer/DB so it survives 500/503; styled with site.css tokens) + `resources/views/errors/{403,404,419,429,500,503}.blade.php`, strings in `lang/{ar,en}/errors.php`.
+  - `.env.example` logging: `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` + comment to raise `LOG_LEVEL=warning` in production.
+  - New test `tests/Feature/SecurityTest.php` (5 tests): headers present, HSTS HTTPS-only, and rate limits on register / track-order / reset-password.
 - **Open issues:** none. (Carry-over: F4 email verification — see Decisions log.)
 - **How to verify on dots.test:**
-  - `php artisan backup:run` → "Backup completed!"; zip appears in `storage/app/private/DOTS/`.
-  - `php artisan backup:list` → row DOTS, disk `local`, Reachable ✅, Healthy ✅.
-  - `php artisan backup:clean` → completes, keeps the newest backup.
-  - `php artisan schedule:list` → shows `backup:clean` (02:30), `backup:run` (03:00), `backup:monitor` (03:30), `sitemap:generate` (02:00), `orders:release-reservations` (every 15 min).
-  - (No UI changes in this task.)
+  - Any page → DevTools → Network → response headers show `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy`, `Permissions-Policy`.
+  - Visit a bad URL e.g. `/ar/does-not-exist` → styled 404 page (DOTS eyebrow, big code, "Back to home" button), RTL in AR.
+  - Submit the Track-Order form (`/ar/track-order`) >10× quickly → "Too many submissions" error.
+  - Book a consultation / register repeatedly → throttled after the cap.
+  - No 403/500/JS errors on normal browsing, add-to-cart, checkout.
 
-**Git:** branch `phase-9` · last commit `<pending>` (T9.3 backups and scheduler) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `<pending>` (T9.4 security and errors) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
-Current phase: **9 — Performance and operations.** T9.1, T9.2, T9.3 done (pending review). Next: T9.4 Security and errors.
+Current phase: **9 — Performance and operations.** T9.1–T9.4 done (pending review). Next: T9.5 (see phase-09 file).
 
 ---
 
@@ -107,7 +106,7 @@ Current phase: **9 — Performance and operations.** T9.1, T9.2, T9.3 done (pend
       → report below ("T9.1 — Query and cache review report")
 - [x] T9.2 Images
 - [x] T9.3 Backups and scheduler
-- [ ] T9.4 Security and errors
+- [x] T9.4 Security and errors
 
 ## Phase 10 — QA and deployment  (`phase-10-qa-deploy.md`)
 - [ ] T10.1 Content coverage report
@@ -161,6 +160,7 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — No strict script-CSP (T9.4):** Technical choice. `SecurityHeaders` ships a Content-Security-Policy limited to `frame-ancestors 'self'` (anti-clickjacking) and leaves script/style sources unrestricted. A strict `script-src` would require `'unsafe-inline'` + `'unsafe-eval'` to keep Livewire and Alpine (and the inline no-FOUC `<script>` in `app.blade.php`) working, which defeats the purpose. Clickjacking, MIME-sniffing, referrer leakage and feature-policy are covered by the other headers; HSTS is sent over HTTPS only. Revisit if the front-end moves off inline Alpine.
 - **2026-10-20 — Muted text color darkened (T9.2 Lighthouse fix):** Design deviation. `--ink-500` was `#75756E` (WCAG 4.74:1 on white but only 4.33:1 on the site's soft-gray `--ink-50` = `#F7F7F5` surface used by `.d-phead` and `.d-footer`). Darkened to `#6F6F68` which gives 4.72:1 on `#F7F7F5` (≥ AA 4.5:1). The change is minimal — 6 steps darker in lightness. Affects all uses of `--fg-3` / `--ink-500` across the site (phead counts, footer bottom strip, form placeholders, sku, muted metadata). Previous value is documented here for reference.
 - **2026-10-20 — Image driver = Imagick (T9.2):** Technical choice. Responsive WebP conversions on the full DemoSeeder exhausted PHP's 128 MB `memory_limit` under the GD driver (`imagewebp` on large truecolor bitmaps). Switched media-library's `image_driver` to **imagick** via `IMAGE_DRIVER=imagick` (`.env`, `.env.example`, `phpunit.xml`) — Imagick holds pixel buffers in its own C allocations, outside `memory_limit`, and gives better WebP. Requires the `imagick` PHP extension in every environment (prod must have it; falls back to `gd` if the env var is unset). Also: tests route conversion jobs to a non-running connection by default so the suite doesn't re-encode every seeded image (TestCase sets `media-library.queue_connection_name => database`; opt back into `sync` per-test when a real conversion file is needed).
 - **2026-10-20 — Reorder dropped (T8.3 manual review):** Owner decision. The Reorder feature (add past order's items back to cart) was removed entirely — too complex to do well (variant availability, price staleness, partial availability), and not required by the PRD. Removed from `OrderDetail`, lang files, and tests. The phase-8.md plan document mentioned it; the report notes it as dropped.

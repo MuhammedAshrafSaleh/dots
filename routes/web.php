@@ -73,6 +73,7 @@ Route::prefix('{locale}')
         Route::get('/', HomeController::class)->name('home');
 
         Route::get('/wa/{source}', [WhatsAppController::class, 'redirect'])
+            ->middleware('throttle:30,1')
             ->name('wa.redirect');
 
         // Customer accounts (Phase 8). Guest-only auth screens on the customer

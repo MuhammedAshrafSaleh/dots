@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AdminAuth;
 use App\Http\Middleware\EnsureCustomerActive;
+use App\Http\Middleware\SecurityHeaders;
 use App\Http\Middleware\SetAdminLocale;
 use App\Http\Middleware\SetLocale;
 use App\Support\Locale;
@@ -20,6 +21,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Baseline security headers on every web response (T9.4).
+        $middleware->web(append: [
+            SecurityHeaders::class,
+        ]);
+
         $middleware->alias([
             'setlocale' => SetLocale::class,
             'setadminlocale' => SetAdminLocale::class,
