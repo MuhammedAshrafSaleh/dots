@@ -56,6 +56,13 @@ Bilingual (AR RTL default / EN) lighting & electrical catalog + e-commerce. Lara
 - Respect `prefers-reduced-motion`; RTL first, check LTR.
 - Keep files small and conventional: Livewire components under `app/Livewire/{Admin,Shop,Account}`, Blade components under `resources/views/components`, actions/services under `app/Actions` and `app/Services`.
 
+## Local email testing (Mailpit)
+Mailpit runs via brew (`brew services start mailpit`). SMTP on port 1025, web UI at **http://localhost:8025**.
+- `.env` uses `MAIL_MAILER=smtp` pointing at Mailpit — all mail is captured locally, nothing real is sent.
+- `phpunit.xml` overrides to `MAIL_MAILER=array` — tests never hit Mailpit.
+- Quick smoke-test: `php artisan mail:test [email]` (default `admin@dots.test`).
+- **NewOrderMail is queued (`ShouldQueue`).** With `QUEUE_CONNECTION=sync` (local default) it dispatches inline. In production (`QUEUE_CONNECTION=database` or `redis`) you must run `php artisan queue:work` for emails to be sent.
+
 ## Commands
 `composer gates` (per-task gate) · `composer test` (unit+feature, parallel) · `composer test:browser` (owner-only) · `npm run dev` / `npm run build` · `php artisan migrate:fresh --seed`
 - **Browser E2E (`tests/Browser`)** use Pest 4 + Playwright. Run `composer test:browser` ONLY when the owner explicitly asks. First time (and in CI): `npx playwright install chromium`. The suite uses `DatabaseTruncation` (committed data), not `RefreshDatabase`.
