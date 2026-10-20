@@ -292,6 +292,42 @@ class CartManager
         $this->removeCoupon();
     }
 
+    /**
+     * Folds the guest session cart into the logged-in customer's cart (PRD §9).
+     * Pass the session id captured BEFORE authentication: logging a customer in
+     * migrates the session id, so by the time this runs the guest cart would no
+     * longer be found by the current id. Quantities for the same variant add up
+     * (capped at 99); the emptied guest cart is removed.
+     */
+    public function mergeGuestCartOnLogin(?string $guestSessionId = null): void
+    {
+        $customerId = $this->customerId();
+        if ($customerId === null) {
+            return;
+        }
+
+        $guest = Cart::whereNull('customer_id')
+            ->where('session_id', $guestSessionId ?? session()->getId())
+            ->first();
+        if ($guest === null) {
+            return;
+        }
+
+        $customerCart = Cart::firstOrCreate(['customer_id' => $customerId]);
+        if ($guest->id === $customerCart->id) {
+            return;
+        }
+
+        foreach ($guest->items as $guestItem) {
+            $item = $customerCart->items()->firstOrNew(['product_variant_id' => $guestItem->product_variant_id]);
+            $existing = $item->exists ? $item->qty : 0;
+            $item->qty = min(99, $existing + $guestItem->qty);
+            $item->save();
+        }
+
+        $guest->delete();
+    }
+
     /** @return Collection<int, Product> */
     public function suggestions(int $limit = 4): Collection
     {

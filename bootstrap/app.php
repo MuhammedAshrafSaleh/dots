@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Middleware\AdminAuth;
+use App\Http\Middleware\EnsureCustomerActive;
 use App\Http\Middleware\SetAdminLocale;
 use App\Http\Middleware\SetLocale;
+use App\Support\Locale;
 use Illuminate\Auth\Middleware\Authorize;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -22,9 +24,19 @@ return Application::configure(basePath: dirname(__DIR__))
             'setlocale' => SetLocale::class,
             'setadminlocale' => SetAdminLocale::class,
             'admin.auth' => AdminAuth::class,
+            'customer.active' => EnsureCustomerActive::class,
             'permission' => PermissionMiddleware::class,
             'role' => RoleMiddleware::class,
         ]);
+
+        // The storefront `login` route is locale-prefixed, so the default
+        // parameterless route('login') guard redirect would fail. Build it with
+        // the current (or default) locale (admin uses its own AdminAuth redirect).
+        $middleware->redirectGuestsTo(function (Request $request): string {
+            $locale = $request->route('locale') ?? Locale::DEFAULT;
+
+            return route('login', ['locale' => $locale]);
+        });
 
         // AdminAuth makes `admin` the default guard; it must run before the
         // `can:` (Authorize) and permission middleware, which resolve the

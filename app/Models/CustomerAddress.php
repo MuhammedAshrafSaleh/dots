@@ -6,8 +6,14 @@ use App\Enums\AddressLabel;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property AddressLabel $label
+ * @property bool $is_default
+ */
 class CustomerAddress extends Model
 {
+    public const int MAX_PER_CUSTOMER = 4;
+
     protected $guarded = ['id'];
 
     protected function casts(): array

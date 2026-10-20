@@ -16,6 +16,8 @@ use App\Livewire\Admin\Consultations\Index as ConsultationIndex;
 use App\Livewire\Admin\ContentPages\Edit as ContentPageEdit;
 use App\Livewire\Admin\ContentPages\Index as ContentPageIndex;
 use App\Livewire\Admin\Coupons\Index as CouponIndex;
+use App\Livewire\Admin\Customers\Detail as CustomerDetail;
+use App\Livewire\Admin\Customers\Index as CustomerIndex;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Delivery\Index as DeliveryIndex;
 use App\Livewire\Admin\Leads\Index as LeadIndex;
@@ -118,6 +120,10 @@ Route::prefix('admin')
             // Commerce — Orders (T7.6).
             Route::get('orders', OrderIndex::class)->middleware('can:orders.view')->name('orders');
             Route::get('orders/{order}', OrderDetail::class)->middleware('can:orders.view')->name('orders.show');
+
+            // Commerce — Customers (T8.5).
+            Route::get('customers', CustomerIndex::class)->middleware('can:customers.view')->name('customers');
+            Route::get('customers/{customer}', CustomerDetail::class)->middleware('can:customers.view')->name('customers.show');
 
             // Commerce — Coupons (T7.7).
             Route::get('coupons', CouponIndex::class)->middleware('can:coupons.view')->name('coupons');

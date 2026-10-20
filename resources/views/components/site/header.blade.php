@@ -11,6 +11,18 @@
     $roots = app(Navigation::class)->megaTree();
     $hotline = $settings->get('contact.hotline');
     $showroom = $settings->translated('contact.showroom_address', $locale);
+    $customer = auth()->guard('customer')->user();
+    $customerFirst = $customer ? (\Illuminate\Support\Str::of((string) $customer->name)->trim()->explode(' ')->first() ?: (string) $customer->name) : '';
+    $customerInitial = $customerFirst !== '' ? mb_strtoupper(mb_substr($customerFirst, 0, 1)) : '';
+
+    // Account dropdown links (mirror the account side-nav). [route, label, icon]
+    $accountItems = [
+        ['account.orders', __('account.nav.orders'), 'package'],
+        ['account.wishlist', __('account.nav.wishlist'), 'heart'],
+        ['account.addresses', __('account.nav.addresses'), 'map-pin'],
+        ['account.profile', __('account.nav.profile'), 'user'],
+    ];
+
     $quoteLink = URL::signedRoute('wa.redirect', [
         'locale'   => $locale,
         'source'   => 'general',
@@ -40,8 +52,40 @@
         <x-site.search-bar class="d-nav__search" />
         <div class="d-nav__actions">
             <x-site.lang-switch />
-            {{-- Account icon: state only for now; auth lands in Phase 8. --}}
-            <x-icon-button icon="user" :label="__('ui.login_register')" />
+            @if ($customer)
+                <div class="d-nav__dd" x-on:mouseleave="acct = false">
+                    <button type="button" class="d-btn d-btn--ghost d-nav__acct" aria-haspopup="menu"
+                            :aria-expanded="acct" x-on:click="acct = !acct">
+                        <span class="d-nav__acct-av">{{ $customerInitial }}</span>{{ $customerFirst }}
+                        <x-icon name="chevron-down" :size="16" ::style="acct ? 'transform:rotate(180deg)' : ''" />
+                    </button>
+                    <div class="d-nav__menu" role="menu" x-show="acct" x-cloak x-transition.opacity
+                         style="inset-inline-start:auto;inset-inline-end:0;top:calc(100% + 4px);width:288px;">
+                        <a href="{{ route('account.overview', $locale) }}" role="menuitem" class="d-nav__mi"
+                           style="border-bottom:1px solid var(--border-1);border-radius:0;padding-bottom:14px;margin-bottom:4px;">
+                            <span class="d-nav__mi-ico" style="font:800 15px var(--font-body);">{{ $customerInitial }}</span>
+                            <span style="min-width:0;"><b>{{ $customer->name }}</b><small dir="ltr" style="text-align:start;">{{ $customer->email }}</small></span>
+                        </a>
+                        @foreach ($accountItems as [$route, $label, $icon])
+                            <a href="{{ route($route, $locale) }}" role="menuitem" class="d-nav__mi" style="font:700 14px var(--font-body);">
+                                <x-icon :name="$icon" :size="18" />{{ $label }}
+                            </a>
+                        @endforeach
+                        <form method="POST" action="{{ route('logout', $locale) }}"
+                              style="border-top:1px solid var(--border-1);margin-top:4px;padding-top:4px;">
+                            @csrf
+                            <button type="submit" role="menuitem" class="d-nav__mi" style="width:100%;font:700 14px var(--font-body);">
+                                <x-icon name="log-out" :size="18" />{{ __('ui.logout') }}
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @else
+                <a href="{{ route('login', $locale) }}" aria-label="{{ __('ui.login_register') }}"
+                   title="{{ __('ui.login_register') }}" class="d-btn d-btn--ghost d-btn--icon">
+                    <x-icon name="user" :size="20" />
+                </a>
+            @endif
             <livewire:shop.cart-button :key="'cart-btn-full'" />
         </div>
     </div>
@@ -91,7 +135,19 @@
         </a>
         <div class="d-nav__actions">
             <x-site.lang-switch />
-            <x-icon-button icon="user" :label="__('ui.login_register')" />
+            @if ($customer)
+                <button type="button" x-on:click="open = true"
+                        aria-label="{{ __('ui.my_account') }}" title="{{ __('ui.my_account') }}"
+                        class="d-btn d-btn--ghost d-btn--icon d-nav__acct--in">
+                    <x-icon name="user" :size="20" />
+                </button>
+            @else
+                <a href="{{ route('login', $locale) }}"
+                   aria-label="{{ __('ui.login_register') }}" title="{{ __('ui.login_register') }}"
+                   class="d-btn d-btn--ghost d-btn--icon">
+                    <x-icon name="user" :size="20" />
+                </a>
+            @endif
             <livewire:shop.cart-button :key="'cart-btn-compact'" />
         </div>
     </div>
@@ -99,10 +155,26 @@
         <x-site.search-bar :scopes="false" size="sm" iconOnly />
     </div>
     <nav x-show="open" x-cloak x-transition style="border-top:1px solid var(--border-1);padding:8px 16px 16px;display:grid;gap:2px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--border-1);">
-            <x-button variant="primary">{{ __('ui.login') }}</x-button>
-            <x-button variant="outline">{{ __('ui.create_account') }}</x-button>
-        </div>
+        @if ($customer)
+            <div style="display:grid;gap:2px;padding-bottom:8px;margin-bottom:6px;border-bottom:1px solid var(--border-1);">
+                <a href="{{ route('account.overview', $locale) }}" class="d-nav__mi">
+                    <span class="d-nav__mi-ico" style="font:800 14px var(--font-body);">{{ $customerInitial }}</span>
+                    <span style="min-width:0;"><b>{{ $customer->name }}</b><small dir="ltr" style="text-align:start;">{{ $customer->email }}</small></span>
+                </a>
+                @foreach ($accountItems as [$route, $label, $icon])
+                    <a href="{{ route($route, $locale) }}" class="d-mega__cat"><x-icon :name="$icon" :size="20" />{{ $label }}<x-icon name="chevron-right" :size="16" /></a>
+                @endforeach
+                <form method="POST" action="{{ route('logout', $locale) }}" style="display:contents;">
+                    @csrf
+                    <button type="submit" class="d-mega__cat" style="width:100%;"><x-icon name="log-out" :size="20" />{{ __('ui.logout') }}<x-icon name="chevron-right" :size="16" /></button>
+                </form>
+            </div>
+        @else
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:12px;margin-bottom:6px;border-bottom:1px solid var(--border-1);">
+                <x-button variant="primary" :href="route('login', $locale)">{{ __('ui.login') }}</x-button>
+                <x-button variant="outline" :href="route('register', $locale)">{{ __('ui.create_account') }}</x-button>
+            </div>
+        @endif
         <a href="{{ route('products') }}" class="d-mega__cat"><x-icon name="layout-grid" :size="20" />{{ __('ui.all_products') }}<x-icon name="chevron-right" :size="16" /></a>
         @foreach ($roots as $root)
             <a href="{{ route('category', ['category' => $root->getTranslation('slug', $locale)]) }}" class="d-mega__cat"><x-icon :name="$root->icon ?? 'layout-grid'" :size="20" />{{ $root->getTranslation('name', $locale) }}<x-icon name="chevron-right" :size="16" /></a>

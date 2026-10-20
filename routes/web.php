@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AboutController;
+use App\Http\Controllers\Account\SessionController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\BrandDetailController;
@@ -22,6 +23,16 @@ use App\Http\Controllers\SearchController;
 use App\Http\Controllers\ServiceDetailController;
 use App\Http\Controllers\ServicesController;
 use App\Http\Controllers\WhatsAppController;
+use App\Livewire\Account\Addresses;
+use App\Livewire\Account\Auth\ForgotPassword;
+use App\Livewire\Account\Auth\Login;
+use App\Livewire\Account\Auth\Register;
+use App\Livewire\Account\Auth\ResetPassword;
+use App\Livewire\Account\OrderDetail;
+use App\Livewire\Account\Orders;
+use App\Livewire\Account\Overview;
+use App\Livewire\Account\Profile;
+use App\Livewire\Account\Wishlist;
 use App\Support\Locale;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Route;
@@ -63,6 +74,30 @@ Route::prefix('{locale}')
 
         Route::get('/wa/{source}', [WhatsAppController::class, 'redirect'])
             ->name('wa.redirect');
+
+        // Customer accounts (Phase 8). Guest-only auth screens on the customer
+        // guard; logout works regardless of state.
+        Route::middleware('guest:customer')->group(function (): void {
+            Route::get('/login', Login::class)->name('login');
+            Route::get('/register', Register::class)->name('register');
+            Route::get('/forgot-password', ForgotPassword::class)->name('password.request');
+            Route::get('/reset-password/{token}', ResetPassword::class)->name('password.reset');
+        });
+        Route::post('/logout', [SessionController::class, 'logout'])->name('logout');
+
+        // Signed-in account area (T8.3). Every screen requires the customer
+        // guard; order detail is scoped to the owner inside the component.
+        Route::middleware(['auth:customer', 'customer.active'])
+            ->prefix('account')
+            ->name('account.')
+            ->group(function (): void {
+                Route::get('/', Overview::class)->name('overview');
+                Route::get('/orders', Orders::class)->name('orders');
+                Route::get('/orders/{order:number}', OrderDetail::class)->name('order');
+                Route::get('/wishlist', Wishlist::class)->name('wishlist');
+                Route::get('/addresses', Addresses::class)->name('addresses');
+                Route::get('/profile', Profile::class)->name('profile');
+            });
 
         // Placeholder public pages. The global layout (T5.1) links to all of
         // these; each is replaced by its real screen in a later Phase 5/6 task.

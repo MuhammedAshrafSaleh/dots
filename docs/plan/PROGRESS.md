@@ -1,16 +1,24 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-7` (local only; branched from main after phase-6 merge).
-- **Current task:** Phase 7 **complete**. Phase-end check done; report written. Awaiting owner review + approval to push/merge.
-- **Last commit:** `b6908a2` (Phase 7 report).
-- **Phase-end gate result:** 492 tests passed / 2 skipped · PHPStan 0 errors · Pint clean · Vite build OK.
-- **Open issues:** Pre-existing FLAKY test `tests/Feature/Admin/Attributes/AttributesCrudTest.php:27` unchanged. Owner's unstaged `database/seeders/SiteSeeder.php` change left unstaged (not part of phase 7).
-- **What to review on dots.test:** See `docs/plan/reports/phase-7.md` for the full checklist. Key paths: end-to-end COD/InstaPay purchase, `/admin/orders`, `/admin/coupons`, `/admin/delivery`, `/admin/payments`, `/admin/leads`, `/admin/newsletter`, `/admin/dashboard`.
+- **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
+- **Current task:** T8.3 manual-review fixes (F1, F2, F3) — **DONE.** Next: write `docs/plan/reports/phase-8.md` (end-of-phase report), commit it, then STOP for owner review.
+- **Last commit:** `2a1db85` fix(phase-8): F3 logout design.
+- **Gate result:** 565 tests (563 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What the T8.3 fix commits added:**
+  - **F1** (`0ade3fd`): Removed `Reorder` feature entirely — `reorder()` method + button + lang keys (`account.order.reorder`, `account.order.reordered` ar+en) + feature test. Updated `save_order.body` copy to drop "reorder" reference.
+  - **F2** (`6424ed2`): `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced in `Addresses::create()` (throws `_limit` ValidationException), `Addresses::save()` (belt-and-suspenders guard), `CheckoutForm::persistAddress()` (silently skips at limit). View: hides add button and shows limit hint card when at limit. Added `account.addresses.limit_reached` / `limit_reached_short` lang keys (ar+en). Feature tests: 4th address succeeds, 5th blocked at drawer-open, slot freed by delete.
+  - **F3** (`2a1db85`): Account side nav (`shell.blade.php`): `<form>` wrapper gets `display:contents` so logout button is a direct grid child matching `<a>` siblings. Compact/mobile menu (`header.blade.php`): same `display:contents` + added `<x-icon name="chevron-right">` after text so `.d-mega__cat .d-icon:last-child` rule targets the chevron (trailing side) not the log-out icon, matching all other rows in AR + LTR.
+- **Open issues:** F4 (email verification) — see Decisions log below.
+- **What to review on dots.test:**
+  1. **F1 — Reorder gone:** open any order detail (`/ar/account/orders/…`) → no "إعادة الطلب" button. Check EN too.
+  2. **F2 — Address limit:** log in, go to `/ar/account/addresses`. Add addresses one by one. 4th add should succeed. After 4 exist: "إضافة عنوان" button disappears, a "وصلت إلى الحد الأقصى من 4 عناوين" hint appears in place of the "+" card. Delete one → add button and "+" card come back.
+  3. **F3 — Logout row design:** open account dropdown (desktop, top-right) → logout row must match the other rows (icon on leading side, same height/font, separator above). Open mobile/compact menu → logout row must have log-out icon on leading side and chevron on trailing side matching all other rows. Verify in AR (RTL) and EN (LTR).
+  4. No 403/500/JS errors on any of the above.
 
-**Git:** branch `phase-7` · last commit `4fb68c3` (livewire config + section collapse fix) · last tag `phase-6-done` · push state: **phase-7 pushed to origin**
+**Git:** branch `phase-8` · last commit `2a1db85` · last tag `phase-7-done` · push state: **not pushed (local only)**
 
-Current phase: **7 — Cart, checkout, payments, orders** — ALL TASKS DONE, phase-end check passed, branch pushed. Next: owner approves → merge to main.
+Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manual-review fixes done. Next: end-of-phase report.
 
 ---
 
@@ -84,11 +92,11 @@ Current phase: **7 — Cart, checkout, payments, orders** — ALL TASKS DONE, ph
 - [x] T7.8 Notifications
 
 ## Phase 8 — Customer accounts  (`phase-08-accounts.md`)
-- [ ] T8.1 Auth screens
-- [ ] T8.2 Linking and merging
-- [ ] T8.3 Account area
-- [ ] T8.4 Wiring
-- [ ] T8.5 Admin: customers
+- [x] T8.1 Auth screens
+- [x] T8.2 Linking and merging
+- [x] T8.3 Account area
+- [x] T8.4 Wiring
+- [x] T8.5 Admin: customers
 
 ## Phase 9 — Performance and operations  (`phase-09-performance-ops.md`)
 - [ ] T9.1 Query and cache review
@@ -110,6 +118,8 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — Reorder dropped (T8.3 manual review):** Owner decision. The Reorder feature (add past order's items back to cart) was removed entirely — too complex to do well (variant availability, price staleness, partial availability), and not required by the PRD. Removed from `OrderDetail`, lang files, and tests. The phase-8.md plan document mentioned it; the report notes it as dropped.
+- **2026-10-20 — Max saved addresses = 4 (T8.3 manual review):** Owner decision. `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced server-side in `Addresses::create/save` and silently in `CheckoutForm::persistAddress`. View hides the add button and shows a hint at the limit.
 - **2026-10-07 — Versions:** do not assume from memory. At install time (Phase 1) use the latest stable majors `composer`/`npm` resolve for Laravel, Livewire, Pest and Vite, provided all required Spatie packages (translatable, medialibrary, permission, backup, sitemap) support them. Record the exact resolved versions here once installed. Local toolchain: PHP 8.4.23, Composer 2.10, Node 22, npm 10.
   - **Resolved at install (T1.1, 2026-10-07):** `laravel/framework` v13.35.0 (latest stable; all Spatie packages support L13), `livewire/livewire` v4.4.7, `spatie/laravel-translatable` 6.14.1, `spatie/laravel-medialibrary` 11.23.9, `spatie/laravel-permission` 8.3.0, `spatie/laravel-backup` 10.3.3, `spatie/laravel-sitemap` 8.2.0, `mews/purifier` 3.4.4 (HTML sanitizer per REVIEW), `pestphp/pest` v4.7.8, `vite` ^8, `@vitejs` via `laravel-vite-plugin` ^3.1. Composer `php` constraint `^8.3`. Local `.env`: MySQL `dots` db, `QUEUE_CONNECTION=sync`, `CACHE_STORE=database` (no local Redis daemon running); `.env.example` keeps `redis` for prod. Tests run on sqlite `:memory:` (phpunit.xml). NOTE: Laravel 13's scaffolding ships a Tailwind `@tailwindcss/vite` entry + default CLAUDE.md/AGENTS.md — restored the project CLAUDE.md, removed AGENTS.md; Tailwind to be stripped in T1.3 (project is no-Tailwind).
 - **2026-10-07 — DB target (Q9):** production MySQL **8.0**. Migrations/SQL must stay 8.0-compatible (no 9.x-only syntax). Local MySQL 9.6 is fine.
@@ -154,4 +164,6 @@ Legend: [ ] todo · [x] done
   - **Number normalisation.** `WhatsApp::normalizeNumber(string $raw)` strips non-digits and converts a leading-`0` local Egyptian number to international format (e.g. `01500060828` → `201500060828`). Both `WhatsApp::link()` and `WhatsAppController::redirect()` pass the raw setting through this helper. The setting `contact.whatsapp_number` should store the number in international format (`201xxxxxxxxx`) — the normaliser is a safety net, not the authoritative source.
   - **Client action pending:** set `contact.whatsapp_number` to the real number in international format via admin Settings → Contact.
 - **2026-10-15 — Browser tests paused (owner decision):** Browser tests (`tests/Browser`) are excluded from all per-task and phase-end gates. The default test run (`composer test` / `php artisan test`) runs Unit + Feature only (via `phpunit.xml`). Browser tests live in `phpunit.browser.xml` and run only via `composer test:browser`, explicitly when the owner asks. New behavior is covered by Feature tests instead of new browser tests. Per-task gate is now `composer gates` = `composer test` + `composer analyse` + `vendor/bin/pint --test` + `npm run build`. **Re-run `composer test:browser` before Phase 7, before Phase 8, and before deploy.**
+- **2026-10-20 — Register confirm-password (T8.1 fix F2):** `KARegister` in `Account.jsx` has no `password_confirmation` field. Added anyway (standard practice for registration forms — without it a typo in the password locks the user out immediately). Decision: always add confirm-password on any form that sets a password for the first time.
+- **2026-10-20 — Email verification (T8.1 F4 — decision only, not implemented):** Current PRD says register logs the user in immediately with no email verification. Adding `MustVerifyEmail` to `Customer` would require: (1) verification routes + `CustomerVerifyEmailNotification`; (2) blocking un-verified customers from placing orders or accessing account (via `verified` middleware or explicit checks); (3) impact on `LinkGuestOrders` — guest orders linked at registration would be attached before email is verified, which may be undesirable; (4) impact on `SaveOrderAccount` (creates an account from a completed order's email — the account would need to be considered "verified by purchase" or trigger a verify email); (5) mobile-only login — a customer who registered via `SaveOrderAccount` on a mobile-only order has no password and cannot reset via email if they never verified. Recommendation: **do not add email verification now.** The checkout flow and mobile-only path make it complex, and the PRD explicitly deferred it. Re-evaluate in Phase 10 QA or after mobile-number verification (WhatsApp OTP) is available.
 - **2026-10-15 — Redis cache serialization (T6.2 fix):** Laravel 13 defaults `config/cache.php` `serializable_classes => false`, which makes `RedisStore` unserialize with `allowed_classes => false` — every cached Eloquent model/collection comes back as `__PHP_Incomplete_Class` (500 on `/products`). Tests never caught it because the test env uses the `array` cache store (no serialization). This app intentionally caches its own Eloquent collections (category tree, brand/attribute facets) in a private Redis store, so set `serializable_classes => env('CACHE_SERIALIZABLE_CLASSES', true)`. Requirement: production Redis must stay non-public (the setting is only safe when the cache store is not attacker-writable).

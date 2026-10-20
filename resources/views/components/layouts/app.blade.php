@@ -42,6 +42,9 @@
     {{-- Cart drawer (opens on add-to-cart / header cart icon). --}}
     @livewire('shop.cart-drawer')
 
+    {{-- Wishlist toggle listener for product-card / PDP hearts. --}}
+    @livewire('shop.wishlist-sync')
+
     {{-- Toasts live-region; populated by Livewire/Alpine events. --}}
     <div class="d-toasts" aria-live="polite" aria-atomic="false">
         {{ $toasts ?? '' }}

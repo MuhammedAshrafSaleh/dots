@@ -219,6 +219,10 @@ class CheckoutForm extends Component
             return;
         }
 
+        if ($customer->addresses()->count() >= CustomerAddress::MAX_PER_CUSTOMER) {
+            return;
+        }
+
         $customer->addresses()->create([
             'recipient_name' => $this->name,
             'mobile' => $this->mobile,

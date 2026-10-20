@@ -160,7 +160,9 @@ it('a status change writes a history row with notes and the admin user', functio
     $order->refresh();
     expect($order->status)->toBe(OrderStatus::Confirmed);
 
-    $latest = $order->statusHistories()->latest('id')->first();
+    // reorder() clears the relation's default created_at ordering so the newest
+    // row is picked by id alone (created_at is second-precision and can tie).
+    $latest = $order->statusHistories()->reorder('id', 'desc')->first();
     expect($latest->status)->toBe('confirmed')
         ->and($latest->user_id)->toBe($admin->id)
         ->and($latest->getTranslation('note', 'en'))->toBe('On its way')
