@@ -2,26 +2,28 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
-- **Current task:** T9.4 Security and errors — **DONE** (pending owner review). Next task: T9.5 (see phase-09 file).
-- **Last commit:** `6fe92d1` (T9.4: security and errors) — hash filled after commit.
-- **Gate result:** 592 tests (590 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **Current task:** Newsletter subscribe wire-up (post-T9.4 gap fix) — **DONE** (pending owner review). Next task: T9.5 (see phase-09 file).
+- **Last commit:** `fe8fdab` (Newsletter subscribe: wire up POST route, dedupe, throttle, lang strings).
+- **Gate result:** 596 tests (594 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
 - **What T9.4 changed:**
   - New `App\Http\Middleware\SecurityHeaders` appended to the `web` group (in `bootstrap/app.php`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Permitted-Cross-Domain-Policies: none`, `Permissions-Policy` (camera/mic/geolocation/browsing-topics off), `Content-Security-Policy: frame-ancestors 'self'`, and `Strict-Transport-Security` (1y, includeSubDomains) **only over HTTPS**. Strict script-CSP intentionally omitted — would break Livewire/Alpine (see Decisions).
   - Rate limits added to the remaining public write forms (pattern matches existing Newsletter/Consultation `RateLimiter` usage): Register (5/10min/IP), ResetPassword (5/10min/IP, on top of the broker's own throttle), TrackOrder lookup (10/min/IP — number+mobile is the only auth), CheckoutForm place (10/10min/IP). WhatsApp redirect route now also has `throttle:30,1`. (Login admin+customer already used `LoginThrottle`; WhatsApp redirect was already signed; rich text already sanitised via `App\Support\Html`; Paymob webhook already CSRF-exempt + HMAC.)
   - Error pages in the design style: self-contained `components/layouts/error.blade.php` (no header/footer/DB so it survives 500/503; styled with site.css tokens) + `resources/views/errors/{403,404,419,429,500,503}.blade.php`, strings in `lang/{ar,en}/errors.php`.
   - `.env.example` logging: `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` + comment to raise `LOG_LEVEL=warning` in production.
   - New test `tests/Feature/SecurityTest.php` (5 tests): headers present, HSTS HTTPS-only, and rate limits on register / track-order / reset-password.
-- **Open issues:** none. (Carry-over: F4 email verification — see Decisions log.)
+  - **Newsletter throttle gap (post-T9.4 fix `fe8fdab`):** `NewsletterController::subscribe` (POST /newsletter/subscribe, `throttle:10,1`) wires up the footer form; deduplicates via `firstOrCreate`/`wasRecentlyCreated`; redirects back with `toast_success`/`toast_info` flash rendered in the app layout. AR/EN `newsletter_already_subscribed` strings added. Livewire `NewsletterForm` updated for already-subscribed distinction. 4 new tests in `NewsletterSubscribeTest`.
+- **Open issues:** none. Newsletter throttle gap closed. (Carry-over: F4 email verification — see Decisions log.)
 - **How to verify on dots.test:**
   - Any page → DevTools → Network → response headers show `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy`, `Permissions-Policy`.
   - Visit a bad URL e.g. `/ar/does-not-exist` → styled 404 page (DOTS eyebrow, big code, "Back to home" button), RTL in AR.
   - Submit the Track-Order form (`/ar/track-order`) >10× quickly → "Too many submissions" error.
   - Book a consultation / register repeatedly → throttled after the cap.
+  - Footer newsletter form: enter a valid email → redirects back with green "You're subscribed!" toast. Enter the same email again → info toast "You're already on the list". Submit 11× rapidly → 429 error page.
   - No 403/500/JS errors on normal browsing, add-to-cart, checkout.
 
-**Git:** branch `phase-9` · last commit `6fe92d1` (T9.4 security and errors) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `fe8fdab` (newsletter wire-up) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
-Current phase: **9 — Performance and operations.** T9.1–T9.4 done (pending review). Next: T9.5 (see phase-09 file).
+Current phase: **9 — Performance and operations.** T9.1–T9.4 done + newsletter gap fixed (pending review). Next: T9.5 (see phase-09 file).
 
 ---
 
@@ -160,6 +162,7 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — Newsletter kept and wired (post-T9.4 gap fix):** Newsletter kept and wired — free (own DB, no auto emails per Q8 decision); email list is a marketing asset. `newsletter.subscribe` changed from GET placeholder to POST `NewsletterController::subscribe` with `throttle:10,1`. Footer form updated to POST + @csrf. Duplicates handled gracefully via `firstOrCreate`/`wasRecentlyCreated` — no 500 or validation error for re-subscriptions.
 - **2026-10-20 — No strict script-CSP (T9.4):** Technical choice. `SecurityHeaders` ships a Content-Security-Policy limited to `frame-ancestors 'self'` (anti-clickjacking) and leaves script/style sources unrestricted. A strict `script-src` would require `'unsafe-inline'` + `'unsafe-eval'` to keep Livewire and Alpine (and the inline no-FOUC `<script>` in `app.blade.php`) working, which defeats the purpose. Clickjacking, MIME-sniffing, referrer leakage and feature-policy are covered by the other headers; HSTS is sent over HTTPS only. Revisit if the front-end moves off inline Alpine.
 - **2026-10-20 — Muted text color darkened (T9.2 Lighthouse fix):** Design deviation. `--ink-500` was `#75756E` (WCAG 4.74:1 on white but only 4.33:1 on the site's soft-gray `--ink-50` = `#F7F7F5` surface used by `.d-phead` and `.d-footer`). Darkened to `#6F6F68` which gives 4.72:1 on `#F7F7F5` (≥ AA 4.5:1). The change is minimal — 6 steps darker in lightness. Affects all uses of `--fg-3` / `--ink-500` across the site (phead counts, footer bottom strip, form placeholders, sku, muted metadata). Previous value is documented here for reference.
 - **2026-10-20 — Image driver = Imagick (T9.2):** Technical choice. Responsive WebP conversions on the full DemoSeeder exhausted PHP's 128 MB `memory_limit` under the GD driver (`imagewebp` on large truecolor bitmaps). Switched media-library's `image_driver` to **imagick** via `IMAGE_DRIVER=imagick` (`.env`, `.env.example`, `phpunit.xml`) — Imagick holds pixel buffers in its own C allocations, outside `memory_limit`, and gives better WebP. Requires the `imagick` PHP extension in every environment (prod must have it; falls back to `gd` if the env var is unset). Also: tests route conversion jobs to a non-running connection by default so the suite doesn't re-encode every seeded image (TestCase sets `media-library.queue_connection_name => database`; opt back into `sync` per-test when a real conversion file is needed).
