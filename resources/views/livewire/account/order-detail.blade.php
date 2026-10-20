@@ -30,16 +30,11 @@
             <a href="{{ route('account.orders', $locale) }}" wire:navigate style="justify-self:start;display:inline-flex;align-items:center;gap:6px;font:800 13px var(--font-body);color:var(--fg-1);text-decoration:none;">
                 <x-icon name="arrow-left" size="16" />{{ __('account.order.all_orders') }}
             </a>
-            <div style="display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:end;">
-                <div style="display:grid;gap:10px;">
-                    <h1 class="t-h2" style="margin:0;">{{ __('account.order.title') }} <span dir="ltr" style="font-family:var(--font-mono);font-weight:500;">{{ $order->number }}</span></h1>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-                        <span style="font:600 14px var(--font-body);color:var(--fg-2);">{{ __('account.orders.placed') }} {{ $order->placed_at?->translatedFormat('j M Y · H:i') }}</span>
-                        <x-site.order-badges :order="$order" />
-                    </div>
-                </div>
-                <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <x-whatsapp-button source="order_help" :model="$order" :label="__('account.order.help')" />
+            <div style="display:grid;gap:10px;">
+                <h1 class="t-h2" style="margin:0;">{{ __('account.order.title') }} <span dir="ltr" style="font-family:var(--font-mono);font-weight:500;">{{ $order->number }}</span></h1>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                    <span style="font:600 14px var(--font-body);color:var(--fg-2);">{{ __('account.orders.placed') }} {{ $order->placed_at?->translatedFormat('j M Y · H:i') }}</span>
+                    <x-site.order-badges :order="$order" />
                 </div>
             </div>
         </div>
@@ -108,6 +103,10 @@
 
             {{-- Right column --}}
             <div style="display:grid;gap:20px;">
+                <div style="display:grid;">
+                    <x-whatsapp-button source="order_help" :model="$order" :label="__('account.order.help')" />
+                </div>
+
                 {{-- Payment summary --}}
                 <div class="d-account__box">
                     <h2 class="d-account__box-title">{{ __('account.order.payment_summary') }}</h2>
