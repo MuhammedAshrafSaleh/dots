@@ -13,7 +13,7 @@
 - **Open issues:** none for T9.1. (Carry-over from phase 8: F4 email verification — see Decisions log.)
 - **How to verify on dots.test:** this task is DB-index + docs only; nothing visual changed. To apply the indexes locally run `php artisan migrate` (adds the two indexes to the `dots` DB — safe, additive, no data change). Listing pages (`/ar/products`, category/brand pages) should behave identically, just faster on large catalogs. Optional deep check: re-seed `dots_testing` with `LargeCatalogSeeder` and re-run EXPLAIN (the throwaway probe scripts were removed after use).
 
-**Git:** branch `phase-9` · last commit `<T9.1 commit>` · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `67e4343` (T9.1) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
 Current phase: **9 — Performance and operations.** T9.1 done (pending review). Next: T9.2 Images.
 
