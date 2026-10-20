@@ -1,21 +1,33 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `bulk-import` (local only; branched from up-to-date main after `phase-9-done`). Bulk product import/export is **pulled forward** from Phase 11 (T11.1) ahead of the client meeting and built here. **After BI.3 the next step is Phase 10** — Phase 9 is already merged/tagged, it does NOT resume.
-- **Current task:** docs-only spec session — **DONE**. Spec + task plan written. **Next task: BI.1** (see `docs/plan/bulk-import.md`).
-- **Last commit:** `docs: bulk product import/export spec` (see Git line for hash).
-- **Gate result:** n/a — docs-only session, no app code changed, no gates run.
-- **What this session produced:**
-  - `docs/IMPORT_SPEC.md` — authoritative spec (template layout + row-2 key maps, generation, data rules, media/ZIP rules & limits, error policy, permissions, export round-trip).
-  - `docs/plan/bulk-import.md` — exactly 3 tasks: **BI.1** (maatwebsite/excel + template generator + Download template + Export + Import page shell + `products.import`/`products.export` perms), **BI.2** (parse/validate/preview/report, dry run), **BI.3** (apply job + ZIP media + cache recompute + import log + one E2E).
-  - `docs/plan/phase-11-deferred.md` — T11.1 replaced with a pointer to the above.
-- **Open issues:** none for this session. (Carry-over: F4 email verification — see Decisions log.)
-- **How to verify on dots.test:** nothing to click — docs only. Review `docs/IMPORT_SPEC.md` and `docs/plan/bulk-import.md`, then start BI.1 in a new session.
-- **Release:** works like a phase. On owner's "approved, push bulk-import" → push branch, `git merge --no-ff bulk-import` into main, tag `bulk-import-done`, push main --tags.
+- **Branch:** `bulk-import` (local only).
+- **Current task:** BI.1 — **DONE**. Next task: **BI.2** (parse + validate + preview + report, dry run).
+- **Last commit:** `BI.1: Template generator, Download template, Export, Import page shell` (see Git line).
+- **Gate result:** 611 tests (609 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **BI.1 produced:**
+  - `maatwebsite/excel` 4.0 installed (pulls in PhpSpreadsheet 5.10).
+  - `products.import` + `products.export` added to `config/permissions.php`.
+  - "استيراد المنتجات" nav link added under Catalog in `config/admin_nav.php`.
+  - Route `admin.products.import` (`GET products/import`) added to `routes/admin.php`.
+  - `App\Services\ProductTemplateBuilder` — builds the 8-sheet xlsx template (live dropdowns, row-2 hidden keys, DataValidation formulas without leading `=`).
+  - `App\Services\ProductExportBuilder` — fills template with current product data; escapes formula-injection cells; images column empty.
+  - `App\Livewire\Admin\Products\Import` — page shell with `downloadTemplate()` + `export()` actions.
+  - View `livewire/admin/products/import.blade.php` — shows both buttons; upload card placeholder.
+  - Lang: `admin.import_products.*` in AR + EN; `admin.nav.import_products` in both.
+  - Products list: added "Import" button for users with `products.import`.
+  - 13 feature tests in `tests/Feature/Admin/Products/ProductImportBI1Test.php`.
+- **Open issues:** After seeding (new install or `php artisan db:seed --class=RolesAndAdminSeeder`), the Admin role gains `products.import` + `products.export` automatically. Existing local installs need one manual seed run.
+- **How to verify on dots.test:**
+  1. Run `php artisan db:seed --class=RolesAndAdminSeeder` (once) to give Admin the new perms.
+  2. Log in → Products (list) → click **"استيراد المنتجات"** button — should load the Import page.
+  3. Click **"تنزيل القالب"** — downloads `DOTS-products-import-template.xlsx`; open it in Excel/LibreOffice, check 8 sheets + dropdowns.
+  4. Click **"تصدير المنتجات"** — downloads `DOTS-products-export-….xlsx`; open it, check data + no `=` injections.
+  5. No 403/500/JS errors.
 
-**Git:** branch `bulk-import` (local, unpushed) · last local commit `docs: bulk product import/export spec` · last tag `phase-9-done` · push state: **not pushed**
+**Git:** branch `bulk-import` (local, unpushed) · last local commit `BI.1: …` · last tag `phase-9-done` · push state: **not pushed**
 
-Current phase: **Bulk import (pulled-forward T11.1) on branch `bulk-import`.** Next task BI.1. After BI.3 → Phase 10. Phase 9 COMPLETE (merged, tagged `phase-9-done`).
+Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. Next: BI.2. After BI.3 → Phase 10.
 
 ---
 

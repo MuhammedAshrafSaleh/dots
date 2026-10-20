@@ -29,6 +29,7 @@ return [
         'payments' => 'Payment methods',
         'settings' => 'Settings',
         'users' => 'Users',
+        'import_products' => 'Import products',
     ],
 
     'shell' => [
@@ -1226,5 +1227,16 @@ return [
         'unsubscribed_toast' => 'Subscriber unsubscribed',
         'resubscribed_toast' => 'Subscriber resubscribed',
         'deleted' => 'Subscriber deleted',
+    ],
+
+    'import_products' => [
+        'title' => 'Import products',
+        'subtitle' => 'Download the template, fill in your data, then upload for preview and apply.',
+        'card_files' => 'Template & export',
+        'card_files_desc' => 'Download the template for live dropdowns, or export current products to edit them.',
+        'download_template' => 'Download template',
+        'export' => 'Export products',
+        'card_upload' => 'Upload file',
+        'upload_coming' => 'File upload and preview are available in the next development phase.',
     ],
 ];

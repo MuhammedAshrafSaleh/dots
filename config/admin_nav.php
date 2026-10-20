@@ -27,6 +27,7 @@ return [
             'label' => 'catalog',
             'items' => [
                 ['products', 'package', 'products', 'admin.products', 'products.view'],
+                ['import', 'upload', 'import_products', 'admin.products.import', 'products.import'],
                 ['categories', 'folder-tree', 'categories', 'admin.categories', 'categories.view'],
                 ['brands', 'award', 'brands', 'admin.brands', 'brands.view'],
                 ['attributes', 'sliders-horizontal', 'attributes', 'admin.attributes', 'attributes.view'],

@@ -11,7 +11,7 @@ Reuse anchors: `App\Actions\UpdateProductCacheColumns`, `App\Support\CacheTags`,
 ---
 
 ## BI.1 — Template generator, Download template, Export, Import page shell  _(Sonnet)_
-- [ ] Done
+- [x] Done
 
 Install `maatwebsite/excel`. Build the template generator (§1–§2 of IMPORT_SPEC): 8 sheets, Arabic row-1 headers + reused cell comments, hidden row-2 keys, live dropdowns (brands, active level-3 category paths, per-axis attribute values, yes/no + status), dynamic `attr:<code>` columns, numeric validations. Add the Import page shell under `app/Livewire/Admin` with a **"Download template"** button and an **Export** button producing the same format. Add `products.import` + `products.export` to `config/permissions.php`; gate the page/buttons.
 
@@ -81,6 +81,6 @@ Implement the queued **Apply** job (§4–§7): upsert products/variants/specs, 
 ---
 
 ## Checklist
-- [ ] BI.1 done
+- [x] BI.1 done
 - [ ] BI.2 done
 - [ ] BI.3 done

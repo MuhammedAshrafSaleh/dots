@@ -9,7 +9,11 @@
 <div class="a-page">
     <x-admin.head :title="__('admin.products.title')">
         <x-slot:actions>
-            {{-- Import CSV button is hidden until the import phase (T11.1). --}}
+            @if (Route::has('admin.products.import'))
+                @can('products.import')
+                    <x-button variant="outline" icon="upload" href="{{ route('admin.products.import') }}" wire:navigate>{{ __('admin.import_products.title') }}</x-button>
+                @endcan
+            @endif
             @if (Route::has('admin.products.create'))
                 @can('products.create')
                     <x-button icon="plus" href="{{ route('admin.products.create') }}" wire:navigate>{{ __('admin.products.add') }}</x-button>
