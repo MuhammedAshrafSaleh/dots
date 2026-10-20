@@ -15,7 +15,7 @@
 - **Open issues:** none for T9.2. (Carry-over from phase 8: F4 email verification — see Decisions log.) Lighthouse was not run in-session (no headless Chrome); verify the image audit manually (see below).
 - **How to verify on dots.test:** open the home page, a category page, a product detail page, the brands and projects pages. In DevTools → Network, image requests should be `.webp` and the browser should pick a size-appropriate variant (resize the window / throttle to see srcset switch). Check DevTools → Lighthouse → Performance: "Serve images in next-gen formats", "Properly size images", and "Defer offscreen images" should be clean/green. Confirm no broken images (SVG logos have no conversions and correctly fall back to the original).
 
-**Git:** branch `phase-9` · last commit `67e4343` (T9.1) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `9c2307e` (T9.2) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
 Current phase: **9 — Performance and operations.** T9.1, T9.2 done (pending review). Next: T9.3 Backups and scheduler.
 
