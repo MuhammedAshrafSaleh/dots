@@ -31,8 +31,15 @@ it('handles a duplicate email gracefully and returns an already-subscribed flash
     expect(NewsletterSubscriber::where('email', 'dup@example.com')->count())->toBe(1);
 });
 
-it('rejects an invalid email', function () {
+it('rejects a malformed email', function () {
     $response = $this->post('/ar/newsletter/subscribe', ['email' => 'not-an-email']);
+
+    $response->assertSessionHasErrors('email');
+    expect(NewsletterSubscriber::count())->toBe(0);
+});
+
+it('rejects an email with special characters in the local part', function () {
+    $response = $this->post('/ar/newsletter/subscribe', ['email' => 'jhjhj?@gmail.com']);
 
     $response->assertSessionHasErrors('email');
     expect(NewsletterSubscriber::count())->toBe(0);

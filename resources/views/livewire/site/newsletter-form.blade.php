@@ -22,7 +22,7 @@
                     class="d-input{{ $errors->has('email') ? ' d-input--error' : '' }}"
                     type="email"
                     wire:model="email"
-                    placeholder="name@example.com"
+                    placeholder="{{ $placeholder ?: 'name@example.com' }}"
                     dir="ltr"
                     aria-label="{{ __('ui.email') }}"
                     style="height:52px;width:100%;"

@@ -15,6 +15,8 @@ class NewsletterForm extends Component
     #[Locked]
     public string $source = 'blog';
 
+    public string $placeholder = '';
+
     public string $email = '';
 
     /** Honeypot — invisible to humans; bots fill it. */
@@ -28,7 +30,7 @@ class NewsletterForm extends Component
     protected function rules(): array
     {
         return [
-            'email' => ['required', 'email', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'regex:/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/'],
         ];
     }
 

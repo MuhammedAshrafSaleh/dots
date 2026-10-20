@@ -11,7 +11,7 @@ class NewsletterController extends Controller
 {
     public function subscribe(Request $request, string $locale): RedirectResponse
     {
-        $request->validate(['email' => ['required', 'email', 'max:255']]);
+        $request->validate(['email' => ['required', 'email', 'max:255', 'regex:/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/']]);
 
         $subscriber = NewsletterSubscriber::firstOrCreate(
             ['email' => strtolower(trim($request->email))],

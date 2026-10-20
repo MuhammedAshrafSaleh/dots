@@ -207,6 +207,14 @@ it('rejects an invalid email in the newsletter form', function () {
         ->assertHasErrors(['email']);
 });
 
+it('rejects an email with special characters in the newsletter form', function () {
+    Livewire::test(NewsletterForm::class, ['source' => 'blog'])
+        ->set('email', 'jhjhj?@gmail.com')
+        ->call('subscribe')
+        ->assertSet('submitted', false)
+        ->assertHasErrors(['email']);
+});
+
 it('newsletter honeypot silently succeeds without saving', function () {
     Livewire::test(NewsletterForm::class, ['source' => 'blog'])
         ->set('email', 'bot@example.com')

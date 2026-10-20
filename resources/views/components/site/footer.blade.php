@@ -29,13 +29,7 @@
         <div style="display:grid;gap:18px;align-content:start;">
             <a href="{{ route('home') }}" class="d-nav__logo" style="font:700 30px/1 var(--font-display);text-decoration:none;color:inherit;">Dots</a>
             <p style="margin:0;font:500 14px/1.6 var(--font-body);color:var(--fg-2);max-width:340px;">{{ $aboutText }}</p>
-            <form method="POST" action="{{ route('newsletter.subscribe') }}" style="display:flex;gap:8px;max-width:360px;">
-                @csrf
-                <input class="d-input" type="email" name="email" required
-                    placeholder="{{ $newsletter?->field('title', $locale) ?: __('ui.newsletter_placeholder') }}"
-                    aria-label="{{ __('ui.email') }}" />
-                <x-button variant="dark" type="submit">{{ __('ui.join') }}</x-button>
-            </form>
+            <livewire:site.newsletter-form source="footer" :placeholder="$newsletter?->field('title', $locale) ?: __('ui.newsletter_placeholder')" />
         </div>
 
         {{-- Shop (categories flagged for the footer) --}}
