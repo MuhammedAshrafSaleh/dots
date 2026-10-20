@@ -52,7 +52,7 @@ class Register extends Component
         $this->mobile = preg_replace('/[\s-]/', '', $this->mobile) ?? $this->mobile;
 
         $data = $this->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/\S+\s+\S+/'],
+            'name' => ['required', 'string', 'max:255'],
             'mobile' => ['required', 'string', 'regex:/^01[0125]\d{8}$/', Rule::unique('customers', 'mobile')],
             'email' => ['required', 'string', 'email', 'max:255', 'regex:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', Rule::unique('customers', 'email')],
             'password' => ['required', 'string', 'min:8', 'regex:/\d/', 'confirmed'],

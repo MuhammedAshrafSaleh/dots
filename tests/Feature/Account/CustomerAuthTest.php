@@ -148,7 +148,7 @@ it('creates an account, logs in and redirects home', function () {
 
 it('rejects registration that fails the PRD rules', function () {
     Livewire::test(Register::class)
-        ->set('name', 'Mona')            // single name
+        ->set('name', '')                // blank name
         ->set('mobile', '0101234')       // not a full Egyptian mobile
         ->set('email', 'mona@invalid')   // invalid email
         ->set('password', 'short')       // < 8 chars, no digit
@@ -254,7 +254,7 @@ it('shows Arabic validation messages on register under the ar locale', function 
     Customer::factory()->create(['mobile' => '01099998888', 'email' => 'taken@example.com']);
 
     $component = Livewire::test(Register::class)
-        ->set('name', 'Mona')          // single name → regex fails
+        ->set('name', 'Mona')          // valid single name — name regex removed
         ->set('mobile', '01099998888') // already taken → unique fails
         ->set('email', 'taken@example.com') // already taken → unique fails
         ->set('password', 'abc')       // too short, no digit → min + regex fail
