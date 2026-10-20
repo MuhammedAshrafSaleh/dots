@@ -21,9 +21,9 @@
   - Footer newsletter form: enter a valid email → redirects back with green "You're subscribed!" toast. Enter the same email again → info toast "You're already on the list". Submit 11× rapidly → 429 error page.
   - No 403/500/JS errors on normal browsing, add-to-cart, checkout.
 
-**Git:** branch `phase-9` · last commit `fe8fdab` (newsletter wire-up) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` merged → `main` · last tag `phase-9-done` · push state: **pushed and merged**
 
-Current phase: **9 — Performance and operations.** T9.1–T9.4 done + newsletter gap fixed (pending review). Next: T9.5 (see phase-09 file).
+Current phase: **9 — Performance and operations — COMPLETE.** Merged to main, tagged `phase-9-done`. Next: Phase 10 (see plan).
 
 ---
 
