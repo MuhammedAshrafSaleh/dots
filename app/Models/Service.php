@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasImageConversions;
 use App\Models\Concerns\HasTranslatableSlug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -10,10 +11,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 class Service extends Model implements HasMedia
 {
+    use HasImageConversions;
     use HasTranslatableSlug;
     use HasTranslations;
     use InteractsWithMedia;
@@ -38,6 +41,17 @@ class Service extends Model implements HasMedia
     {
         $this->addMediaCollection('image')->singleFile();
         $this->addMediaCollection('gallery'); // 3 images beside "what's included"
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->registerResponsiveImageConversions();
+    }
+
+    /** @return array<int, string> */
+    public function imageConversionCollections(): array
+    {
+        return ['image', 'gallery'];
     }
 
     /** @return HasMany<ServiceItem, $this> */

@@ -7,6 +7,7 @@ use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
@@ -78,6 +79,14 @@ class ResetPassword extends Component
 
     public function save(): void
     {
+        $key = 'reset-password.'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 5)) {
+            throw ValidationException::withMessages([
+                'email' => __('ui.too_many_attempts'),
+            ]);
+        }
+        RateLimiter::hit($key, 600);
+
         $this->validate(attributes: ['password' => __('account.register.password')]);
 
         $status = Password::broker('customers')->reset([

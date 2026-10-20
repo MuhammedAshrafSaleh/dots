@@ -56,7 +56,7 @@
   --ink-800: #2A2A27;
   --ink-700: #3D3D39;  /* dark button hover */
   --ink-600: #5B5B55;  /* secondary text 6.9:1 (6.4:1 on #F7F7F5) */
-  --ink-500: #75756E;  /* muted text, AA-safe 4.6:1 */
+  --ink-500: #6F6F68;  /* muted text, 4.72:1 on #F7F7F5 (>= AA 4.5:1) */
   --ink-400: #8A8A82;  /* muted DECORATIVE only 3.5:1 — ≥18px, icons, disabled */
   --ink-350: #8F8E86;  /* form-control borders 3.3:1 (non-text 3:1) */
   --ink-300: #B8B7B0;
@@ -420,7 +420,7 @@ textarea.d-input { height: auto; min-height: 104px; padding-block: 12px; resize:
 /* Footer */
 .d-footer { background: var(--ink-50); border-top: 1px solid var(--border-1); color: var(--fg-1); }
 .d-footer__top { display: grid; grid-template-columns: 1.4fr repeat(4, minmax(0, 1fr)); gap: 40px; padding-block: 64px 48px; }
-.d-footer h5 { margin: 0 0 16px; font: 800 13px/1 var(--font-body); letter-spacing: var(--tracking-overline); text-transform: var(--text-transform-overline); }
+.d-footer h2 { margin: 0 0 16px; font: 800 13px/1 var(--font-body); letter-spacing: var(--tracking-overline); text-transform: var(--text-transform-overline); }
 .d-footer ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
 .d-footer li a { font: 500 14px/1.4 var(--font-body); color: var(--fg-2); text-decoration: none; }
 .d-footer li a:hover { color: var(--fg-1); text-decoration: underline; text-decoration-color: var(--accent); }
@@ -554,7 +554,7 @@ textarea.d-input { height: auto; min-height: 104px; padding-block: 12px; resize:
 /* Filter sidebar */
 .d-filters { display: flex; flex-direction: column; background: var(--white); }
 .d-filters__head { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1.5px solid var(--ink-900); }
-.d-filters__head h3 { margin: 0; font: 800 16px/1 var(--font-body); display: flex; align-items: center; gap: 8px; }
+.d-filters__head h2 { margin: 0; font: 800 16px/1 var(--font-body); display: flex; align-items: center; gap: 8px; }
 .d-fsec { border-bottom: 1px solid var(--border-1); }
 .d-fsec__btn { width: 100%; display: flex; align-items: center; justify-content: space-between; height: 52px; border: 0; background: transparent; font: 800 14px/1 var(--font-body); color: var(--fg-1); cursor: pointer; padding: 0; }
 .d-fsec__btn:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }

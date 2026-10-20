@@ -14,6 +14,7 @@ use App\Services\Payments\PaymentException;
 use App\Services\Payments\PaymentGateway;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 use Livewire\Component;
 
@@ -127,6 +128,15 @@ class CheckoutForm extends Component
 
     public function place(PlaceOrder $placeOrder): void
     {
+        // Cap order placement to 10 attempts / 10 min per IP.
+        $key = 'checkout.'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            throw ValidationException::withMessages([
+                'name' => __('ui.too_many_attempts'),
+            ]);
+        }
+        RateLimiter::hit($key, 600);
+
         $this->mobile = preg_replace('/\s+/', '', $this->mobile) ?? $this->mobile;
 
         $available = $this->availableDeliveryMethods();

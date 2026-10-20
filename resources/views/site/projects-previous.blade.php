@@ -11,7 +11,7 @@
 
     $filterUrl = fn (array $extra) => request()->fullUrlWithQuery(array_merge(['type' => $type, 'year' => $year, 'page' => 1], $extra));
 
-    $heroImg   = $section?->getMedia('section')->where('custom_properties.field', 'image')->first()?->getUrl();
+    $heroMedia = $section?->getMedia('section')->where('custom_properties.field', 'image')->first();
     $eyebrow   = $section?->field('eyebrow', $locale) ?: __('ui.portfolio');
     $title     = $section?->field('title', $locale) ?: __('ui.previous_projects');
     $lede      = $section?->field('lede', $locale) ?: __('ui.previous_projects_sub');
@@ -20,9 +20,11 @@
 <x-seo :title="$title" :description="$lede" />
 
     {{-- ========== 1. HERO ========== --}}
-    @if ($heroImg)
+    @if ($heroMedia)
         <section class="d-media-hero" style="min-height:400px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;background:var(--ink-900);overflow:hidden;">
-            <img src="{{ $heroImg }}" alt="" aria-hidden="true"
+            <img src="{{ \App\Support\ResponsiveImage::fallbackUrl($heroMedia, 'hero') }}" alt="" aria-hidden="true"
+                 @if ($heroSrcset = \App\Support\ResponsiveImage::srcset($heroMedia)) srcset="{{ $heroSrcset }}" sizes="100vw" @endif
+                 loading="lazy" decoding="async"
                  style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;">
             <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(24,24,22,.75) 0%,rgba(24,24,22,.2) 60%,transparent 100%);"></div>
             <div class="d-container" style="position:relative;z-index:2;padding-block:40px;">
@@ -100,7 +102,7 @@
                 <div class="d-rv d-prev-masonry" style="columns:3;column-gap:20px;">
                     @foreach ($projects as $i => $project)
                         @php
-                            $pImg  = $project->getFirstMediaUrl('cover');
+                            $pImg  = $project->getFirstMedia('cover');
                             $pSlug = $project->getTranslation('slug', $locale);
                         @endphp
                         <div class="d-rv" style="break-inside:avoid;margin-bottom:20px;--rv-d:{{ ($i % 3) * 60 }}ms;">
@@ -108,7 +110,9 @@
                                class="d-card d-prcard--overlay d-card--linked" style="display:flex;flex-direction:column;min-height:300px;text-decoration:none;">
                                 @if ($pImg)
                                     <div class="d-prcard__media" style="position:absolute;inset:0;">
-                                        <img src="{{ $pImg }}" alt="{{ $project->getTranslation('title', $locale) }}"
+                                        <img src="{{ \App\Support\ResponsiveImage::fallbackUrl($pImg) }}" alt="{{ $project->getTranslation('title', $locale) }}"
+                                             @if ($pSrcset = \App\Support\ResponsiveImage::srcset($pImg)) srcset="{{ $pSrcset }}" sizes="(max-width: 48rem) 100vw, 33vw" @endif
+                                             loading="lazy" decoding="async"
                                              style="width:100%;height:100%;object-fit:cover;">
                                     </div>
                                 @endif

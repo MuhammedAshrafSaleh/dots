@@ -74,7 +74,7 @@
             {{-- Featured wide card --}}
             @if ($featured)
                 @php
-                    $featImg  = $featured->getFirstMediaUrl('cover');
+                    $featImg  = $featured->getFirstMedia('cover');
                     $featSlug = $featured->getTranslation('slug', $locale);
                     $featCat  = $featured->category?->getTranslation('name', $locale);
                     $featDate = $featured->published_at?->translatedFormat('j M Y');
@@ -82,7 +82,7 @@
                 <div class="d-rv" style="margin-bottom:40px;">
                     <a href="{{ route('blog.show', [$locale, $featSlug]) }}" class="d-card d-acard d-acard--wide"
                        style="text-decoration:none;">
-                        <x-image-frame class="d-acard__media" :src="$featImg ?: null"
+                        <x-image-frame class="d-acard__media" :media="$featImg" sizes="(max-width: 60rem) 100vw, 50vw"
                                        :alt="$featured->getTranslation('title', $locale)" />
                         <div class="d-card__body" style="display:grid;gap:10px;align-content:center;">
                             <div style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -138,7 +138,7 @@
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;" class="d-blog-grid">
                     @foreach ($posts as $i => $post)
                         @php
-                            $pImg  = $post->getFirstMediaUrl('cover');
+                            $pImg  = $post->getFirstMedia('cover');
                             $pSlug = $post->getTranslation('slug', $locale);
                             $pCat  = $post->category?->getTranslation('name', $locale);
                             $pDate = $post->published_at?->translatedFormat('j M Y');
@@ -148,7 +148,8 @@
                                 <a href="{{ route('blog.show', [$locale, $pSlug]) }}"
                                    class="d-card__link" aria-label="{{ $post->getTranslation('title', $locale) }}"></a>
                                 <x-image-frame class="d-acard__media" ratio="4 / 3"
-                                               :src="$pImg ?: null"
+                                               :media="$pImg"
+                                               sizes="(max-width: 48rem) 100vw, 33vw"
                                                :alt="$post->getTranslation('title', $locale)" />
                                 @if ($pCat)
                                     <span class="d-acard__tag">

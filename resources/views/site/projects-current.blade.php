@@ -17,11 +17,13 @@
 
     {{-- ========== 1. HERO ========== --}}
     @php
-        $heroImg = $lead?->getFirstMediaUrl('cover') ?? '';
+        $heroMedia = $lead?->getFirstMedia('cover');
     @endphp
     <section class="d-media-hero" style="min-height:480px;position:relative;display:flex;flex-direction:column;justify-content:flex-end;background:var(--ink-900);overflow:hidden;">
-        @if ($heroImg)
-            <img src="{{ $heroImg }}" alt="" aria-hidden="true"
+        @if ($heroMedia)
+            <img src="{{ \App\Support\ResponsiveImage::fallbackUrl($heroMedia, 'hero') }}" alt="" aria-hidden="true"
+                 @if ($heroSrcset = \App\Support\ResponsiveImage::srcset($heroMedia)) srcset="{{ $heroSrcset }}" sizes="100vw" @endif
+                 loading="lazy" decoding="async"
                  style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.45;">
         @endif
         <div style="position:absolute;inset:0;background:linear-gradient(0deg,rgba(24,24,22,.75) 0%,rgba(24,24,22,.2) 60%,transparent 100%);"></div>
@@ -69,7 +71,7 @@
             {{-- Featured lead card (type=all only) --}}
             @if ($lead && $type === 'all')
                 @php
-                    $leadImg  = $lead->getFirstMediaUrl('cover');
+                    $leadImg  = $lead->getFirstMedia('cover');
                     $leadSlug = $lead->getTranslation('slug', $locale);
                     $stageIdx = $lead->stage?->index() ?? 0;
                     $leadProgress = $lead->progress;
@@ -78,7 +80,7 @@
                     <a href="{{ route('project.show', [$locale, $leadSlug]) }}" class="d-card d-prcard-lead"
                        style="display:grid;grid-template-columns:1.4fr 1fr;text-decoration:none;">
                         <div class="d-prcard__media d-prcard-lead__media" style="aspect-ratio:auto;min-height:380px;">
-                            <x-image-frame ratio="auto" style="height:100%;" :src="$leadImg ?: null"
+                            <x-image-frame ratio="auto" style="height:100%;" :media="$leadImg" sizes="(max-width: 60rem) 100vw, 58vw"
                                            :alt="$lead->getTranslation('title', $locale)" />
                         </div>
                         <div class="d-card__body d-prcard-lead__body" style="padding:36px;display:grid;gap:16px;align-content:center;">
@@ -131,14 +133,14 @@
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;" class="d-projects-grid">
                     @foreach ($gridProjects as $i => $project)
                         @php
-                            $pImg  = $project->getFirstMediaUrl('cover');
+                            $pImg  = $project->getFirstMedia('cover');
                             $pSlug = $project->getTranslation('slug', $locale);
                             $pStageIdx = $project->stage?->index() ?? 0;
                         @endphp
                         <div class="d-rv" style="--rv-d:{{ ($i % 3) * 60 }}ms;">
                             <a href="{{ route('project.show', [$locale, $pSlug]) }}" class="d-card d-card--linked" style="text-decoration:none;">
                                 <div class="d-prcard__media" style="position:relative;">
-                                    <x-image-frame ratio="4 / 3" :src="$pImg ?: null" :alt="$project->getTranslation('title', $locale)" />
+                                    <x-image-frame ratio="4 / 3" :media="$pImg" sizes="(max-width: 48rem) 100vw, 33vw" :alt="$project->getTranslation('title', $locale)" />
                                     <div class="d-prcard__badges">
                                         <x-badge tone="accent" :dot="true">{{ __('ui.in_progress') }}</x-badge>
                                         <x-badge tone="outline">{{ $project->type->label() }}</x-badge>

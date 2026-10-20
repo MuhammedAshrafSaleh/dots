@@ -81,7 +81,7 @@
                     @php $pSlug = $p->getTranslation('slug', $locale); @endphp
                     <a href="{{ route('product.show', [$locale, $pSlug]) }}" wire:navigate
                         style="display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;border-top:1px solid var(--border-1);padding-top:12px;text-decoration:none;color:var(--fg-1);">
-                        <span style="width:56px;height:56px;border-radius:8px;border:1px solid var(--border-1);background:var(--white) center/contain no-repeat;@if ($p->getFirstMediaUrl('gallery')) background-image:url('{{ $p->getFirstMediaUrl('gallery') }}');@endif"></span>
+                        <span style="width:56px;height:56px;border-radius:8px;border:1px solid var(--border-1);background:var(--white) center/contain no-repeat;@if ($p->getFirstMediaUrl('gallery')) background-image:url('{{ $p->getFirstMediaUrl('gallery', 'thumb') }}');@endif"></span>
                         <span style="display:grid;gap:3px;min-width:0;">
                             <span class="d-pcard__brand">{{ $p->brand?->name }}</span>
                             <span style="font:700 13px/1.35 var(--font-body);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;">{{ $p->getTranslation('name', $locale) }}</span>

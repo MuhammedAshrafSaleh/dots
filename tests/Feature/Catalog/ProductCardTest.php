@@ -143,6 +143,27 @@ it('renders on-order label for StockStatus::Order', function () {
         ->assertSee(__('ui.pcard_on_order'));
 });
 
+// ──────────────────────── Eager / priority loading ────────────────────────
+
+it('image-frame renders eager + fetchpriority=high when passed to _product-card with a src', function () {
+    // Use a plain src string so the <img> is rendered without needing real media/storage.
+    $html = $this->blade(
+        '<x-image-frame src="/img/test.jpg" alt="test" :eager="true" :priority="true" />',
+    );
+
+    $html->assertSee('loading="eager"', false)
+        ->assertSee('fetchpriority="high"', false);
+});
+
+it('image-frame defaults to loading=lazy when eager is not set', function () {
+    $html = $this->blade(
+        '<x-image-frame src="/img/test.jpg" alt="test" />',
+    );
+
+    $html->assertSee('loading="lazy"', false)
+        ->assertDontSee('fetchpriority="high"', false);
+});
+
 // ──────────────────────── Wishlist prompt ────────────────────────
 
 it('renders wishlist heart button on card', function () {

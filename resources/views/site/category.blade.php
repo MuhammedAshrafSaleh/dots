@@ -6,7 +6,7 @@
     /** @var \Illuminate\Support\Collection $faqs */
     /** @var \Illuminate\Support\Collection $brands */
 
-    $heroUrl    = $category->getFirstMediaUrl('hero');
+    $heroMedia  = $category->getFirstMedia('hero');
     $catName    = $category->getTranslation('name', $locale);
     $catDesc    = $category->getTranslation('description', $locale);
     $guideTitle = $category->getTranslation('buying_guide_title', $locale);
@@ -34,12 +34,12 @@
 <x-seo
     :title="$category->getTranslation('meta_title', $locale) ?: $catName"
     :description="$category->getTranslation('meta_description', $locale) ?: $catDesc"
-    :image="$heroUrl ?: null"
+    :image="$heroMedia?->getUrl()"
 />
 
     {{-- ========== 1. HERO ========== --}}
     <section class="d-cat-hero" style="position:relative;min-height:440px;display:flex;align-items:flex-end;">
-        <x-image-frame :src="$heroUrl" :alt="$catName" style="position:absolute;inset:0;" />
+        <x-image-frame :media="$heroMedia" sizes="100vw" :alt="$catName" eager priority style="position:absolute;inset:0;" />
         {{-- Directional gradient: dark on the reading-start side (RTL flips direction) --}}
         <div aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient({{ $dir === 'rtl' ? '270deg' : '90deg' }},rgba(24,24,22,.78),rgba(24,24,22,.1) 75%);"></div>
 
@@ -73,7 +73,7 @@
                         @php
                             $childName  = $child->getTranslation('name', $locale);
                             $childSlug  = $child->getTranslation('slug', $locale);
-                            $childImg   = $child->getFirstMediaUrl('image');
+                            $childImg   = $child->getFirstMedia('image');
                             $childCount = $child->products_count ?? 0;
                         @endphp
                         <div class="d-rv" style="--rv-d:{{ $i * 50 }}ms;">
@@ -82,7 +82,7 @@
                                    class="d-card__link"
                                    aria-label="{{ $childName }}"></a>
                                 <div class="d-ccard__media">
-                                    <x-image-frame :src="$childImg" :alt="$childName" contain />
+                                    <x-image-frame :media="$childImg" sizes="(max-width: 48rem) 50vw, 280px" :alt="$childName" contain />
                                 </div>
                                 <div class="d-ccard__body">
                                     <div style="flex:1;min-width:0;">
@@ -120,7 +120,7 @@
                 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($featuredProducts as $i => $product)
                         <div class="d-rv" style="--rv-d:{{ $i * 60 }}ms;">
-                            @include('site._product-card', ['product' => $product])
+                            @include('site._product-card', ['product' => $product, 'eager' => $loop->index < 4, 'priority' => $loop->first])
                         </div>
                     @endforeach
                 </div>

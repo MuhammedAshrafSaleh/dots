@@ -153,7 +153,7 @@ Indexes: `slug unique`, `is_featured`, `(is_active, sort_order)`
 | `created_at` | timestamp |  |
 | `updated_at` | timestamp |  |
 
-Indexes: `sku unique`, `(status, category_id)`, `brand_id`, `min_price`, `stock_status`, `created_at`, `sort_weight`, `FULLTEXT(search_text)`
+Indexes: `sku unique`, `(status, category_id)`, `brand_id`, `min_price`, `stock_status`, `created_at`, `sort_weight`, `FULLTEXT(search_text)`, `(status, sort_weight DESC, is_best_seller DESC, id)` [recommended-sort listing], `(status, published_at DESC, id DESC)` [newest-sort listing]
 
 ### `product_variants`
 | column | type | notes |

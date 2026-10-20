@@ -29,17 +29,12 @@
         <div style="display:grid;gap:18px;align-content:start;">
             <a href="{{ route('home') }}" class="d-nav__logo" style="font:700 30px/1 var(--font-display);text-decoration:none;color:inherit;">Dots</a>
             <p style="margin:0;font:500 14px/1.6 var(--font-body);color:var(--fg-2);max-width:340px;">{{ $aboutText }}</p>
-            <form method="GET" action="{{ route('newsletter.subscribe') }}" style="display:flex;gap:8px;max-width:360px;">
-                <input class="d-input" type="email" name="email" required
-                    placeholder="{{ $newsletter?->field('title', $locale) ?: __('ui.newsletter_placeholder') }}"
-                    aria-label="{{ __('ui.email') }}" />
-                <x-button variant="dark" type="submit">{{ __('ui.join') }}</x-button>
-            </form>
+            <livewire:site.newsletter-form source="footer" :placeholder="$newsletter?->field('title', $locale) ?: __('ui.newsletter_placeholder')" />
         </div>
 
         {{-- Shop (categories flagged for the footer) --}}
         <div>
-            <h5>{{ __('ui.footer_shop') }}</h5>
+            <h2>{{ __('ui.footer_shop') }}</h2>
             <ul>
                 @foreach ($footerCats as $cat)
                     <li><a href="{{ $catUrl($cat) }}">{{ $cat->getTranslation('name', $locale) }}</a></li>
@@ -50,7 +45,7 @@
 
         {{-- Services --}}
         <div>
-            <h5>{{ __('ui.services') }}</h5>
+            <h2>{{ __('ui.services') }}</h2>
             <ul>
                 <li><a href="{{ route('services') }}">{{ __('ui.all_services') }}</a></li>
             </ul>
@@ -58,7 +53,7 @@
 
         {{-- Company --}}
         <div>
-            <h5>{{ __('ui.footer_company') }}</h5>
+            <h2>{{ __('ui.footer_company') }}</h2>
             <ul>
                 <li><a href="{{ route('about') }}">{{ __('ui.about') }}</a></li>
                 <li><a href="{{ route('projects.current') }}">{{ __('ui.current_projects') }}</a></li>
@@ -69,7 +64,7 @@
 
         {{-- Help (content pages flagged for the footer + track order) --}}
         <div>
-            <h5>{{ __('ui.footer_help') }}</h5>
+            <h2>{{ __('ui.footer_help') }}</h2>
             <ul>
                 <li><a href="{{ route('track') }}">{{ __('ui.track_order') }}</a></li>
                 @foreach ($footerPages as $page)

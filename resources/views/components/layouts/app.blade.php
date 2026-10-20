@@ -45,9 +45,15 @@
     {{-- Wishlist toggle listener for product-card / PDP hearts. --}}
     @livewire('shop.wishlist-sync')
 
-    {{-- Toasts live-region; populated by Livewire/Alpine events. --}}
+    {{-- Toasts live-region; populated by Livewire/Alpine events or redirect flash. --}}
     <div class="d-toasts" aria-live="polite" aria-atomic="false">
         {{ $toasts ?? '' }}
+        @if (session('toast_success'))
+            <x-toast tone="success" :message="session('toast_success')" />
+        @endif
+        @if (session('toast_info'))
+            <x-toast tone="info" :message="session('toast_info')" />
+        @endif
     </div>
 </body>
 </html>

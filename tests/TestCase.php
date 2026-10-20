@@ -37,6 +37,13 @@ abstract class TestCase extends BaseTestCase
         }
 
         parent::setUp();
+
+        // Image conversions are expensive (real WebP encoding). Route the media
+        // conversion jobs to a connection with no worker so the full suite does
+        // not regenerate thumbnails for every seeded/uploaded image. Tests that
+        // need real conversion files opt back in with
+        // config(['media-library.queue_connection_name' => 'sync']).
+        config(['media-library.queue_connection_name' => 'database']);
     }
 
     protected function setUpTraits(): array

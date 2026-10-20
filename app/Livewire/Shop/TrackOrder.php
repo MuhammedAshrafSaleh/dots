@@ -5,6 +5,8 @@ namespace App\Livewire\Shop;
 use App\Models\Order;
 use App\Support\Orders\StatusTimeline;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 
@@ -35,6 +37,16 @@ class TrackOrder extends Component
 
     public function track(): void
     {
+        // Rate-limit lookups: number + exact mobile is the only auth, so cap
+        // guessing to 10 tries per minute per IP.
+        $key = 'track-order.'.request()->ip();
+        if (RateLimiter::tooManyAttempts($key, 10)) {
+            throw ValidationException::withMessages([
+                'number' => __('ui.too_many_attempts'),
+            ]);
+        }
+        RateLimiter::hit($key, 60);
+
         $this->validate([
             'number' => ['required', 'string', 'max:40'],
             'mobile' => ['required', 'string', 'max:30'],

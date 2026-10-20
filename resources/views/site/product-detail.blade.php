@@ -90,10 +90,13 @@
                                     @if ($i > 0) x-cloak @endif
                                     style="animation: d-fade-in 240ms var(--ease-out)">
                                     <x-image-frame
-                                        :src="$media->getUrl()"
+                                        :media="$media"
+                                        sizes="(max-width: 60rem) 100vw, 560px"
                                         :alt="$captionStr ?: $productName"
                                         ratio="1 / 1"
-                                        :label="$captionStr" />
+                                        :label="$captionStr"
+                                        :eager="$i === 0"
+                                        :priority="$i === 0" />
                                 </div>
                             @endforeach
 
@@ -305,7 +308,8 @@
             @if ($gallery->count() > 1)
                 <div class="d-compact-hide">
                     <x-image-frame
-                        :src="$gallery->get(1)?->getUrl()"
+                        :media="$gallery->get(1)"
+                        sizes="300px"
                         :alt="$productName"
                         ratio="1 / 1"
                         radius="var(--radius-lg)"

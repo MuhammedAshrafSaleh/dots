@@ -11,7 +11,8 @@
     $role     = $post->getTranslation('author_role', $locale);
     $date     = $post->published_at?->translatedFormat('j M Y');
     $coverImg = $post->getFirstMediaUrl('cover');
-    $authorImg = $post->getFirstMediaUrl('author');
+    $coverMedia = $post->getFirstMedia('cover');
+    $authorMedia = $post->getFirstMedia('author');
 
     $crumbs = [
         ['label' => __('ui.home'), 'href' => route('home')],
@@ -50,8 +51,9 @@
             {{-- Author + meta + share bar --}}
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between;padding-block:14px;border-block:1px solid var(--border-1);">
                 <div style="display:flex;align-items:center;gap:12px;">
-                    @if ($authorImg)
-                        <img src="{{ $authorImg }}" alt="{{ $author }}"
+                    @if ($authorMedia)
+                        <img src="{{ \App\Support\ResponsiveImage::fallbackUrl($authorMedia, 'thumb') }}" alt="{{ $author }}"
+                             loading="lazy" decoding="async"
                              style="width:44px;height:44px;border-radius:50%;object-fit:cover;flex:none;" />
                     @else
                         <span style="width:44px;height:44px;border-radius:50%;background:var(--ink-100);display:grid;place-items:center;flex:none;">
@@ -93,7 +95,7 @@
     {{-- ========== 2. COVER IMAGE ========== --}}
     @if ($coverImg)
         <div class="d-container" style="padding-block:36px;max-width:1240px;">
-            <x-image-frame ratio="21 / 9" radius="var(--radius-xl)" :src="$coverImg" :alt="$title" />
+            <x-image-frame ratio="21 / 9" radius="var(--radius-xl)" :media="$coverMedia" sizes="(max-width: 78rem) 100vw, 1240px" :alt="$title" />
         </div>
     @endif
 
@@ -117,7 +119,7 @@
             @if ($post->products->isNotEmpty())
                 <div style="border:1px solid var(--border-1);border-radius:var(--radius-lg);overflow:hidden;">
                     @php $firstProd = $post->products->first(); @endphp
-                    <x-image-frame ratio="4 / 3" :src="$firstProd?->getFirstMediaUrl('gallery') ?: null"
+                    <x-image-frame ratio="4 / 3" :media="$firstProd?->getFirstMedia('gallery')" sizes="260px"
                                    :alt="$firstProd?->getTranslation('name', $locale) ?? ''" />
                     <div style="padding:16px;display:grid;gap:10px;">
                         <b style="font:600 17px/1.3 var(--font-display);">{{ __('ui.shop_products_article') }}</b>
@@ -150,7 +152,7 @@
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;" class="d-blog-grid">
                     @foreach ($related as $i => $rel)
                         @php
-                            $relImg  = $rel->getFirstMediaUrl('cover');
+                            $relImg  = $rel->getFirstMedia('cover');
                             $relSlug = $rel->getTranslation('slug', $locale);
                             $relCat  = $rel->category?->getTranslation('name', $locale);
                             $relDate = $rel->published_at?->translatedFormat('j M Y');
@@ -160,7 +162,8 @@
                                 <a href="{{ route('blog.show', [$locale, $relSlug]) }}"
                                    class="d-card__link" aria-label="{{ $rel->getTranslation('title', $locale) }}"></a>
                                 <x-image-frame class="d-acard__media" ratio="4 / 3"
-                                               :src="$relImg ?: null"
+                                               :media="$relImg"
+                                               sizes="(max-width: 48rem) 100vw, 33vw"
                                                :alt="$rel->getTranslation('title', $locale)" />
                                 @if ($relCat)
                                     <span class="d-acard__tag">

@@ -9,7 +9,8 @@
     $processItems = $sec('process')?->field('items', $locale) ?? [];
 
     $heroImg    = $service->getFirstMediaUrl('image');
-    $galleryImg = $service->getMedia('gallery')->map(fn ($m) => $m->getUrl())->values();
+    $heroMedia  = $service->getFirstMedia('image');
+    $galleryImg = $service->getMedia('gallery')->values();
 
     $serviceItems = $service->items;
 
@@ -49,7 +50,7 @@
                 </div>
                 @if ($heroImg)
                     <div class="d-rv" style="--rv-d:80ms;">
-                        <x-image-frame ratio="4 / 3" radius="var(--radius-xl)" :src="$heroImg" :alt="$service->getTranslation('title', $locale)" />
+                        <x-image-frame ratio="4 / 3" radius="var(--radius-xl)" :media="$heroMedia" sizes="(max-width: 60rem) 100vw, 560px" :alt="$service->getTranslation('title', $locale)" />
                     </div>
                 @endif
             </div>
@@ -81,10 +82,10 @@
                     </div>
                     @if ($galleryImg->isNotEmpty())
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                            <x-image-frame ratio="3 / 4" radius="var(--radius-lg)" :src="$galleryImg->get(0)" />
+                            <x-image-frame ratio="3 / 4" radius="var(--radius-lg)" :media="$galleryImg->get(0)" sizes="(max-width: 60rem) 50vw, 280px" />
                             <div style="display:grid;gap:12px;">
-                                <x-image-frame ratio="4 / 3" radius="var(--radius-lg)" :src="$galleryImg->get(1)" />
-                                <x-image-frame ratio="4 / 3" radius="var(--radius-lg)" :src="$galleryImg->get(2)" />
+                                <x-image-frame ratio="4 / 3" radius="var(--radius-lg)" :media="$galleryImg->get(1)" sizes="(max-width: 60rem) 50vw, 280px" />
+                                <x-image-frame ratio="4 / 3" radius="var(--radius-lg)" :media="$galleryImg->get(2)" sizes="(max-width: 60rem) 50vw, 280px" />
                             </div>
                         </div>
                     @endif

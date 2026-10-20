@@ -11,6 +11,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ContentPageController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\NewsletterController;
 use App\Http\Controllers\OrderConfirmationController;
 use App\Http\Controllers\PaymobReturnController;
 use App\Http\Controllers\PaymobWebhookController;
@@ -73,6 +74,7 @@ Route::prefix('{locale}')
         Route::get('/', HomeController::class)->name('home');
 
         Route::get('/wa/{source}', [WhatsAppController::class, 'redirect'])
+            ->middleware('throttle:30,1')
             ->name('wa.redirect');
 
         // Customer accounts (Phase 8). Guest-only auth screens on the customer
@@ -125,8 +127,9 @@ Route::prefix('{locale}')
         Route::get('/c/{category}', CategoryController::class)->name('category');
         Route::get('/p/{page}', ContentPageController::class)->name('page');
 
-        // Newsletter subscribe — real handler + dedupe lands in T5.7.
-        Route::get('/newsletter/subscribe', $comingSoon)->name('newsletter.subscribe');
+        Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])
+            ->middleware('throttle:10,1')
+            ->name('newsletter.subscribe');
 
         // Design styleguide + component kitchen sink — never in production.
         if (! app()->isProduction()) {

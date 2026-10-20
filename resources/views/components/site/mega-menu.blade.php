@@ -6,7 +6,7 @@
 
     $roots = app(Navigation::class)->megaTree();
     $promo = PageSection::where('page', 'global')->where('key', 'mega_promo')->first();
-    $promoImg = $promo?->getFirstMediaUrl('section') ?: null;
+    $promoImg = $promo?->getFirstMedia('section');
     $catUrl = fn ($cat) => route('category', ['category' => $cat->getTranslation('slug', $locale)]);
 @endphp
 @if ($roots->isNotEmpty())
@@ -42,7 +42,7 @@
                 </div>
             @endforeach
             <div class="d-mega__promo">
-                <x-image-frame ratio="4 / 3" radius="var(--radius-md)" :src="$promoImg" />
+                <x-image-frame ratio="4 / 3" radius="var(--radius-md)" :media="$promoImg" sizes="280px" />
                 @if ($promo)
                     <div style="font:600 18px/1.3 var(--font-display);">{{ $promo->field('title', $locale) }}</div>
                     <x-button variant="dark" size="sm" iconEnd="arrow-right" :href="url($locale.($promo->field('button_link') ?: '/services'))">{{ $promo->field('button_label', $locale) }}</x-button>

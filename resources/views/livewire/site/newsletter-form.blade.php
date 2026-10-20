@@ -5,7 +5,9 @@
                 <x-icon name="check" :size="24" style="color:var(--green-600,#16a34a);" />
             </span>
             <h3 class="t-h3" style="margin:0;">{{ __('ui.subscribed') }}</h3>
-            <p class="t-body" style="margin:0;color:var(--fg-2);">{{ __('ui.newsletter_subscribed_lead') }}</p>
+            <p class="t-body" style="margin:0;color:var(--fg-2);">
+                {{ $alreadySubscribed ? __('ui.newsletter_already_subscribed') : __('ui.newsletter_subscribed_lead') }}
+            </p>
         </div>
     @else
         <form wire:submit="subscribe" novalidate style="display:flex;gap:8px;flex-wrap:wrap;">
@@ -20,7 +22,7 @@
                     class="d-input{{ $errors->has('email') ? ' d-input--error' : '' }}"
                     type="email"
                     wire:model="email"
-                    placeholder="name@example.com"
+                    placeholder="{{ $placeholder ?: 'name@example.com' }}"
                     dir="ltr"
                     aria-label="{{ __('ui.email') }}"
                     style="height:52px;width:100%;"

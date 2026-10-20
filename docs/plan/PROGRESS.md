@@ -1,24 +1,29 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.3 manual-review fixes (F1, F2, F3) — **DONE.** Next: write `docs/plan/reports/phase-8.md` (end-of-phase report), commit it, then STOP for owner review.
-- **Last commit:** `2a1db85` fix(phase-8): F3 logout design.
-- **Gate result:** 565 tests (563 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What the T8.3 fix commits added:**
-  - **F1** (`0ade3fd`): Removed `Reorder` feature entirely — `reorder()` method + button + lang keys (`account.order.reorder`, `account.order.reordered` ar+en) + feature test. Updated `save_order.body` copy to drop "reorder" reference.
-  - **F2** (`6424ed2`): `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced in `Addresses::create()` (throws `_limit` ValidationException), `Addresses::save()` (belt-and-suspenders guard), `CheckoutForm::persistAddress()` (silently skips at limit). View: hides add button and shows limit hint card when at limit. Added `account.addresses.limit_reached` / `limit_reached_short` lang keys (ar+en). Feature tests: 4th address succeeds, 5th blocked at drawer-open, slot freed by delete.
-  - **F3** (`2a1db85`): Account side nav (`shell.blade.php`): `<form>` wrapper gets `display:contents` so logout button is a direct grid child matching `<a>` siblings. Compact/mobile menu (`header.blade.php`): same `display:contents` + added `<x-icon name="chevron-right">` after text so `.d-mega__cat .d-icon:last-child` rule targets the chevron (trailing side) not the log-out icon, matching all other rows in AR + LTR.
-- **Open issues:** F4 (email verification) — see Decisions log below.
-- **What to review on dots.test:**
-  1. **F1 — Reorder gone:** open any order detail (`/ar/account/orders/…`) → no "إعادة الطلب" button. Check EN too.
-  2. **F2 — Address limit:** log in, go to `/ar/account/addresses`. Add addresses one by one. 4th add should succeed. After 4 exist: "إضافة عنوان" button disappears, a "وصلت إلى الحد الأقصى من 4 عناوين" hint appears in place of the "+" card. Delete one → add button and "+" card come back.
-  3. **F3 — Logout row design:** open account dropdown (desktop, top-right) → logout row must match the other rows (icon on leading side, same height/font, separator above). Open mobile/compact menu → logout row must have log-out icon on leading side and chevron on trailing side matching all other rows. Verify in AR (RTL) and EN (LTR).
-  4. No 403/500/JS errors on any of the above.
+- **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
+- **Current task:** Newsletter subscribe wire-up (post-T9.4 gap fix) — **DONE** (pending owner review). Next task: T9.5 (see phase-09 file).
+- **Last commit:** `fe8fdab` (Newsletter subscribe: wire up POST route, dedupe, throttle, lang strings).
+- **Gate result:** 596 tests (594 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T9.4 changed:**
+  - New `App\Http\Middleware\SecurityHeaders` appended to the `web` group (in `bootstrap/app.php`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Permitted-Cross-Domain-Policies: none`, `Permissions-Policy` (camera/mic/geolocation/browsing-topics off), `Content-Security-Policy: frame-ancestors 'self'`, and `Strict-Transport-Security` (1y, includeSubDomains) **only over HTTPS**. Strict script-CSP intentionally omitted — would break Livewire/Alpine (see Decisions).
+  - Rate limits added to the remaining public write forms (pattern matches existing Newsletter/Consultation `RateLimiter` usage): Register (5/10min/IP), ResetPassword (5/10min/IP, on top of the broker's own throttle), TrackOrder lookup (10/min/IP — number+mobile is the only auth), CheckoutForm place (10/10min/IP). WhatsApp redirect route now also has `throttle:30,1`. (Login admin+customer already used `LoginThrottle`; WhatsApp redirect was already signed; rich text already sanitised via `App\Support\Html`; Paymob webhook already CSRF-exempt + HMAC.)
+  - Error pages in the design style: self-contained `components/layouts/error.blade.php` (no header/footer/DB so it survives 500/503; styled with site.css tokens) + `resources/views/errors/{403,404,419,429,500,503}.blade.php`, strings in `lang/{ar,en}/errors.php`.
+  - `.env.example` logging: `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` + comment to raise `LOG_LEVEL=warning` in production.
+  - New test `tests/Feature/SecurityTest.php` (5 tests): headers present, HSTS HTTPS-only, and rate limits on register / track-order / reset-password.
+  - **Newsletter throttle gap (post-T9.4 fix `fe8fdab`):** `NewsletterController::subscribe` (POST /newsletter/subscribe, `throttle:10,1`) wires up the footer form; deduplicates via `firstOrCreate`/`wasRecentlyCreated`; redirects back with `toast_success`/`toast_info` flash rendered in the app layout. AR/EN `newsletter_already_subscribed` strings added. Livewire `NewsletterForm` updated for already-subscribed distinction. 4 new tests in `NewsletterSubscribeTest`.
+- **Open issues:** none. Newsletter throttle gap closed. (Carry-over: F4 email verification — see Decisions log.)
+- **How to verify on dots.test:**
+  - Any page → DevTools → Network → response headers show `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy`, `Permissions-Policy`.
+  - Visit a bad URL e.g. `/ar/does-not-exist` → styled 404 page (DOTS eyebrow, big code, "Back to home" button), RTL in AR.
+  - Submit the Track-Order form (`/ar/track-order`) >10× quickly → "Too many submissions" error.
+  - Book a consultation / register repeatedly → throttled after the cap.
+  - Footer newsletter form: enter a valid email → redirects back with green "You're subscribed!" toast. Enter the same email again → info toast "You're already on the list". Submit 11× rapidly → 429 error page.
+  - No 403/500/JS errors on normal browsing, add-to-cart, checkout.
 
-**Git:** branch `phase-8` · last commit `2a1db85` · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `fe8fdab` (newsletter wire-up) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manual-review fixes done. Next: end-of-phase report.
+Current phase: **9 — Performance and operations.** T9.1–T9.4 done + newsletter gap fixed (pending review). Next: T9.5 (see phase-09 file).
 
 ---
 
@@ -99,10 +104,11 @@ Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manua
 - [x] T8.5 Admin: customers
 
 ## Phase 9 — Performance and operations  (`phase-09-performance-ops.md`)
-- [ ] T9.1 Query and cache review
-- [ ] T9.2 Images
-- [ ] T9.3 Backups and scheduler
-- [ ] T9.4 Security and errors
+- [x] T9.1 Query and cache review
+      → report below ("T9.1 — Query and cache review report")
+- [x] T9.2 Images
+- [x] T9.3 Backups and scheduler
+- [x] T9.4 Security and errors
 
 ## Phase 10 — QA and deployment  (`phase-10-qa-deploy.md`)
 - [ ] T10.1 Content coverage report
@@ -117,7 +123,49 @@ Legend: [ ] todo · [x] done
 
 ---
 
+## T9.1 — Query and cache review report
+
+**Dataset:** `LargeCatalogSeeder` on `dots_testing` → 10,012 active products · 10,020 variants · 20,034 variant-values · 65 categories · 8 brands. MySQL 9.6 (tree-format `EXPLAIN`). Dev `dots` DB was left untouched (DB-safety rule); all EXPLAIN work ran on the throwaway test DB. Timings are best-of-3 of the raw SQL (no eager-load / Blade overhead); treat as relative, not absolute.
+
+**Findings — every query already uses an index; no full table scan on `products`.** The one recurring cost was a **filesort over the full active set (~5006 est. rows)** on the uncached listing sorts, which run on every listing page view that has no/weak filters. Filtered variants (category / brand / price) were already fast because the FK / `min_price` indexes shrink the set before the sort.
+
+**Change made (ERD index addition — flagged for owner review):** migration `2026_10_20_000001_add_listing_sort_indexes_to_products_table` adds two composite indexes (raw `ALTER`, DESC columns, MySQL-only like the FULLTEXT one), and `docs/ERD.md` products Indexes line updated:
+- `products_recommended_sort_index (status, sort_weight DESC, is_best_seller DESC, id)` — the "recommended" default sort.
+- `products_published_sort_index (status, published_at DESC, id DESC)` — the "newest" sort.
+
+**Before → after (best-of-3 ms):**
+
+| Query | Before | After | Note |
+|---|---|---|---|
+| Listing, recommended sort, LIMIT 12 | 15.0 | **0.2** | filesort eliminated → index lookup |
+| Listing, newest sort, LIMIT 12 | 10.6 | **0.2** | filesort eliminated |
+| Listing, inStock + recommended sort | 9.8 | **0.2** | sort served by new index, stock filtered on top |
+| Listing, category scope + sort | 0.4 | 0.4 | already fast (FK index) |
+| Listing, brand filter + sort | 1.7 | 1.7 | already fast (FK index) |
+| Listing, price range + sort | 0.7 | 0.7 | already fast (`min_price` range scan) |
+| FACET brand counts (group by brand_id) | 6.7 | 6.7 | aggregate, covered by `(status,category_id)` |
+| FACET category counts (group by category_id) | 1.5 | 1.5 | covering index on `(status,category_id)` |
+| FACET attr counts (pvv⋈pv⋈products) | 18.4 | 18.4 | see rejected index below |
+| SEARCH fulltext MATCH…AGAINST + sort | 32.5 | 32.5 | FULLTEXT index used; `Perf*` matches all 10k (worst case) |
+| CATEGORY page count in scope | 1.7 | 1.7 | FK index |
+| BRAND page products + sort LIMIT 8 | 0.5 | 0.5 | already fast |
+| HOME is_new/best/smart + sort LIMIT 4 | ~8.6 | ~8.6 | worst case: seeder flags none, so it scans the whole sort_weight index finding 0; in prod a handful are flagged near the top → fast. Not worth a per-flag index. |
+
+**Rejected index:** `product_variants (product_id, is_active)` for the attr-facet join — EXPLAIN switched the `pv` table scan to a covering index scan but timing was unchanged (18.4 → 19.1 ms), because the facet inherently needs every active product's variants. Not added (pure write-cost). Attr facets are cached 120 s anyway.
+
+**Cache tags & invalidation:** tags are centralised in `App\Support\CacheTags` (categories · brands · facets · listings · sections · settings) with a driver-safe tagged `remember()` / `flush()` (redis in prod, DB fallback flushes whole store). Facets cached 120 s keyed by locale+filter-hash; category tree / per-category children/total/brands cached 3600 s; invalidated by model observers. No invalidation gaps found for this task's scope.
+
+**N+1:** `Model::shouldBeStrict()` is on outside production (`AppServiceProvider`), so any lazy load throws in dev/tests. Listing / home / category / brand queries all eager-load (`media`, `brand`, `variants.swatchAttributeValues`). Full suite passes under strict mode — no N+1.
+
+**Gate:** 565 tests (563 passed / 2 skipped) · PHPStan 0 · Pint clean · build OK.
+
+---
+
 ## Decisions log
+- **2026-10-20 — Newsletter kept and wired (post-T9.4 gap fix):** Newsletter kept and wired — free (own DB, no auto emails per Q8 decision); email list is a marketing asset. `newsletter.subscribe` changed from GET placeholder to POST `NewsletterController::subscribe` with `throttle:10,1`. Footer form updated to POST + @csrf. Duplicates handled gracefully via `firstOrCreate`/`wasRecentlyCreated` — no 500 or validation error for re-subscriptions.
+- **2026-10-20 — No strict script-CSP (T9.4):** Technical choice. `SecurityHeaders` ships a Content-Security-Policy limited to `frame-ancestors 'self'` (anti-clickjacking) and leaves script/style sources unrestricted. A strict `script-src` would require `'unsafe-inline'` + `'unsafe-eval'` to keep Livewire and Alpine (and the inline no-FOUC `<script>` in `app.blade.php`) working, which defeats the purpose. Clickjacking, MIME-sniffing, referrer leakage and feature-policy are covered by the other headers; HSTS is sent over HTTPS only. Revisit if the front-end moves off inline Alpine.
+- **2026-10-20 — Muted text color darkened (T9.2 Lighthouse fix):** Design deviation. `--ink-500` was `#75756E` (WCAG 4.74:1 on white but only 4.33:1 on the site's soft-gray `--ink-50` = `#F7F7F5` surface used by `.d-phead` and `.d-footer`). Darkened to `#6F6F68` which gives 4.72:1 on `#F7F7F5` (≥ AA 4.5:1). The change is minimal — 6 steps darker in lightness. Affects all uses of `--fg-3` / `--ink-500` across the site (phead counts, footer bottom strip, form placeholders, sku, muted metadata). Previous value is documented here for reference.
+- **2026-10-20 — Image driver = Imagick (T9.2):** Technical choice. Responsive WebP conversions on the full DemoSeeder exhausted PHP's 128 MB `memory_limit` under the GD driver (`imagewebp` on large truecolor bitmaps). Switched media-library's `image_driver` to **imagick** via `IMAGE_DRIVER=imagick` (`.env`, `.env.example`, `phpunit.xml`) — Imagick holds pixel buffers in its own C allocations, outside `memory_limit`, and gives better WebP. Requires the `imagick` PHP extension in every environment (prod must have it; falls back to `gd` if the env var is unset). Also: tests route conversion jobs to a non-running connection by default so the suite doesn't re-encode every seeded image (TestCase sets `media-library.queue_connection_name => database`; opt back into `sync` per-test when a real conversion file is needed).
 - **2026-10-20 — Reorder dropped (T8.3 manual review):** Owner decision. The Reorder feature (add past order's items back to cart) was removed entirely — too complex to do well (variant availability, price staleness, partial availability), and not required by the PRD. Removed from `OrderDetail`, lang files, and tests. The phase-8.md plan document mentioned it; the report notes it as dropped.
 - **2026-10-20 — Max saved addresses = 4 (T8.3 manual review):** Owner decision. `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced server-side in `Addresses::create/save` and silently in `CheckoutForm::persistAddress`. View hides the add button and shows a hint at the limit.
 - **2026-10-07 — Versions:** do not assume from memory. At install time (Phase 1) use the latest stable majors `composer`/`npm` resolve for Laravel, Livewire, Pest and Vite, provided all required Spatie packages (translatable, medialibrary, permission, backup, sitemap) support them. Record the exact resolved versions here once installed. Local toolchain: PHP 8.4.23, Composer 2.10, Node 22, npm 10.

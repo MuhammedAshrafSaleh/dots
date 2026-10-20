@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\PostStatus;
+use App\Models\Concerns\HasImageConversions;
 use App\Models\Concerns\HasTranslatableSlug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Carbon;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -19,6 +21,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Post extends Model implements HasMedia
 {
+    use HasImageConversions;
     use HasTranslatableSlug;
     use HasTranslations;
     use InteractsWithMedia;
@@ -44,6 +47,17 @@ class Post extends Model implements HasMedia
     {
         $this->addMediaCollection('cover')->singleFile();
         $this->addMediaCollection('author')->singleFile();
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->registerResponsiveImageConversions();
+    }
+
+    /** @return array<int, string> */
+    public function imageConversionCollections(): array
+    {
+        return ['cover', 'author'];
     }
 
     /** @return BelongsTo<PostCategory, $this> */

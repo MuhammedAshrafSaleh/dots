@@ -7,7 +7,7 @@
 @endphp
 <div class="d-lang" role="group" aria-label="{{ __('ui.language') }}">
     <a lang="en" href="{{ Locale::switchUrl('en') }}" hreflang="en"
-        @if ($current === 'en') aria-current="true" @endif aria-pressed="{{ $current === 'en' ? 'true' : 'false' }}">EN</a>
+        @if ($current === 'en') aria-current="true" @endif>EN</a>
     <a lang="ar" href="{{ Locale::switchUrl('ar') }}" hreflang="ar-EG"
-        @if ($current === 'ar') aria-current="true" @endif aria-pressed="{{ $current === 'ar' ? 'true' : 'false' }}">عربي</a>
+        @if ($current === 'ar') aria-current="true" @endif>عربي</a>
 </div>

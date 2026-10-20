@@ -15,6 +15,8 @@ class NewsletterForm extends Component
     #[Locked]
     public string $source = 'blog';
 
+    public string $placeholder = '';
+
     public string $email = '';
 
     /** Honeypot — invisible to humans; bots fill it. */
@@ -22,11 +24,13 @@ class NewsletterForm extends Component
 
     public bool $submitted = false;
 
+    public bool $alreadySubscribed = false;
+
     /** @return array<string, array<int, string>> */
     protected function rules(): array
     {
         return [
-            'email' => ['required', 'email', 'max:255'],
+            'email' => ['required', 'email', 'max:255', 'regex:/^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/'],
         ];
     }
 
@@ -47,7 +51,7 @@ class NewsletterForm extends Component
 
         $this->validate();
 
-        NewsletterSubscriber::firstOrCreate(
+        $subscriber = NewsletterSubscriber::firstOrCreate(
             ['email' => strtolower(trim($this->email))],
             [
                 'source' => NewsletterSource::from($this->source),
@@ -58,6 +62,7 @@ class NewsletterForm extends Component
 
         RateLimiter::hit($key, 600);
 
+        $this->alreadySubscribed = ! $subscriber->wasRecentlyCreated;
         $this->submitted = true;
     }
 
