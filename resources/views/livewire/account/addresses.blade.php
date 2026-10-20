@@ -1,5 +1,6 @@
 @php
     use App\Enums\AddressLabel;
+    use App\Models\CustomerAddress;
 
     /** @var \Illuminate\Support\Collection<int, \App\Models\CustomerAddress> $addresses */
     /** @var \Illuminate\Support\Collection<int, \App\Models\Governorate> $governorates */
@@ -8,13 +9,14 @@
     /** @var string $locale */
 
     $govOptions = $governorates->map(fn ($g) => ['value' => $g->id, 'label' => $g->name])->all();
+    $atLimit = $addresses->count() >= CustomerAddress::MAX_PER_CUSTOMER;
 @endphp
 
 <div>
     <x-site.account.shell current="addresses" :counts="$counts">
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
             <h1 class="t-h2" style="margin:0;">{{ __('account.nav.addresses') }}</h1>
-            @if ($addresses->isNotEmpty())
+            @if ($addresses->isNotEmpty() && ! $atLimit)
                 <button type="button" wire:click="create" class="d-btn d-btn--dark"><x-icon name="plus" size="18" />{{ __('account.addresses.add') }}</button>
             @endif
         </div>
@@ -61,9 +63,16 @@
                         </div>
                     </article>
                 @endforeach
-                <button type="button" wire:click="create" class="d-account__addr-add">
-                    <span class="d-nav__mi-ico"><x-icon name="plus" size="20" /></span>{{ __('account.addresses.add_new') }}
-                </button>
+                @if ($atLimit)
+                    <div class="d-account__addr-add d-account__addr-add--limit" style="cursor:default;">
+                        <span class="d-nav__mi-ico" style="background:var(--ink-50);"><x-icon name="map-pin-off" size="20" /></span>
+                        <span style="font:600 13px/1.4 var(--font-body);color:var(--fg-2);">{{ __('account.addresses.limit_reached_short', ['max' => CustomerAddress::MAX_PER_CUSTOMER]) }}</span>
+                    </div>
+                @else
+                    <button type="button" wire:click="create" class="d-account__addr-add">
+                        <span class="d-nav__mi-ico"><x-icon name="plus" size="20" /></span>{{ __('account.addresses.add_new') }}
+                    </button>
+                @endif
             </div>
         @else
             <div class="d-account__empty">

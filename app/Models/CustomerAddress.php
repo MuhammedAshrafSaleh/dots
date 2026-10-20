@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class CustomerAddress extends Model
 {
+    public const int MAX_PER_CUSTOMER = 4;
+
     protected $guarded = ['id'];
 
     protected function casts(): array
