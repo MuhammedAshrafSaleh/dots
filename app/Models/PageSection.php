@@ -2,9 +2,11 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasImageConversions;
 use Illuminate\Database\Eloquent\Model;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 /**
  * An editable content block. Its `content` JSON follows the fixed schema in
@@ -19,6 +21,7 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  */
 class PageSection extends Model implements HasMedia
 {
+    use HasImageConversions;
     use InteractsWithMedia;
 
     /** Scalar field types whose stored value is a translatable {ar, en} map. */
@@ -41,6 +44,17 @@ class PageSection extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
         $this->addMediaCollection('section');
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->registerResponsiveImageConversions();
+    }
+
+    /** @return array<int, string> */
+    public function imageConversionCollections(): array
+    {
+        return ['section'];
     }
 
     public function schemaKey(): string

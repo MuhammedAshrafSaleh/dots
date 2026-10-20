@@ -4,30 +4,31 @@
     /** @var \Illuminate\Support\Collection<string,PageSection> $sections */
     $sec   = fn (string $key): ?PageSection => $sections->get($key);
     $field = fn (string $key, string $f): string => $sec($key)?->field($f, $locale) ?? '';
-    $media = fn (string $key, string $f): ?string => $sec($key)?->getMedia('section')
-        ->first(fn ($m) => $m->getCustomProperty('field') === $f)?->getUrl();
+    $mediaObj = fn (string $key, string $f): ?\Spatie\MediaLibrary\MediaCollections\Models\Media => $sec($key)?->getMedia('section')
+        ->first(fn ($m) => $m->getCustomProperty('field') === $f);
+    $media = fn (string $key, string $f): ?string => $mediaObj($key, $f)?->getUrl();
 
     $heroImg   = $media('hero', 'image');
+    $heroMedia = $mediaObj('hero', 'image');
     $heroVid   = $media('hero', 'video');
 
     $storyImgs = $sec('story')?->getMedia('section')
         ->filter(fn ($m) => $m->getCustomProperty('field') === 'images')
-        ->map(fn ($m) => $m->getUrl())
         ->values()
         ->all() ?? [];
 
     $statsItems = $sec('stats')?->content['items'] ?? [];
 
-    $mvMissionImg = $media('mission_vision', 'mission_image');
-    $mvVisionImg  = $media('mission_vision', 'vision_image');
+    $mvMissionImg = $mediaObj('mission_vision', 'mission_image');
+    $mvVisionImg  = $mediaObj('mission_vision', 'vision_image');
 
     $discItems = $sec('disciplines')?->field('items', $locale) ?? [];
     // Media for each discipline card is stored as item_image_0/1/2
-    $discImgs  = array_map(fn ($i) => $media('disciplines', 'item_image_'.$i), [0, 1, 2]);
+    $discImgs  = array_map(fn ($i) => $mediaObj('disciplines', 'item_image_'.$i), [0, 1, 2]);
 
     $whyItems = $sec('why')?->field('items', $locale) ?? [];
 
-    $ctaBg = $media('cta', 'background_image');
+    $ctaBg = $mediaObj('cta', 'background_image');
 @endphp
 <x-layouts.app :title="$field('hero', 'title') ?: __('ui.about')">
 <x-seo :title="$field('hero', 'title') ?: __('ui.about')" :description="$field('hero', 'lede')" />
@@ -37,6 +38,8 @@
         <div class="d-hi__media">
             <x-image-frame
                 :src="$heroImg"
+                :media="$heroMedia"
+                sizes="100vw"
                 :video="$heroVid"
                 :label="$field('hero', 'title')"
                 style="position:absolute;inset:0;"
@@ -114,14 +117,14 @@
                     @if ($storyImgs)
                         <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:12px;">
                             <div class="d-rv">
-                                <x-image-frame ratio="3 / 4" radius="var(--radius-lg)" :src="$storyImgs[0] ?? null" :alt="$field('story', 'title')" />
+                                <x-image-frame ratio="3 / 4" radius="var(--radius-lg)" :media="$storyImgs[0] ?? null" sizes="(max-width: 60rem) 50vw, 320px" :alt="$field('story', 'title')" />
                             </div>
                             <div style="display:grid;gap:12px;align-content:end;">
                                 <div class="d-rv" style="--rv-d:80ms;">
-                                    <x-image-frame ratio="1 / 1" radius="var(--radius-lg)" :src="$storyImgs[1] ?? null" />
+                                    <x-image-frame ratio="1 / 1" radius="var(--radius-lg)" :media="$storyImgs[1] ?? null" sizes="(max-width: 60rem) 50vw, 320px" />
                                 </div>
                                 <div class="d-rv" style="--rv-d:160ms;">
-                                    <x-image-frame ratio="4 / 3" radius="var(--radius-lg)" :src="$storyImgs[2] ?? null" />
+                                    <x-image-frame ratio="4 / 3" radius="var(--radius-lg)" :media="$storyImgs[2] ?? null" sizes="(max-width: 60rem) 50vw, 320px" />
                                 </div>
                             </div>
                         </div>
@@ -172,7 +175,7 @@
                     @if ($field('mission_vision', 'mission_text'))
                         <div class="d-rv" style="background:var(--white);border:1px solid var(--border-1);border-radius:var(--radius-xl);overflow:hidden;">
                             @if ($mvMissionImg)
-                                <x-image-frame :src="$mvMissionImg" ratio="16 / 9" />
+                                <x-image-frame :media="$mvMissionImg" sizes="(max-width: 60rem) 100vw, 50vw" ratio="16 / 9" />
                             @endif
                             <div style="padding:32px;display:grid;gap:14px;">
                                 <span style="width:48px;height:48px;border-radius:50%;background:var(--yellow-100);display:grid;place-items:center;">
@@ -187,7 +190,7 @@
                     @if ($field('mission_vision', 'vision_text'))
                         <div class="d-rv" style="--rv-d:80ms;background:var(--white);border:1px solid var(--border-1);border-radius:var(--radius-xl);overflow:hidden;">
                             @if ($mvVisionImg)
-                                <x-image-frame :src="$mvVisionImg" ratio="16 / 9" />
+                                <x-image-frame :media="$mvVisionImg" sizes="(max-width: 60rem) 100vw, 50vw" ratio="16 / 9" />
                             @endif
                             <div style="padding:32px;display:grid;gap:14px;">
                                 <span style="width:48px;height:48px;border-radius:50%;background:var(--yellow-100);display:grid;place-items:center;">
@@ -228,7 +231,7 @@
                                     <a href="{{ $item['link'] }}" class="d-card__link" aria-label="{{ $item['title'] ?? '' }}"></a>
                                 @endif
                                 <div class="d-prcard__media">
-                                    <x-image-frame :src="$discImgs[$i] ?? null" style="position:absolute;inset:0;height:100%;" />
+                                    <x-image-frame :media="$discImgs[$i] ?? null" sizes="(max-width: 48rem) 100vw, 33vw" style="position:absolute;inset:0;height:100%;" />
                                 </div>
                                 <div class="d-card__body" style="padding:28px;gap:12px;">
                                     @if ($item['icon'] ?? null)
@@ -309,11 +312,14 @@
                         <div class="d-rv" style="--rv-d:{{ ($i % 4) * 60 }}ms;">
                             <a href="{{ route('brands') }}" class="d-card d-bcard">
                                 <div class="d-bcard__logo">
-                                    @if ($brand->getFirstMediaUrl('logo'))
+                                    @php $logoMedia = $brand->getFirstMedia('logo'); @endphp
+                                    @if ($logoMedia)
                                         <img
-                                            src="{{ $brand->getFirstMediaUrl('logo') }}"
+                                            src="{{ \App\Support\ResponsiveImage::fallbackUrl($logoMedia) }}"
+                                            @if ($logoSrcset = \App\Support\ResponsiveImage::srcset($logoMedia)) srcset="{{ $logoSrcset }}" sizes="160px" @endif
                                             alt="{{ $brand->name }}"
                                             loading="lazy"
+                                            decoding="async"
                                             style="max-height:80px;max-width:100%;object-fit:contain;"
                                         >
                                     @else
@@ -345,7 +351,7 @@
     @if ($field('cta', 'title'))
         <section style="position:relative;overflow:hidden;">
             @if ($ctaBg)
-                <x-image-frame :src="$ctaBg" style="position:absolute;inset:0;" />
+                <x-image-frame :media="$ctaBg" sizes="100vw" style="position:absolute;inset:0;" />
             @endif
             <div style="position:absolute;inset:0;background:rgba(24,24,22,.72);"></div>
             <div class="d-about-cta d-container" style="position:relative;padding-block:104px;display:grid;gap:20px;justify-items:center;text-align:center;color:#fff;">

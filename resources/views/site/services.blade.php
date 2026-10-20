@@ -52,13 +52,13 @@
                 <div class="d-rv d-services-grid" style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;">
                     @foreach ($services as $i => $service)
                         @php
-                            $imgUrl = $service->getFirstMediaUrl('image');
+                            $imgMedia = $service->getFirstMedia('image');
                             $slug   = $service->getTranslation('slug', $locale);
                         @endphp
                         <div class="d-rv" style="--rv-d:{{ ($i % 2) * 80 }}ms;">
                             <a href="{{ route('service.show', [$locale, $slug]) }}" class="d-card">
                                 <div class="d-scard__media">
-                                    <x-image-frame ratio="4 / 3" :src="$imgUrl ?: null" :alt="$service->getTranslation('title', $locale)" />
+                                    <x-image-frame ratio="4 / 3" :media="$imgMedia" sizes="(max-width: 48rem) 100vw, 50vw" :alt="$service->getTranslation('title', $locale)" />
                                 </div>
                                 <div class="d-scard__body">
                                     <span class="d-scard__num">{{ $service->number }}</span>

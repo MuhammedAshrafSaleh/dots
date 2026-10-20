@@ -27,6 +27,7 @@
 /storage/app/purifier
 /storage/app/public/*
 /storage/app/private/
+/storage/media-library
 
 # Tooling caches
 .phpunit.result.cache

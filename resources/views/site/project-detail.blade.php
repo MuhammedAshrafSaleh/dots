@@ -6,8 +6,9 @@
     /** @var bool $isCurrent */
     /** @var \Illuminate\Support\Collection $related */
 
+    $coverMedia  = $project->getFirstMedia('cover');
     $coverImg    = $project->getFirstMediaUrl('cover');
-    $galleryImgs = $project->getMedia('gallery')->map(fn ($m) => $m->getUrl())->values();
+    $galleryImgs = $project->getMedia('gallery')->values();
 
     $stages    = ProjectStage::cases();
     $stageIdx  = $project->stage?->index() ?? 0;
@@ -77,21 +78,21 @@
     </div>
 
     {{-- ========== 2. GALLERY ========== --}}
-    @if ($galleryImgs->isNotEmpty() || $coverImg)
+    @if ($galleryImgs->isNotEmpty() || $coverMedia)
         @php
-            $allImgs = $galleryImgs->isNotEmpty() ? $galleryImgs : collect([$coverImg]);
+            $allImgs = $galleryImgs->isNotEmpty() ? $galleryImgs : collect([$coverMedia])->filter();
         @endphp
         <div class="d-container" style="padding-bottom:28px;">
             @if ($allImgs->count() === 1)
-                <x-image-frame ratio="21 / 9" radius="var(--radius-xl)" :src="$allImgs->first()" :alt="$project->getTranslation('title', $locale)" />
+                <x-image-frame ratio="21 / 9" radius="var(--radius-xl)" :media="$allImgs->first()" sizes="(max-width: 72rem) 100vw, 1120px" :alt="$project->getTranslation('title', $locale)" />
             @else
                 <div class="d-project-gallery" style="display:grid;grid-template-columns:2fr 1fr;gap:8px;border-radius:var(--radius-xl);overflow:hidden;">
                     <div>
-                        <x-image-frame ratio="4 / 3" :src="$allImgs->get(0)" :alt="$project->getTranslation('title', $locale)" />
+                        <x-image-frame ratio="4 / 3" :media="$allImgs->get(0)" sizes="(max-width: 72rem) 66vw, 740px" :alt="$project->getTranslation('title', $locale)" />
                     </div>
                     <div style="display:grid;gap:8px;">
                         @foreach ($allImgs->skip(1)->take(2) as $img)
-                            <x-image-frame ratio="4 / 3" :src="$img" alt="" />
+                            <x-image-frame ratio="4 / 3" :media="$img" sizes="(max-width: 72rem) 33vw, 380px" alt="" />
                         @endforeach
                     </div>
                 </div>
@@ -270,14 +271,14 @@
                 <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;" class="d-related-grid">
                     @foreach ($related as $i => $rel)
                         @php
-                            $rImg  = $rel->getFirstMediaUrl('cover');
+                            $rImg  = $rel->getFirstMedia('cover');
                             $rSlug = $rel->getTranslation('slug', $locale);
                         @endphp
                         <div class="d-rv" style="--rv-d:{{ $i * 60 }}ms;">
                             <a href="{{ route('project.show', [$locale, $rSlug]) }}"
                                class="d-card d-card--linked" style="text-decoration:none;">
                                 <div class="d-prcard__media" style="position:relative;">
-                                    <x-image-frame ratio="4 / 3" :src="$rImg ?: null" :alt="$rel->getTranslation('title', $locale)" />
+                                    <x-image-frame ratio="4 / 3" :media="$rImg" sizes="(max-width: 48rem) 100vw, 33vw" :alt="$rel->getTranslation('title', $locale)" />
                                     <div class="d-prcard__badges">
                                         @if ($rel->status === \App\Enums\ProjectStatus::Current)
                                             <x-badge tone="accent" :dot="true">{{ __('ui.in_progress') }}</x-badge>

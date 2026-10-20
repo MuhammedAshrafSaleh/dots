@@ -8,7 +8,7 @@
     $variant = $item->productVariant;
     $product = $variant->product;
     $name = $product->getTranslation('name', $locale);
-    $img = $product->getFirstMediaUrl('gallery');
+    $img = $product->getFirstMedia('gallery');
     $lineTotal = round((float) $variant->price * $item->qty, 2);
     $variantLabel = $variant->attributeValues
         ->map(fn ($av) => $av->getTranslation('label', $locale))
@@ -17,7 +17,7 @@
 
 <div class="d-line" wire:key="line-{{ $item->id }}">
     <div class="d-line__img">
-        <x-image-frame :src="$img" :alt="$name" />
+        <x-image-frame :media="$img" sizes="80px" :alt="$name" />
     </div>
     <div>
         <div class="d-line__name">{{ $name }}</div>

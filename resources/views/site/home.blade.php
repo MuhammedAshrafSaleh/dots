@@ -4,14 +4,17 @@
     /** @var \Illuminate\Support\Collection<string,PageSection> $sections */
     $sec = fn (string $key): ?PageSection => $sections->get($key);
     $field = fn (string $key, string $f): string => $sec($key)?->field($f, $locale) ?? '';
-    $media = fn (string $key, string $f): ?string => $sec($key)?->getMedia('section')
-        ->first(fn ($m) => $m->getCustomProperty('field') === $f)?->getUrl();
+    $mediaObj = fn (string $key, string $f): ?\Spatie\MediaLibrary\MediaCollections\Models\Media => $sec($key)?->getMedia('section')
+        ->first(fn ($m) => $m->getCustomProperty('field') === $f);
+    $media = fn (string $key, string $f): ?string => $mediaObj($key, $f)?->getUrl();
 
     $heroVid    = $media('hero', 'video');
     $heroPoster = $media('hero', 'poster');
+    $heroPosterMedia = $mediaObj('hero', 'poster');
     $heroWords  = array_values(array_filter(explode(' ', $field('hero', 'headline'))));
 
     $smartImg = $media('smart_banner', 'image');
+    $smartImgMedia = $mediaObj('smart_banner', 'image');
 @endphp
 <x-layouts.app :title="$field('hero', 'headline') ?: 'DOTS'">
 <x-seo :title="$field('hero', 'headline')" :description="$field('hero', 'subhead')" :image="$heroPoster" />
@@ -27,6 +30,8 @@
         <div class="d-hi__media">
             <x-image-frame
                 :src="$heroPoster"
+                :media="$heroPosterMedia"
+                sizes="100vw"
                 :video="$heroVid"
                 :label="$field('hero', 'eyebrow')"
                 style="position:absolute;inset:0;"
@@ -147,8 +152,9 @@
                             <a href="{{ route('category', ['category' => $catSlug]) }}" class="d-card d-ccard">
                                 <div class="d-ccard__media">
                                     <x-image-frame
-                                        :src="$cat->getFirstMediaUrl('image')"
+                                        :media="$cat->getFirstMedia('image')"
                                         :alt="$cat->getTranslation('name', $locale)"
+                                        sizes="(max-width: 48rem) 50vw, 300px"
                                     />
                                 </div>
                                 <div class="d-ccard__body">
@@ -237,8 +243,9 @@
                             <a href="{{ route('services') }}" class="d-card d-scard">
                                 <div class="d-scard__media">
                                     <x-image-frame
-                                        :src="$service->getFirstMediaUrl('image')"
+                                        :media="$service->getFirstMedia('image')"
                                         :alt="$service->getTranslation('title', $locale)"
+                                        sizes="(max-width: 48rem) 100vw, 380px"
                                     />
                                 </div>
                                 <div class="d-scard__body">
@@ -292,6 +299,8 @@
                     <div class="d-smart__media">
                         <x-image-frame
                             :src="$smartImg"
+                            :media="$smartImgMedia"
+                            sizes="(max-width: 60rem) 100vw, 560px"
                             :label="$field('smart_banner', 'eyebrow')"
                             style="height:100%;"
                         />
@@ -324,11 +333,14 @@
                         <div class="d-rv" style="--rv-d:{{ ($i % 4) * 60 }}ms;">
                             <a href="{{ route('brands') }}" class="d-card d-bcard">
                                 <div class="d-bcard__logo">
-                                    @if ($brand->getFirstMediaUrl('logo'))
+                                    @php $logoMedia = $brand->getFirstMedia('logo'); @endphp
+                                    @if ($logoMedia)
                                         <img
-                                            src="{{ $brand->getFirstMediaUrl('logo') }}"
+                                            src="{{ \App\Support\ResponsiveImage::fallbackUrl($logoMedia) }}"
+                                            @if ($srcset = \App\Support\ResponsiveImage::srcset($logoMedia)) srcset="{{ $srcset }}" sizes="160px" @endif
                                             alt="{{ $brand->name }}"
                                             loading="lazy"
+                                            decoding="async"
                                             style="max-height:80px;max-width:100%;object-fit:contain;"
                                         >
                                     @else

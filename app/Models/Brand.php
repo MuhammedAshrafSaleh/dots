@@ -2,15 +2,18 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasImageConversions;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 class Brand extends Model implements HasMedia
 {
+    use HasImageConversions;
     use HasTranslations;
     use InteractsWithMedia;
 
@@ -61,6 +64,17 @@ class Brand extends Model implements HasMedia
         $this->addMediaCollection('cover')->singleFile();     // brand-page header
         $this->addMediaCollection('feature')->singleFile();   // "signature" banner image
         $this->addMediaCollection('catalogue')->singleFile(); // PDF
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->registerResponsiveImageConversions();
+    }
+
+    /** @return array<int, string> */
+    public function imageConversionCollections(): array
+    {
+        return ['logo', 'cover', 'feature'];
     }
 
     /** @return HasMany<Product, $this> */

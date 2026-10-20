@@ -83,13 +83,14 @@
             {{-- Featured brand banner --}}
             @if ($featured && (! $q) && (! $letter || $letter === 'all'))
                 @php
-                    $featCover = $featured->getFirstMediaUrl('feature') ?: $featured->getFirstMediaUrl('cover');
+                    $featCover = $featured->getFirstMedia('feature') ?: $featured->getFirstMedia('cover');
                     $featText  = $featured->getTranslation('feature_text', $locale)
                                  ?: $featured->getTranslation('description', $locale);
                 @endphp
                 <div class="d-rv d-brands-feature" style="display:grid;grid-template-columns:1.2fr 1fr;border:1px solid var(--border-1);border-radius:var(--radius-xl);overflow:hidden;margin-bottom:32px;">
                     <x-image-frame
-                        :src="$featCover ?: null"
+                        :media="$featCover ?: null"
+                        sizes="(max-width: 60rem) 100vw, 55vw"
                         :alt="$featured->name"
                         style="min-height:320px;"
                     />
@@ -114,7 +115,7 @@
                 <div class="d-brands-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($brands as $i => $brand)
                         @php
-                            $logoUrl = $brand->getFirstMediaUrl('logo');
+                            $logoMedia = $brand->getFirstMedia('logo');
                             $origin  = $brand->getTranslation('origin_country', $locale);
                         @endphp
                         <div class="d-rv" style="--rv-d:{{ ($i % 4) * 60 }}ms;">
@@ -123,8 +124,10 @@
                                    class="d-card__link"
                                    aria-label="{{ $brand->name }}"></a>
                                 <div class="d-bcard__logo">
-                                    @if ($logoUrl)
-                                        <img src="{{ $logoUrl }}" alt="{{ $brand->name }}"
+                                    @if ($logoMedia)
+                                        <img src="{{ \App\Support\ResponsiveImage::fallbackUrl($logoMedia) }}" alt="{{ $brand->name }}"
+                                             @if ($logoSrcset = \App\Support\ResponsiveImage::srcset($logoMedia)) srcset="{{ $logoSrcset }}" sizes="160px" @endif
+                                             loading="lazy" decoding="async"
                                              style="max-height:80px;max-width:160px;object-fit:contain;">
                                     @else
                                         <span class="d-bcard__word">{{ $brand->name }}</span>

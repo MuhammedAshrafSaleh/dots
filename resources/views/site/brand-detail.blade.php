@@ -5,6 +5,7 @@
     /** @var \Illuminate\Pagination\LengthAwarePaginator $products */
     /** @var \Illuminate\Support\Collection $projects */
 
+    $logoMedia = $brand->getFirstMedia('logo');
     $logoUrl  = $brand->getFirstMediaUrl('logo');
     $coverUrl = $brand->getFirstMediaUrl('cover');
     $pdfUrl   = $brand->getFirstMediaUrl('catalogue');
@@ -32,8 +33,10 @@
             <div class="d-rv d-brand-header" style="display:grid;grid-template-columns:220px 1fr;gap:40px;align-items:center;">
                 {{-- Logo / wordmark --}}
                 <div class="d-brand-logo-box" style="aspect-ratio:1/1;background:var(--white);border:1px solid var(--border-1);border-radius:var(--radius-lg);display:grid;place-items:center;padding:24px;">
-                    @if ($logoUrl)
-                        <img src="{{ $logoUrl }}" alt="{{ $brand->name }}"
+                    @if ($logoMedia)
+                        <img src="{{ \App\Support\ResponsiveImage::fallbackUrl($logoMedia) }}" alt="{{ $brand->name }}"
+                             @if ($logoSrcset = \App\Support\ResponsiveImage::srcset($logoMedia)) srcset="{{ $logoSrcset }}" sizes="280px" @endif
+                             loading="lazy" decoding="async"
                              style="max-height:140px;max-width:100%;object-fit:contain;">
                     @else
                         <span class="d-bcard__word" style="font-size:30px;">{{ $brand->name }}</span>
@@ -133,7 +136,7 @@
                 <div class="d-brand-projects-grid" style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:16px;">
                     @foreach ($projects as $i => $project)
                         @php
-                            $pImg  = $project->getFirstMediaUrl('cover');
+                            $pImg  = $project->getFirstMedia('cover');
                             $pSlug = $project->getTranslation('slug', $locale);
                             $pTitle = $project->getTranslation('title', $locale);
                         @endphp
@@ -142,7 +145,8 @@
                                style="display:block;text-decoration:none;border-radius:var(--radius-lg);overflow:hidden;position:relative;"
                                aria-label="{{ $pTitle }}">
                                 <x-image-frame
-                                    :src="$pImg ?: null"
+                                    :media="$pImg"
+                                    sizes="(max-width: 48rem) 100vw, 33vw"
                                     :alt="$pTitle"
                                     :ratio="$i === 0 ? 'auto' : '4/3'"
                                     :style="$i === 0 ? 'min-height:340px;' : ''"

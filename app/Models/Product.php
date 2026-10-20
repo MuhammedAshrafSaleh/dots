@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ProductRelationType;
 use App\Enums\ProductStatus;
 use App\Enums\StockStatus;
+use App\Models\Concerns\HasImageConversions;
 use App\Models\Concerns\HasTranslatableSlug;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Spatie\Translatable\HasTranslations;
 
 /**
@@ -28,6 +30,7 @@ use Spatie\Translatable\HasTranslations;
  */
 class Product extends Model implements HasMedia
 {
+    use HasImageConversions;
     use HasTranslatableSlug;
     use HasTranslations;
     use InteractsWithMedia;
@@ -61,6 +64,17 @@ class Product extends Model implements HasMedia
     {
         $this->addMediaCollection('gallery'); // images; caption kept as a custom property
         $this->addMediaCollection('files');   // datasheet / IES / LDT / install guide, with title + type
+    }
+
+    public function registerMediaConversions(?Media $media = null): void
+    {
+        $this->registerResponsiveImageConversions();
+    }
+
+    /** @return array<int, string> */
+    public function imageConversionCollections(): array
+    {
+        return ['gallery'];
     }
 
     /** @return BelongsTo<Brand, $this> */

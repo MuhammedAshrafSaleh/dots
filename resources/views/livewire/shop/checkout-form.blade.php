@@ -203,7 +203,7 @@
                                 @endphp
                                 <div class="d-line">
                                     <div class="d-line__img">
-                                        <x-image-frame :src="$product->getFirstMediaUrl('gallery')" :alt="$product->getTranslation('name', $locale)" />
+                                        <x-image-frame :media="$product->getFirstMedia('gallery')" sizes="80px" :alt="$product->getTranslation('name', $locale)" />
                                         <span class="d-summary__qty">{{ $item->qty }}</span>
                                     </div>
                                     <div style="min-width:0;">

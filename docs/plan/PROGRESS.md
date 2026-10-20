@@ -2,20 +2,22 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
-- **Current task:** T9.1 Query and cache review — **DONE** (pending owner review). Next task: T9.2 Images.
+- **Current task:** T9.2 Images — **DONE** (pending owner review). Next task: T9.3 Backups and scheduler.
 - **Last commit:** see Git line below.
-- **Gate result:** 565 tests (563 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What T9.1 changed:**
-  - New migration `2026_10_20_000001_add_listing_sort_indexes_to_products_table` — adds two composite indexes to `products` (raw `ALTER`, DESC columns, MySQL-only): `products_recommended_sort_index (status, sort_weight DESC, is_best_seller DESC, id)` and `products_published_sort_index (status, published_at DESC, id DESC)`.
-  - `docs/ERD.md` products Indexes line updated to document the two new indexes (**ERD index change — flag for owner review**).
-  - Full T9.1 report (10k-product EXPLAIN, before/after timings, cache/N+1 review) is in this file under "T9.1 — Query and cache review report".
-  - No app-code changes; existing eager-loading / cache-tag setup was reviewed and found sound.
-- **Open issues:** none for T9.1. (Carry-over from phase 8: F4 email verification — see Decisions log.)
-- **How to verify on dots.test:** this task is DB-index + docs only; nothing visual changed. To apply the indexes locally run `php artisan migrate` (adds the two indexes to the `dots` DB — safe, additive, no data change). Listing pages (`/ar/products`, category/brand pages) should behave identically, just faster on large catalogs. Optional deep check: re-seed `dots_testing` with `LargeCatalogSeeder` and re-run EXPLAIN (the throwaway probe scripts were removed after use).
+- **Gate result:** 577 tests (575 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T9.2 changed:**
+  - Responsive WebP conversions `thumb 160 / card 640 / large 1280 / hero 1920` registered on every image collection via new trait `App\Models\Concerns\HasImageConversions` (wired into Product, Category, Brand, Service, Project, Post, PageSection). Non-image collections (`files`, `catalogue` PDF) are excluded. Conversions are **queued** by default.
+  - Single source of truth `App\Support\ResponsiveImage` (SIZES map + `srcset()` + `fallbackUrl()`).
+  - `<x-image-frame>` now takes `:media` (+ `sizes`) and emits `srcset`/`sizes`/best-fit `src`; added `decoding="async"`. `:src` string path still works (SEO, mail, external). All customer-facing views updated to pass media objects (listing cards, PDP gallery, category/brand/project/service/blog/about/home/cart/checkout/account + raw `<img>` logos/hero backgrounds).
+  - **Image driver → Imagick** (`IMAGE_DRIVER=imagick` in `.env`, `.env.example`, `phpunit.xml`): GD exhausted PHP's 128 MB encoding WebP for the full DemoSeeder; Imagick keeps pixel buffers outside `memory_limit`. Requires the `imagick` PHP ext (present locally).
+  - Tests route media-conversion jobs to a non-running connection by default (TestCase `media-library.queue_connection_name => database`) so the suite doesn't re-encode every seeded image; the one render test opts back into `sync`. New tests: `tests/Feature/Media/ResponsiveImageConversionsTest.php`.
+  - Ran `php artisan media-library:regenerate --only-missing` on the dev `dots` DB (115 media) so existing seeded images already have WebP conversions for review.
+- **Open issues:** none for T9.2. (Carry-over from phase 8: F4 email verification — see Decisions log.) Lighthouse was not run in-session (no headless Chrome); verify the image audit manually (see below).
+- **How to verify on dots.test:** open the home page, a category page, a product detail page, the brands and projects pages. In DevTools → Network, image requests should be `.webp` and the browser should pick a size-appropriate variant (resize the window / throttle to see srcset switch). Check DevTools → Lighthouse → Performance: "Serve images in next-gen formats", "Properly size images", and "Defer offscreen images" should be clean/green. Confirm no broken images (SVG logos have no conversions and correctly fall back to the original).
 
 **Git:** branch `phase-9` · last commit `67e4343` (T9.1) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
-Current phase: **9 — Performance and operations.** T9.1 done (pending review). Next: T9.2 Images.
+Current phase: **9 — Performance and operations.** T9.1, T9.2 done (pending review). Next: T9.3 Backups and scheduler.
 
 ---
 
@@ -98,7 +100,7 @@ Current phase: **9 — Performance and operations.** T9.1 done (pending review).
 ## Phase 9 — Performance and operations  (`phase-09-performance-ops.md`)
 - [x] T9.1 Query and cache review
       → report below ("T9.1 — Query and cache review report")
-- [ ] T9.2 Images
+- [x] T9.2 Images
 - [ ] T9.3 Backups and scheduler
 - [ ] T9.4 Security and errors
 
@@ -154,6 +156,7 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — Image driver = Imagick (T9.2):** Technical choice. Responsive WebP conversions on the full DemoSeeder exhausted PHP's 128 MB `memory_limit` under the GD driver (`imagewebp` on large truecolor bitmaps). Switched media-library's `image_driver` to **imagick** via `IMAGE_DRIVER=imagick` (`.env`, `.env.example`, `phpunit.xml`) — Imagick holds pixel buffers in its own C allocations, outside `memory_limit`, and gives better WebP. Requires the `imagick` PHP extension in every environment (prod must have it; falls back to `gd` if the env var is unset). Also: tests route conversion jobs to a non-running connection by default so the suite doesn't re-encode every seeded image (TestCase sets `media-library.queue_connection_name => database`; opt back into `sync` per-test when a real conversion file is needed).
 - **2026-10-20 — Reorder dropped (T8.3 manual review):** Owner decision. The Reorder feature (add past order's items back to cart) was removed entirely — too complex to do well (variant availability, price staleness, partial availability), and not required by the PRD. Removed from `OrderDetail`, lang files, and tests. The phase-8.md plan document mentioned it; the report notes it as dropped.
 - **2026-10-20 — Max saved addresses = 4 (T8.3 manual review):** Owner decision. `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced server-side in `Addresses::create/save` and silently in `CheckoutForm::persistAddress`. View hides the add button and shows a hint at the limit.
 - **2026-10-07 — Versions:** do not assume from memory. At install time (Phase 1) use the latest stable majors `composer`/`npm` resolve for Laravel, Livewire, Pest and Vite, provided all required Spatie packages (translatable, medialibrary, permission, backup, sitemap) support them. Record the exact resolved versions here once installed. Local toolchain: PHP 8.4.23, Composer 2.10, Node 22, npm 10.
