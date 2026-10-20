@@ -41,6 +41,12 @@
             :help="__('account.register.password_help')"
             autocomplete="new-password"
         />
+        <x-site.password-input
+            :label="__('account.register.password_confirm')"
+            wire:model="password_confirmation"
+            :error="$errors->first('password_confirmation')"
+            autocomplete="new-password"
+        />
         <div style="display:grid;gap:6px;">
             <x-checkbox wire:model="terms" :checked="$terms">
                 <span style="font-weight:500;color:var(--fg-2);">

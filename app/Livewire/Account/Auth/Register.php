@@ -32,6 +32,8 @@ class Register extends Component
 
     public string $password = '';
 
+    public string $password_confirmation = '';
+
     public bool $terms = false;
 
     #[Url]
@@ -53,7 +55,7 @@ class Register extends Component
             'name' => ['required', 'string', 'max:255', 'regex:/\S+\s+\S+/'],
             'mobile' => ['required', 'string', 'regex:/^01[0125]\d{8}$/', Rule::unique('customers', 'mobile')],
             'email' => ['required', 'string', 'email', 'max:255', 'regex:/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/', Rule::unique('customers', 'email')],
-            'password' => ['required', 'string', 'min:8', 'regex:/\d/'],
+            'password' => ['required', 'string', 'min:8', 'regex:/\d/', 'confirmed'],
             'terms' => ['accepted'],
         ], attributes: [
             'name' => __('account.register.name'),

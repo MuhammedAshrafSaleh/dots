@@ -134,6 +134,7 @@ it('links matching guest orders when a customer registers', function () {
         ->set('mobile', '01055556666')
         ->set('email', 'newbie@example.com')
         ->set('password', 'secret123')
+        ->set('password_confirmation', 'secret123')
         ->set('terms', true)
         ->call('register')
         ->assertHasNoErrors();

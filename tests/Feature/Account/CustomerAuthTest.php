@@ -8,6 +8,7 @@ use App\Livewire\Account\Auth\ResetPassword;
 use App\Models\Customer;
 use App\Notifications\CustomerResetPasswordNotification;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Password;
@@ -132,6 +133,7 @@ it('creates an account, logs in and redirects home', function () {
         ->set('mobile', '01012345678')
         ->set('email', 'mona@example.com')
         ->set('password', 'secret12')
+        ->set('password_confirmation', 'secret12')
         ->set('terms', true)
         ->call('register')
         ->assertHasNoErrors()
@@ -163,6 +165,7 @@ it('rejects a password without a number', function () {
         ->set('mobile', '01012345678')
         ->set('email', 'mona@example.com')
         ->set('password', 'password')
+        ->set('password_confirmation', 'password') // matching — isolates the digit rule
         ->set('terms', true)
         ->call('register')
         ->assertHasErrors('password');
@@ -176,6 +179,7 @@ it('rejects a mobile or email already in use', function () {
         ->set('mobile', '01099998888')
         ->set('email', 'taken@example.com')
         ->set('password', 'secret12')
+        ->set('password_confirmation', 'secret12')
         ->set('terms', true)
         ->call('register')
         ->assertHasErrors(['mobile', 'email']);
@@ -233,6 +237,132 @@ it('rejects a reset with an invalid token', function () {
     $customer = Customer::factory()->create();
 
     Livewire::test(ResetPassword::class, ['token' => 'bogus-token'])
+        ->set('email', $customer->email)
+        ->set('password', 'new-pass1')
+        ->set('password_confirmation', 'new-pass1')
+        ->call('save')
+        ->assertHasErrors('email');
+
+    expect(Hash::check('new-pass1', $customer->fresh()->password))->toBeFalse();
+});
+
+/* ---------- F1: Arabic validation messages ---------- */
+
+it('shows Arabic validation messages on register under the ar locale', function () {
+    app()->setLocale('ar');
+
+    Customer::factory()->create(['mobile' => '01099998888', 'email' => 'taken@example.com']);
+
+    $component = Livewire::test(Register::class)
+        ->set('name', 'Mona')          // single name → regex fails
+        ->set('mobile', '01099998888') // already taken → unique fails
+        ->set('email', 'taken@example.com') // already taken → unique fails
+        ->set('password', 'abc')       // too short, no digit → min + regex fail
+        ->set('password_confirmation', '')
+        ->set('terms', false)
+        ->call('register');
+
+    $errors = $component->errors();
+
+    // Each failing rule should produce Arabic text (no English "The … field" pattern)
+    foreach ($errors->all() as $message) {
+        expect($message)->not->toContain('The ')
+            ->and($message)->toMatch('/[\x{0600}-\x{06FF}]/u'); // contains Arabic char
+    }
+
+    // Spot-check specific rule messages
+    expect($errors->first('mobile'))->toContain('مستخدمة بالفعل');
+    expect($errors->first('email'))->toContain('مستخدمة بالفعل');
+});
+
+it('shows Arabic validation messages on reset password under the ar locale', function () {
+    app()->setLocale('ar');
+
+    $customer = Customer::factory()->create();
+    $token = Password::broker('customers')->createToken($customer);
+
+    $component = Livewire::test(ResetPassword::class, ['token' => $token])
+        ->set('email', $customer->email)
+        ->set('password', 'abc1')              // < 8 chars → min fails
+        ->set('password_confirmation', 'xyz2') // mismatch → confirmed fails
+        ->call('save');
+
+    $errors = $component->errors();
+
+    foreach ($errors->all() as $message) {
+        expect($message)->not->toContain('The ')
+            ->and($message)->toMatch('/[\x{0600}-\x{06FF}]/u');
+    }
+
+    expect($errors->first('password'))->toContain('يقل');      // min rule
+});
+
+/* ---------- F3: reset-token single-use ---------- */
+
+it('rejects a reset token that has already been used', function () {
+    $customer = Customer::factory()->create();
+    $token = Password::broker('customers')->createToken($customer);
+
+    // First use succeeds
+    Livewire::test(ResetPassword::class, ['token' => $token])
+        ->set('email', $customer->email)
+        ->set('password', 'new-pass1')
+        ->set('password_confirmation', 'new-pass1')
+        ->call('save')
+        ->assertSet('done', true);
+
+    // Second submission with the same token must be rejected
+    Livewire::withQueryParams(['email' => $customer->email])
+        ->test(ResetPassword::class, ['token' => $token])
+        ->set('email', $customer->email)
+        ->set('password', 'another2')
+        ->set('password_confirmation', 'another2')
+        ->call('save')
+        ->assertHasErrors('email');
+
+    expect(Hash::check('another2', $customer->fresh()->password))->toBeFalse();
+});
+
+it('marks a used token as invalid on mount', function () {
+    $customer = Customer::factory()->create();
+    $token = Password::broker('customers')->createToken($customer);
+
+    // Consume the token
+    Livewire::test(ResetPassword::class, ['token' => $token])
+        ->set('email', $customer->email)
+        ->set('password', 'new-pass1')
+        ->set('password_confirmation', 'new-pass1')
+        ->call('save');
+
+    // Re-mount after use: component must flag itself invalid immediately
+    Livewire::withQueryParams(['email' => $customer->email])
+        ->test(ResetPassword::class, ['token' => $token])
+        ->assertSet('invalid', true);
+});
+
+it('marks an expired token as invalid on mount', function () {
+    $customer = Customer::factory()->create();
+    $token = Password::broker('customers')->createToken($customer);
+
+    // Backdate the token to simulate expiry (broker expire = 30 min)
+    DB::table('customer_password_reset_tokens')
+        ->where('email', $customer->email)
+        ->update(['created_at' => now()->subMinutes(31)]);
+
+    Livewire::withQueryParams(['email' => $customer->email])
+        ->test(ResetPassword::class, ['token' => $token])
+        ->assertSet('invalid', true);
+});
+
+it('rejects an expired reset token on submission', function () {
+    $customer = Customer::factory()->create();
+    $token = Password::broker('customers')->createToken($customer);
+
+    DB::table('customer_password_reset_tokens')
+        ->where('email', $customer->email)
+        ->update(['created_at' => now()->subMinutes(31)]);
+
+    Livewire::test(ResetPassword::class, ['token' => $token])
         ->set('email', $customer->email)
         ->set('password', 'new-pass1')
         ->set('password_confirmation', 'new-pass1')
