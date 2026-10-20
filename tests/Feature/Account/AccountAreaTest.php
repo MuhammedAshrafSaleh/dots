@@ -4,7 +4,6 @@ use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\ProductStatus;
 use App\Livewire\Account\Addresses;
-use App\Livewire\Account\OrderDetail;
 use App\Livewire\Account\Orders;
 use App\Livewire\Account\Profile;
 use App\Livewire\Account\Wishlist;
@@ -145,27 +144,6 @@ it('404s when a customer opens a guest order', function () {
         ->assertNotFound();
 });
 
-it('reorders the items from a past order into the cart', function () {
-    $customer = Customer::factory()->create();
-    $variant = accountVariant('RE', 250);
-    $order = accountOrder($customer);
-    $order->items()->create([
-        'product_id' => $variant->product_id,
-        'product_variant_id' => $variant->id,
-        'product_name' => ['ar' => 'منتج', 'en' => 'Item'],
-        'sku' => $variant->sku,
-        'unit_price' => 250,
-        'qty' => 2,
-        'line_total' => 500,
-    ]);
-
-    Livewire::actingAs($customer, 'customer')
-        ->test(OrderDetail::class, ['order' => $order])
-        ->call('reorder');
-
-    expect(app(CartManager::class)->itemCount())->toBe(2);
-});
-
 /* ---------- wishlist ---------- */
 
 it('removes a product from the wishlist', function () {
@@ -278,6 +256,92 @@ it('rejects an invalid mobile on an address', function () {
         ->set('floor_apartment', '1')
         ->call('save')
         ->assertHasErrors('mobile');
+});
+
+it('allows saving the 4th address', function () {
+    $customer = Customer::factory()->create();
+    $gov = Governorate::create(['name' => ['ar' => 'القاهرة', 'en' => 'Cairo'], 'is_active' => true]);
+
+    foreach (range(1, 3) as $i) {
+        $customer->addresses()->create([
+            'label' => 'home', 'recipient_name' => "A$i", 'mobile' => '01012345678',
+            'governorate_id' => $gov->id, 'city' => 'C', 'street' => 'S', 'floor_apartment' => "$i", 'is_default' => $i === 1,
+        ]);
+    }
+
+    Livewire::actingAs($customer, 'customer')
+        ->test(Addresses::class)
+        ->call('create')
+        ->set('recipient_name', 'Fourth')
+        ->set('mobile', '01212345678')
+        ->set('governorate_id', $gov->id)
+        ->set('city', 'C4')
+        ->set('street', 'S4')
+        ->set('floor_apartment', '4')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($customer->addresses()->count())->toBe(4);
+});
+
+it('rejects opening the add drawer when 4 addresses exist', function () {
+    $customer = Customer::factory()->create();
+    $gov = Governorate::create(['name' => ['ar' => 'القاهرة', 'en' => 'Cairo'], 'is_active' => true]);
+
+    foreach (range(1, 4) as $i) {
+        $customer->addresses()->create([
+            'label' => 'home', 'recipient_name' => "A$i", 'mobile' => '01012345678',
+            'governorate_id' => $gov->id, 'city' => 'C', 'street' => 'S', 'floor_apartment' => "$i", 'is_default' => $i === 1,
+        ]);
+    }
+
+    Livewire::actingAs($customer, 'customer')
+        ->test(Addresses::class)
+        ->call('create')
+        ->assertHasErrors('_limit');
+});
+
+it('freeing a slot allows adding again after deletion', function () {
+    $customer = Customer::factory()->create();
+    $gov = Governorate::create(['name' => ['ar' => 'القاهرة', 'en' => 'Cairo'], 'is_active' => true]);
+
+    $toDelete = $customer->addresses()->create([
+        'label' => 'home', 'recipient_name' => 'Del', 'mobile' => '01012345678',
+        'governorate_id' => $gov->id, 'city' => 'C', 'street' => 'S', 'floor_apartment' => '1', 'is_default' => true,
+    ]);
+    foreach (range(2, 4) as $i) {
+        $customer->addresses()->create([
+            'label' => 'office', 'recipient_name' => "B$i", 'mobile' => '01112345678',
+            'governorate_id' => $gov->id, 'city' => 'C', 'street' => 'S', 'floor_apartment' => "$i", 'is_default' => false,
+        ]);
+    }
+
+    // At 4 — adding should be blocked.
+    Livewire::actingAs($customer, 'customer')
+        ->test(Addresses::class)
+        ->call('create')
+        ->assertHasErrors('_limit');
+
+    // Delete one.
+    Livewire::actingAs($customer, 'customer')
+        ->test(Addresses::class)
+        ->call('confirmDelete', $toDelete->id)
+        ->call('delete');
+
+    // Now adding should succeed.
+    Livewire::actingAs($customer, 'customer')
+        ->test(Addresses::class)
+        ->call('create')
+        ->set('recipient_name', 'New')
+        ->set('mobile', '01212345678')
+        ->set('governorate_id', $gov->id)
+        ->set('city', 'C')
+        ->set('street', 'S')
+        ->set('floor_apartment', '1')
+        ->call('save')
+        ->assertHasNoErrors();
+
+    expect($customer->addresses()->count())->toBe(4);
 });
 
 /* ---------- profile ---------- */

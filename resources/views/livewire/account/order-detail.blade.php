@@ -39,9 +39,6 @@
                     </div>
                 </div>
                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
-                    <button type="button" wire:click="reorder" class="d-btn d-btn--dark">
-                        <x-icon name="rotate-ccw" size="18" />{{ __('account.order.reorder') }}
-                    </button>
                     <x-whatsapp-button source="order_help" :model="$order" :label="__('account.order.help')" />
                 </div>
             </div>
