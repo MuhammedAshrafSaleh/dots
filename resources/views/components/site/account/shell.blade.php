@@ -71,7 +71,7 @@
                         </a>
                     @endforeach
                     <span class="d-account__nav-sep"></span>
-                    <form method="POST" action="{{ route('logout', $locale) }}">
+                    <form method="POST" action="{{ route('logout', $locale) }}" style="display:contents;">
                         @csrf
                         <button type="submit" class="d-mega__cat" style="width:100%;">
                             <x-icon name="log-out" size="20" /><span>{{ __('account.nav.logout') }}</span>

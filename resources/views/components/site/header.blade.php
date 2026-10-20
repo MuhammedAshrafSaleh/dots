@@ -164,9 +164,9 @@
                 @foreach ($accountItems as [$route, $label, $icon])
                     <a href="{{ route($route, $locale) }}" class="d-mega__cat"><x-icon :name="$icon" :size="20" />{{ $label }}<x-icon name="chevron-right" :size="16" /></a>
                 @endforeach
-                <form method="POST" action="{{ route('logout', $locale) }}">
+                <form method="POST" action="{{ route('logout', $locale) }}" style="display:contents;">
                     @csrf
-                    <button type="submit" class="d-mega__cat" style="width:100%;border:0;background:none;cursor:pointer;"><x-icon name="log-out" :size="20" />{{ __('ui.logout') }}</button>
+                    <button type="submit" class="d-mega__cat" style="width:100%;"><x-icon name="log-out" :size="20" />{{ __('ui.logout') }}<x-icon name="chevron-right" :size="16" /></button>
                 </form>
             </div>
         @else
