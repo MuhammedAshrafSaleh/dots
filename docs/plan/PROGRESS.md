@@ -2,23 +2,23 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-8` (local only; branched from main after phase-7 merge).
-- **Current task:** T8.1 manual-review fixes (F1, F2, F3) — **DONE.** Next: write `docs/plan/reports/phase-8.md` (end-of-phase report), commit it, then STOP for owner review.
-- **Last commit:** `d851317` fix(phase-8): F3 (see Git line below).
-- **Gate result:** 563 tests (561 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What the T8.1 fix commits added:**
-  - **F1** (`86ed29d`): `lang/ar/validation.php` (full Arabic validation rule set) + `lang/ar/passwords.php` (broker status messages). Fixes English validation messages leaking into the AR locale on Register, Reset, Profile, Addresses, Checkout, Forgot. Also added `tests/Browser` to `pint.json` exclude (browser tests are excluded from the test suite; they also had pre-existing pint style issues since they were untracked/uncommitted).
-  - **F2** (`8c8ff7e`): Added `password_confirmation` field and `confirmed` validation rule to `Register.php` + matching show/hide field in `register.blade.php` + `account.register.password_confirm` lang key (ar+en). Updated `CustomerAuthTest` and `GuestLinkingTest` to supply `password_confirmation` in register calls. Added F1 AR-message tests and F3 token tests to `CustomerAuthTest`.
-  - **F3** (`d851317`): `ResetPassword.php` now calls `tokenIsUsable()` in `mount()` — queries `customer_password_reset_tokens`, checks the bcrypt hash and 30-min expiry, sets `$invalid = true` on mount if the link is used or expired. View shows "link invalid or expired" panel with "request a new link" CTA. `lang/ar/account.php` and `lang/en/account.php` gained `reset.invalid_title`, `reset.invalid_lede`, `reset.request_new`. Root cause: Laravel's broker correctly deletes the token on use (second submission already failed), but the component always mounted with `done=false` so a fresh page visit showed the form again.
-- **Open issues:** F4 (email verification) — see decision note in Decisions log below.
+- **Current task:** T8.3 manual-review fixes (F1, F2, F3) — **DONE.** Next: write `docs/plan/reports/phase-8.md` (end-of-phase report), commit it, then STOP for owner review.
+- **Last commit:** `2a1db85` fix(phase-8): F3 logout design.
+- **Gate result:** 565 tests (563 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What the T8.3 fix commits added:**
+  - **F1** (`0ade3fd`): Removed `Reorder` feature entirely — `reorder()` method + button + lang keys (`account.order.reorder`, `account.order.reordered` ar+en) + feature test. Updated `save_order.body` copy to drop "reorder" reference.
+  - **F2** (`6424ed2`): `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced in `Addresses::create()` (throws `_limit` ValidationException), `Addresses::save()` (belt-and-suspenders guard), `CheckoutForm::persistAddress()` (silently skips at limit). View: hides add button and shows limit hint card when at limit. Added `account.addresses.limit_reached` / `limit_reached_short` lang keys (ar+en). Feature tests: 4th address succeeds, 5th blocked at drawer-open, slot freed by delete.
+  - **F3** (`2a1db85`): Account side nav (`shell.blade.php`): `<form>` wrapper gets `display:contents` so logout button is a direct grid child matching `<a>` siblings. Compact/mobile menu (`header.blade.php`): same `display:contents` + added `<x-icon name="chevron-right">` after text so `.d-mega__cat .d-icon:last-child` rule targets the chevron (trailing side) not the log-out icon, matching all other rows in AR + LTR.
+- **Open issues:** F4 (email verification) — see Decisions log below.
 - **What to review on dots.test:**
-  1. **F1 — AR locale validation:** switch to Arabic, open `/ar/register` → submit empty → all errors in Arabic. Try mobile with wrong format → "صيغة رقم الموبايل غير صحيحة." Try a taken email → "قيمة البريد الإلكتروني مستخدمة بالفعل."
-  2. **F2 — Register confirm password:** open `/ar/register` (or `/en/register`) → password field should be followed by "تأكيد كلمة المرور" / "Confirm password". Enter mismatched passwords → "تأكيد كلمة المرور غير متطابق." / "The password field confirmation does not match."
-  3. **F3 — Reset link single-use UX:** request a password reset, use the link, set a new password (success screen). Open the same link again in the browser → must see "الرابط غير صالح أو منتهي الصلاحية" / "Link invalid or expired" panel with a "Request a new link" button, NOT the password form.
-  4. Check RTL + LTR on all three above; no 403/500/JS errors.
+  1. **F1 — Reorder gone:** open any order detail (`/ar/account/orders/…`) → no "إعادة الطلب" button. Check EN too.
+  2. **F2 — Address limit:** log in, go to `/ar/account/addresses`. Add addresses one by one. 4th add should succeed. After 4 exist: "إضافة عنوان" button disappears, a "وصلت إلى الحد الأقصى من 4 عناوين" hint appears in place of the "+" card. Delete one → add button and "+" card come back.
+  3. **F3 — Logout row design:** open account dropdown (desktop, top-right) → logout row must match the other rows (icon on leading side, same height/font, separator above). Open mobile/compact menu → logout row must have log-out icon on leading side and chevron on trailing side matching all other rows. Verify in AR (RTL) and EN (LTR).
+  4. No 403/500/JS errors on any of the above.
 
-**Git:** branch `phase-8` · last commit `d851317` · last tag `phase-7-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-8` · last commit `2a1db85` · last tag `phase-7-done` · push state: **not pushed (local only)**
 
-Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 manual-review fixes done. Next: end-of-phase report.
+Current phase: **8 — Customer accounts.** T8.1–T8.5 done + T8.1 + T8.3 manual-review fixes done. Next: end-of-phase report.
 
 ---
 
@@ -118,6 +118,8 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — Reorder dropped (T8.3 manual review):** Owner decision. The Reorder feature (add past order's items back to cart) was removed entirely — too complex to do well (variant availability, price staleness, partial availability), and not required by the PRD. Removed from `OrderDetail`, lang files, and tests. The phase-8.md plan document mentioned it; the report notes it as dropped.
+- **2026-10-20 — Max saved addresses = 4 (T8.3 manual review):** Owner decision. `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced server-side in `Addresses::create/save` and silently in `CheckoutForm::persistAddress`. View hides the add button and shows a hint at the limit.
 - **2026-10-07 — Versions:** do not assume from memory. At install time (Phase 1) use the latest stable majors `composer`/`npm` resolve for Laravel, Livewire, Pest and Vite, provided all required Spatie packages (translatable, medialibrary, permission, backup, sitemap) support them. Record the exact resolved versions here once installed. Local toolchain: PHP 8.4.23, Composer 2.10, Node 22, npm 10.
   - **Resolved at install (T1.1, 2026-10-07):** `laravel/framework` v13.35.0 (latest stable; all Spatie packages support L13), `livewire/livewire` v4.4.7, `spatie/laravel-translatable` 6.14.1, `spatie/laravel-medialibrary` 11.23.9, `spatie/laravel-permission` 8.3.0, `spatie/laravel-backup` 10.3.3, `spatie/laravel-sitemap` 8.2.0, `mews/purifier` 3.4.4 (HTML sanitizer per REVIEW), `pestphp/pest` v4.7.8, `vite` ^8, `@vitejs` via `laravel-vite-plugin` ^3.1. Composer `php` constraint `^8.3`. Local `.env`: MySQL `dots` db, `QUEUE_CONNECTION=sync`, `CACHE_STORE=database` (no local Redis daemon running); `.env.example` keeps `redis` for prod. Tests run on sqlite `:memory:` (phpunit.xml). NOTE: Laravel 13's scaffolding ships a Tailwind `@tailwindcss/vite` entry + default CLAUDE.md/AGENTS.md — restored the project CLAUDE.md, removed AGENTS.md; Tailwind to be stripped in T1.3 (project is no-Tailwind).
 - **2026-10-07 — DB target (Q9):** production MySQL **8.0**. Migrations/SQL must stay 8.0-compatible (no 9.x-only syntax). Local MySQL 9.6 is fine.
