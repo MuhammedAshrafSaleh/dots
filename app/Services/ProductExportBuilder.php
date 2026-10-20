@@ -51,7 +51,7 @@ final class ProductExportBuilder
 
         $products = Product::with([
             'brand',
-            'category',
+            'category.parent.parent',
             'variants' => fn ($q) => $q->where('is_default', true)->limit(1),
         ])->orderBy('id')->lazy();
 
