@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
 - **Current task:** T9.4 Security and errors — **DONE** (pending owner review). Next task: T9.5 (see phase-09 file).
-- **Last commit:** `<pending>` (T9.4: security and errors) — hash filled after commit.
+- **Last commit:** `6fe92d1` (T9.4: security and errors) — hash filled after commit.
 - **Gate result:** 592 tests (590 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
 - **What T9.4 changed:**
   - New `App\Http\Middleware\SecurityHeaders` appended to the `web` group (in `bootstrap/app.php`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Permitted-Cross-Domain-Policies: none`, `Permissions-Policy` (camera/mic/geolocation/browsing-topics off), `Content-Security-Policy: frame-ancestors 'self'`, and `Strict-Transport-Security` (1y, includeSubDomains) **only over HTTPS**. Strict script-CSP intentionally omitted — would break Livewire/Alpine (see Decisions).
@@ -19,7 +19,7 @@
   - Book a consultation / register repeatedly → throttled after the cap.
   - No 403/500/JS errors on normal browsing, add-to-cart, checkout.
 
-**Git:** branch `phase-9` · last commit `<pending>` (T9.4 security and errors) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `6fe92d1` (T9.4 security and errors) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
 Current phase: **9 — Performance and operations.** T9.1–T9.4 done (pending review). Next: T9.5 (see phase-09 file).
 
