@@ -10,7 +10,7 @@
     $cancelled = $order->status === OrderStatus::Cancelled;
     $progress = $stepCount > 1 ? (int) round(($stepIndex / ($stepCount - 1)) * 100) : 0;
     $addr = $order->address;
-    $labelMeta = $addr?->label ? \App\Enums\AddressLabel::tryFrom($addr->label) : null;
+    $labelMeta = $addr !== null ? \App\Enums\AddressLabel::tryFrom((string) $addr->getRawOriginal('label', '')) : null;
 @endphp
 
 <div>
