@@ -1,29 +1,21 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
-- **Current task:** Newsletter subscribe wire-up (post-T9.4 gap fix) — **DONE** (pending owner review). Next task: T9.5 (see phase-09 file).
-- **Last commit:** `fe8fdab` (Newsletter subscribe: wire up POST route, dedupe, throttle, lang strings).
-- **Gate result:** 596 tests (594 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What T9.4 changed:**
-  - New `App\Http\Middleware\SecurityHeaders` appended to the `web` group (in `bootstrap/app.php`): `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, `X-Permitted-Cross-Domain-Policies: none`, `Permissions-Policy` (camera/mic/geolocation/browsing-topics off), `Content-Security-Policy: frame-ancestors 'self'`, and `Strict-Transport-Security` (1y, includeSubDomains) **only over HTTPS**. Strict script-CSP intentionally omitted — would break Livewire/Alpine (see Decisions).
-  - Rate limits added to the remaining public write forms (pattern matches existing Newsletter/Consultation `RateLimiter` usage): Register (5/10min/IP), ResetPassword (5/10min/IP, on top of the broker's own throttle), TrackOrder lookup (10/min/IP — number+mobile is the only auth), CheckoutForm place (10/10min/IP). WhatsApp redirect route now also has `throttle:30,1`. (Login admin+customer already used `LoginThrottle`; WhatsApp redirect was already signed; rich text already sanitised via `App\Support\Html`; Paymob webhook already CSRF-exempt + HMAC.)
-  - Error pages in the design style: self-contained `components/layouts/error.blade.php` (no header/footer/DB so it survives 500/503; styled with site.css tokens) + `resources/views/errors/{403,404,419,429,500,503}.blade.php`, strings in `lang/{ar,en}/errors.php`.
-  - `.env.example` logging: `LOG_STACK=daily`, `LOG_DAILY_DAYS=14` + comment to raise `LOG_LEVEL=warning` in production.
-  - New test `tests/Feature/SecurityTest.php` (5 tests): headers present, HSTS HTTPS-only, and rate limits on register / track-order / reset-password.
-  - **Newsletter throttle gap (post-T9.4 fix `fe8fdab`):** `NewsletterController::subscribe` (POST /newsletter/subscribe, `throttle:10,1`) wires up the footer form; deduplicates via `firstOrCreate`/`wasRecentlyCreated`; redirects back with `toast_success`/`toast_info` flash rendered in the app layout. AR/EN `newsletter_already_subscribed` strings added. Livewire `NewsletterForm` updated for already-subscribed distinction. 4 new tests in `NewsletterSubscribeTest`.
-- **Open issues:** none. Newsletter throttle gap closed. (Carry-over: F4 email verification — see Decisions log.)
-- **How to verify on dots.test:**
-  - Any page → DevTools → Network → response headers show `X-Frame-Options`, `X-Content-Type-Options`, `Referrer-Policy`, `Content-Security-Policy`, `Permissions-Policy`.
-  - Visit a bad URL e.g. `/ar/does-not-exist` → styled 404 page (DOTS eyebrow, big code, "Back to home" button), RTL in AR.
-  - Submit the Track-Order form (`/ar/track-order`) >10× quickly → "Too many submissions" error.
-  - Book a consultation / register repeatedly → throttled after the cap.
-  - Footer newsletter form: enter a valid email → redirects back with green "You're subscribed!" toast. Enter the same email again → info toast "You're already on the list". Submit 11× rapidly → 429 error page.
-  - No 403/500/JS errors on normal browsing, add-to-cart, checkout.
+- **Branch:** `bulk-import` (local only; branched from up-to-date main after `phase-9-done`). Bulk product import/export is **pulled forward** from Phase 11 (T11.1) ahead of the client meeting and built here. **After BI.3 the next step is Phase 10** — Phase 9 is already merged/tagged, it does NOT resume.
+- **Current task:** docs-only spec session — **DONE**. Spec + task plan written. **Next task: BI.1** (see `docs/plan/bulk-import.md`).
+- **Last commit:** `docs: bulk product import/export spec` (see Git line for hash).
+- **Gate result:** n/a — docs-only session, no app code changed, no gates run.
+- **What this session produced:**
+  - `docs/IMPORT_SPEC.md` — authoritative spec (template layout + row-2 key maps, generation, data rules, media/ZIP rules & limits, error policy, permissions, export round-trip).
+  - `docs/plan/bulk-import.md` — exactly 3 tasks: **BI.1** (maatwebsite/excel + template generator + Download template + Export + Import page shell + `products.import`/`products.export` perms), **BI.2** (parse/validate/preview/report, dry run), **BI.3** (apply job + ZIP media + cache recompute + import log + one E2E).
+  - `docs/plan/phase-11-deferred.md` — T11.1 replaced with a pointer to the above.
+- **Open issues:** none for this session. (Carry-over: F4 email verification — see Decisions log.)
+- **How to verify on dots.test:** nothing to click — docs only. Review `docs/IMPORT_SPEC.md` and `docs/plan/bulk-import.md`, then start BI.1 in a new session.
+- **Release:** works like a phase. On owner's "approved, push bulk-import" → push branch, `git merge --no-ff bulk-import` into main, tag `bulk-import-done`, push main --tags.
 
-**Git:** branch `phase-9` merged → `main` · last tag `phase-9-done` · push state: **pushed and merged**
+**Git:** branch `bulk-import` (local, unpushed) · last local commit `docs: bulk product import/export spec` · last tag `phase-9-done` · push state: **not pushed**
 
-Current phase: **9 — Performance and operations — COMPLETE.** Merged to main, tagged `phase-9-done`. Next: Phase 10 (see plan).
+Current phase: **Bulk import (pulled-forward T11.1) on branch `bulk-import`.** Next task BI.1. After BI.3 → Phase 10. Phase 9 COMPLETE (merged, tagged `phase-9-done`).
 
 ---
 
@@ -162,6 +154,12 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — Bulk import pulled forward from Phase 11 (T11.1):** Owner decision. Built now on branch `bulk-import` (off main after `phase-9-done`) ahead of the client meeting, as 3 tasks BI.1–BI.3 (`docs/plan/bulk-import.md`), spec in `docs/IMPORT_SPEC.md`. After BI.3 the next step is **Phase 10** (Phase 9 does not resume). Release works like a phase: on "approved, push bulk-import" → push, `merge --no-ff` into main, tag `bulk-import-done`, push. T11.1 in the Phase 11 file is now a pointer. Key spec decisions:
+  - **Columns mapped by the hidden row-2 system key, never by position** — reordered/renamed row-1 headers don't break import.
+  - **Reference data is never created by import** — unknown brand/category/attribute value = row error ("add in admin, re-download the template"); import never writes to brands/categories/attributes/attribute_values, and never deletes products.
+  - **Media problems are warnings, not row errors** — a product still imports without a bad/missing file; a NEW product ending with zero valid images is forced to `draft`. DATA problems skip the row.
+  - **`SKU-manual.pdf` → the `guide` (installation guide) file slot** (the 4 T4.8 slots are `datasheet/ies/ldt/guide`, no "manual" slot).
+  - **Reuse** `App\Actions\UpdateProductCacheColumns` + `App\Support\CacheTags` for post-apply recompute/flush (imported price shows on the public page immediately), `App\Support\Slug` for slugs, `App\Support\Html` purifier for `overview_*`. New permissions `products.import` / `products.export`.
 - **2026-10-20 — Newsletter kept and wired (post-T9.4 gap fix):** Newsletter kept and wired — free (own DB, no auto emails per Q8 decision); email list is a marketing asset. `newsletter.subscribe` changed from GET placeholder to POST `NewsletterController::subscribe` with `throttle:10,1`. Footer form updated to POST + @csrf. Duplicates handled gracefully via `firstOrCreate`/`wasRecentlyCreated` — no 500 or validation error for re-subscriptions.
 - **2026-10-20 — No strict script-CSP (T9.4):** Technical choice. `SecurityHeaders` ships a Content-Security-Policy limited to `frame-ancestors 'self'` (anti-clickjacking) and leaves script/style sources unrestricted. A strict `script-src` would require `'unsafe-inline'` + `'unsafe-eval'` to keep Livewire and Alpine (and the inline no-FOUC `<script>` in `app.blade.php`) working, which defeats the purpose. Clickjacking, MIME-sniffing, referrer leakage and feature-policy are covered by the other headers; HSTS is sent over HTTPS only. Revisit if the front-end moves off inline Alpine.
 - **2026-10-20 — Muted text color darkened (T9.2 Lighthouse fix):** Design deviation. `--ink-500` was `#75756E` (WCAG 4.74:1 on white but only 4.33:1 on the site's soft-gray `--ink-50` = `#F7F7F5` surface used by `.d-phead` and `.d-footer`). Darkened to `#6F6F68` which gives 4.72:1 on `#F7F7F5` (≥ AA 4.5:1). The change is minimal — 6 steps darker in lightness. Affects all uses of `--fg-3` / `--ink-500` across the site (phead counts, footer bottom strip, form placeholders, sku, muted metadata). Previous value is documented here for reference.
