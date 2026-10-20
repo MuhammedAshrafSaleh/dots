@@ -60,6 +60,20 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Off-site backup destination (PRD §13). Wired but inactive until the
+         * Google Drive credentials arrive; set BACKUP_DISK=google to switch on.
+         * Requires `composer require masbug/flysystem-google-drive-ext` and a
+         * driver registration before use.
+         */
+        'google' => [
+            'driver' => 'google',
+            'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
+            'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
+            'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
+            'folderId' => env('GOOGLE_DRIVE_FOLDER_ID'),
+        ],
+
     ],
 
     /*

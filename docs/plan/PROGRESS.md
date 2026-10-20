@@ -2,30 +2,27 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
-- **Current task:** T9.2 Images (Lighthouse fix round) — **DONE** (pending owner review). Next task: T9.3 Backups and scheduler.
-- **Last commit:** `dea296a` (T9.2 fix: Lighthouse a11y, loading, contrast).
-- **Gate result:** 581 tests (579 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What T9.2 originally changed:** (see commit `9c2307e`) WebP conversions, srcset, Imagick driver, responsive image component.
-- **What this Lighthouse fix round changed:**
-  - `<x-image-frame>` now accepts `eager` (bool) and `priority` (bool) props → `loading="eager"` and `fetchpriority="high"` on the img.
-  - Product grids: first 4 cards get `eager`, first card also gets `priority` (listing, home, category, brand-detail); PDP first gallery image eager+priority.
-  - Hero images on home, category: `eager priority` passed to image-frame.
-  - Livewire script gets `defer` via `Livewire::useScriptTagAttributes(['defer' => true])` in AppServiceProvider.
-  - `<x-site.lang-switch>`: removed `aria-pressed` from `<a>` tags (invalid ARIA role on anchors); `aria-current` retained.
-  - Filter sidebar `<h3>` → `<h2>`; footer column `<h5>` → `<h2>` (heading order: no skipped levels). CSS selectors updated accordingly.
-  - `--ink-500` darkened from `#75756E` to `#6F6F68` (4.72:1 on #F7F7F5 — see Decisions log).
+- **Current task:** T9.3 Backups and scheduler — **DONE** (pending owner review). Next task: T9.4 Security and errors.
+- **Last commit:** `<pending>` (T9.3: backups and scheduler).
+- **Gate result:** 587 tests (585 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T9.3 changed:**
+  - Published + configured `config/backup.php`: source = database (`mysql`) + media (`storage/app/public`); destination disk via `BACKUP_DISK` env (default `local`); retention = keep last 7 days only (all longer tiers set to 0); email on failure only (success/healthy notifications set to `[]`), `to` via `BACKUP_NOTIFICATION_EMAIL` (default `admin@dots.test`); monitor disk also env-driven.
+  - `config/filesystems.php`: added a `google` (Google Drive) disk — wired but off; switch on with `BACKUP_DISK=google` once credentials arrive (needs a Drive flysystem adapter + driver registration first).
+  - `routes/console.php` scheduler: `backup:clean` 02:30, `backup:run` 03:00, `backup:monitor` 03:30 (all daily); `sitemap:generate` moved weekly → dailyAt 02:00; existing `orders:release-reservations` every 15 min retained.
+  - `.env.example`: added `BACKUP_DISK`, `BACKUP_NOTIFICATION_EMAIL`, `BACKUP_ARCHIVE_PASSWORD`, `GOOGLE_DRIVE_*` placeholders.
+  - New test `tests/Feature/BackupScheduleTest.php` (6 tests): config correctness, retention, failure-only mail, Google disk wired-but-off, scheduled commands, backup:run at 03:00.
+  - Verified locally: `php artisan backup:run` created a healthy 73 MB zip (DB + media) under `storage/app/private/DOTS/` (gitignored); `backup:list` healthy; `backup:clean` kept the newest. Test archive removed after verification.
 - **Open issues:** none. (Carry-over: F4 email verification — see Decisions log.)
 - **How to verify on dots.test:**
-  - Home page: DevTools Network — hero img has `loading="eager" fetchpriority="high"`. First product card in Featured tabs has same. Category cards row 1 has `loading="eager"`.
-  - `/en/products`: first 4 product cards have `loading="eager"`, first has `fetchpriority="high"`, cards 5+ have `loading="lazy"`. Language switcher in header has NO `aria-pressed`; active locale has `aria-current="true"`.
-  - Inspect footer column headings → `<h2>` not `<h5>`. Inspect sidebar filter header → `<h2>` not `<h3>`.
-  - Muted text (#6F6F68) in count/subtitle areas passes contrast in DevTools accessibility checker.
-  - Cart drawer and filter accordions still open/close (Livewire + Alpine working with defer).
-  - `/ar/products` (RTL): same as above, direction correct.
+  - `php artisan backup:run` → "Backup completed!"; zip appears in `storage/app/private/DOTS/`.
+  - `php artisan backup:list` → row DOTS, disk `local`, Reachable ✅, Healthy ✅.
+  - `php artisan backup:clean` → completes, keeps the newest backup.
+  - `php artisan schedule:list` → shows `backup:clean` (02:30), `backup:run` (03:00), `backup:monitor` (03:30), `sitemap:generate` (02:00), `orders:release-reservations` (every 15 min).
+  - (No UI changes in this task.)
 
-**Git:** branch `phase-9` · last commit `dea296a` (T9.2 Lighthouse fix) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `<pending>` (T9.3 backups and scheduler) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
-Current phase: **9 — Performance and operations.** T9.1, T9.2 done (pending review). Next: T9.3 Backups and scheduler.
+Current phase: **9 — Performance and operations.** T9.1, T9.2, T9.3 done (pending review). Next: T9.4 Security and errors.
 
 ---
 
@@ -109,7 +106,7 @@ Current phase: **9 — Performance and operations.** T9.1, T9.2 done (pending re
 - [x] T9.1 Query and cache review
       → report below ("T9.1 — Query and cache review report")
 - [x] T9.2 Images
-- [ ] T9.3 Backups and scheduler
+- [x] T9.3 Backups and scheduler
 - [ ] T9.4 Security and errors
 
 ## Phase 10 — QA and deployment  (`phase-10-qa-deploy.md`)
