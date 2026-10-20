@@ -1,5 +1,12 @@
 <div>
-    @if (! $done)
+    @if ($invalid)
+        <div class="d-auth__head">
+            <span class="d-auth__icon d-auth__icon--error"><x-icon name="circle-alert" size="26" /></span>
+            <h1 class="t-h2" style="margin:0;text-wrap:balance;">{{ __('account.reset.invalid_title') }}</h1>
+            <p class="d-auth__lede">{{ __('account.reset.invalid_lede') }}</p>
+        </div>
+        <x-button :href="route('password.request', $locale)" size="lg" block iconEnd="arrow-right">{{ __('account.reset.request_new') }}</x-button>
+    @elseif (! $done)
         <div class="d-auth__head">
             <span class="d-auth__icon"><x-icon name="lock" size="26" /></span>
             <h1 class="t-h2" style="margin:0;text-wrap:balance;">{{ __('account.reset.title') }}</h1>

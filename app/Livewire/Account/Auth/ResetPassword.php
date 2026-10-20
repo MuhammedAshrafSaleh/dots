@@ -4,6 +4,7 @@ namespace App\Livewire\Account\Auth;
 
 use Illuminate\Auth\Events\PasswordReset;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
@@ -34,6 +35,9 @@ class ResetPassword extends Component
 
     public bool $done = false;
 
+    /** Set to true on mount when the token is missing, expired, or already used. */
+    public bool $invalid = false;
+
     /** Captured at mount so route() works during /livewire/update (setlocale is not persistent). */
     public string $locale = '';
 
@@ -42,6 +46,34 @@ class ResetPassword extends Component
         $this->token = $token;
         $this->email = (string) request()->query('email', '');
         $this->locale = app()->getLocale();
+
+        $this->invalid = ! $this->tokenIsUsable();
+    }
+
+    /** Check token existence and expiry without consuming it. */
+    private function tokenIsUsable(): bool
+    {
+        $email = mb_strtolower(trim($this->email));
+
+        if ($email === '') {
+            return false;
+        }
+
+        $record = DB::table('customer_password_reset_tokens')
+            ->where('email', $email)
+            ->first();
+
+        if (! $record) {
+            return false;
+        }
+
+        if (! Hash::check($this->token, $record->token)) {
+            return false;
+        }
+
+        $expireMinutes = (int) config('auth.passwords.customers.expire', 30);
+
+        return now()->diffInMinutes($record->created_at, true) < $expireMinutes;
     }
 
     public function save(): void
