@@ -2,20 +2,28 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-9` (local only; branched from an up-to-date main after phase-8 merge; `phase-8-done` tag present).
-- **Current task:** T9.2 Images — **DONE** (pending owner review). Next task: T9.3 Backups and scheduler.
-- **Last commit:** see Git line below.
-- **Gate result:** 577 tests (575 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
-- **What T9.2 changed:**
-  - Responsive WebP conversions `thumb 160 / card 640 / large 1280 / hero 1920` registered on every image collection via new trait `App\Models\Concerns\HasImageConversions` (wired into Product, Category, Brand, Service, Project, Post, PageSection). Non-image collections (`files`, `catalogue` PDF) are excluded. Conversions are **queued** by default.
-  - Single source of truth `App\Support\ResponsiveImage` (SIZES map + `srcset()` + `fallbackUrl()`).
-  - `<x-image-frame>` now takes `:media` (+ `sizes`) and emits `srcset`/`sizes`/best-fit `src`; added `decoding="async"`. `:src` string path still works (SEO, mail, external). All customer-facing views updated to pass media objects (listing cards, PDP gallery, category/brand/project/service/blog/about/home/cart/checkout/account + raw `<img>` logos/hero backgrounds).
-  - **Image driver → Imagick** (`IMAGE_DRIVER=imagick` in `.env`, `.env.example`, `phpunit.xml`): GD exhausted PHP's 128 MB encoding WebP for the full DemoSeeder; Imagick keeps pixel buffers outside `memory_limit`. Requires the `imagick` PHP ext (present locally).
-  - Tests route media-conversion jobs to a non-running connection by default (TestCase `media-library.queue_connection_name => database`) so the suite doesn't re-encode every seeded image; the one render test opts back into `sync`. New tests: `tests/Feature/Media/ResponsiveImageConversionsTest.php`.
-  - Ran `php artisan media-library:regenerate --only-missing` on the dev `dots` DB (115 media) so existing seeded images already have WebP conversions for review.
-- **Open issues:** none for T9.2. (Carry-over from phase 8: F4 email verification — see Decisions log.) Lighthouse was not run in-session (no headless Chrome); verify the image audit manually (see below).
-- **How to verify on dots.test:** open the home page, a category page, a product detail page, the brands and projects pages. In DevTools → Network, image requests should be `.webp` and the browser should pick a size-appropriate variant (resize the window / throttle to see srcset switch). Check DevTools → Lighthouse → Performance: "Serve images in next-gen formats", "Properly size images", and "Defer offscreen images" should be clean/green. Confirm no broken images (SVG logos have no conversions and correctly fall back to the original).
+- **Current task:** T9.2 Images (Lighthouse fix round) — **DONE** (pending owner review). Next task: T9.3 Backups and scheduler.
+- **Last commit:** `dea296a` (T9.2 fix: Lighthouse a11y, loading, contrast).
+- **Gate result:** 581 tests (579 passed / 2 skipped) · PHPStan 0 errors · Pint clean · Vite build OK.
+- **What T9.2 originally changed:** (see commit `9c2307e`) WebP conversions, srcset, Imagick driver, responsive image component.
+- **What this Lighthouse fix round changed:**
+  - `<x-image-frame>` now accepts `eager` (bool) and `priority` (bool) props → `loading="eager"` and `fetchpriority="high"` on the img.
+  - Product grids: first 4 cards get `eager`, first card also gets `priority` (listing, home, category, brand-detail); PDP first gallery image eager+priority.
+  - Hero images on home, category: `eager priority` passed to image-frame.
+  - Livewire script gets `defer` via `Livewire::useScriptTagAttributes(['defer' => true])` in AppServiceProvider.
+  - `<x-site.lang-switch>`: removed `aria-pressed` from `<a>` tags (invalid ARIA role on anchors); `aria-current` retained.
+  - Filter sidebar `<h3>` → `<h2>`; footer column `<h5>` → `<h2>` (heading order: no skipped levels). CSS selectors updated accordingly.
+  - `--ink-500` darkened from `#75756E` to `#6F6F68` (4.72:1 on #F7F7F5 — see Decisions log).
+- **Open issues:** none. (Carry-over: F4 email verification — see Decisions log.)
+- **How to verify on dots.test:**
+  - Home page: DevTools Network — hero img has `loading="eager" fetchpriority="high"`. First product card in Featured tabs has same. Category cards row 1 has `loading="eager"`.
+  - `/en/products`: first 4 product cards have `loading="eager"`, first has `fetchpriority="high"`, cards 5+ have `loading="lazy"`. Language switcher in header has NO `aria-pressed`; active locale has `aria-current="true"`.
+  - Inspect footer column headings → `<h2>` not `<h5>`. Inspect sidebar filter header → `<h2>` not `<h3>`.
+  - Muted text (#6F6F68) in count/subtitle areas passes contrast in DevTools accessibility checker.
+  - Cart drawer and filter accordions still open/close (Livewire + Alpine working with defer).
+  - `/ar/products` (RTL): same as above, direction correct.
 
-**Git:** branch `phase-9` · last commit `9c2307e` (T9.2) · last tag `phase-8-done` · push state: **not pushed (local only)**
+**Git:** branch `phase-9` · last commit `dea296a` (T9.2 Lighthouse fix) · last tag `phase-8-done` · push state: **not pushed (local only)**
 
 Current phase: **9 — Performance and operations.** T9.1, T9.2 done (pending review). Next: T9.3 Backups and scheduler.
 
@@ -156,6 +164,7 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-20 — Muted text color darkened (T9.2 Lighthouse fix):** Design deviation. `--ink-500` was `#75756E` (WCAG 4.74:1 on white but only 4.33:1 on the site's soft-gray `--ink-50` = `#F7F7F5` surface used by `.d-phead` and `.d-footer`). Darkened to `#6F6F68` which gives 4.72:1 on `#F7F7F5` (≥ AA 4.5:1). The change is minimal — 6 steps darker in lightness. Affects all uses of `--fg-3` / `--ink-500` across the site (phead counts, footer bottom strip, form placeholders, sku, muted metadata). Previous value is documented here for reference.
 - **2026-10-20 — Image driver = Imagick (T9.2):** Technical choice. Responsive WebP conversions on the full DemoSeeder exhausted PHP's 128 MB `memory_limit` under the GD driver (`imagewebp` on large truecolor bitmaps). Switched media-library's `image_driver` to **imagick** via `IMAGE_DRIVER=imagick` (`.env`, `.env.example`, `phpunit.xml`) — Imagick holds pixel buffers in its own C allocations, outside `memory_limit`, and gives better WebP. Requires the `imagick` PHP extension in every environment (prod must have it; falls back to `gd` if the env var is unset). Also: tests route conversion jobs to a non-running connection by default so the suite doesn't re-encode every seeded image (TestCase sets `media-library.queue_connection_name => database`; opt back into `sync` per-test when a real conversion file is needed).
 - **2026-10-20 — Reorder dropped (T8.3 manual review):** Owner decision. The Reorder feature (add past order's items back to cart) was removed entirely — too complex to do well (variant availability, price staleness, partial availability), and not required by the PRD. Removed from `OrderDetail`, lang files, and tests. The phase-8.md plan document mentioned it; the report notes it as dropped.
 - **2026-10-20 — Max saved addresses = 4 (T8.3 manual review):** Owner decision. `CustomerAddress::MAX_PER_CUSTOMER = 4`. Enforced server-side in `Addresses::create/save` and silently in `CheckoutForm::persistAddress`. View hides the add button and shows a hint at the limit.
