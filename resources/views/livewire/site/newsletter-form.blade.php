@@ -5,7 +5,9 @@
                 <x-icon name="check" :size="24" style="color:var(--green-600,#16a34a);" />
             </span>
             <h3 class="t-h3" style="margin:0;">{{ __('ui.subscribed') }}</h3>
-            <p class="t-body" style="margin:0;color:var(--fg-2);">{{ __('ui.newsletter_subscribed_lead') }}</p>
+            <p class="t-body" style="margin:0;color:var(--fg-2);">
+                {{ $alreadySubscribed ? __('ui.newsletter_already_subscribed') : __('ui.newsletter_subscribed_lead') }}
+            </p>
         </div>
     @else
         <form wire:submit="subscribe" novalidate style="display:flex;gap:8px;flex-wrap:wrap;">

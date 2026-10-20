@@ -205,6 +205,7 @@ return [
     'subscribed' => 'You\'re subscribed!',
     'newsletter_subscribed_lead' => 'Thank you — you\'ll hear from us monthly.',
     'newsletter_too_many' => 'Too many requests. Please try again later.',
+    'newsletter_already_subscribed' => 'You\'re already on the list — no need to subscribe again.',
     'ask_lighting_designer' => 'Ask a lighting designer',
     'shop_products_article' => 'Shop the products in this article',
     'view_n_products' => 'View :count products',

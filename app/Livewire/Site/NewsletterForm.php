@@ -22,6 +22,8 @@ class NewsletterForm extends Component
 
     public bool $submitted = false;
 
+    public bool $alreadySubscribed = false;
+
     /** @return array<string, array<int, string>> */
     protected function rules(): array
     {
@@ -47,7 +49,7 @@ class NewsletterForm extends Component
 
         $this->validate();
 
-        NewsletterSubscriber::firstOrCreate(
+        $subscriber = NewsletterSubscriber::firstOrCreate(
             ['email' => strtolower(trim($this->email))],
             [
                 'source' => NewsletterSource::from($this->source),
@@ -58,6 +60,7 @@ class NewsletterForm extends Component
 
         RateLimiter::hit($key, 600);
 
+        $this->alreadySubscribed = ! $subscriber->wasRecentlyCreated;
         $this->submitted = true;
     }
 

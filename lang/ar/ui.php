@@ -205,6 +205,7 @@ return [
     'subscribed' => 'تم الاشتراك!',
     'newsletter_subscribed_lead' => 'شكراً — سنراسلك مرة كل شهر.',
     'newsletter_too_many' => 'طلبات كثيرة جداً. حاول لاحقاً.',
+    'newsletter_already_subscribed' => 'أنت مشترك بالفعل — لا داعي للاشتراك مجدداً.',
     'ask_lighting_designer' => 'اسأل مصمم إضاءة',
     'shop_products_article' => 'تسوق منتجات هذا المقال',
     'view_n_products' => 'عرض :count منتج',
