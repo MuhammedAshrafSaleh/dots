@@ -33,7 +33,7 @@ Install `maatwebsite/excel`. Build the template generator (§1–§2 of IMPORT_S
 ---
 
 ## BI.2 — Parse, validate, preview, report download (dry run, no writes)  _(Sonnet)_
-- [ ] Done
+- [x] Done
 
 Parse the uploaded xlsx mapping **by row-2 key, never by position** (§1). Validate every rule in §3–§4 and §7 without writing anything. Produce the preview: counts (create/update, variants, specs, images matched) + an errors/warnings table (sheet, row, column, Arabic message) + a downloadable **.xlsx report**. Buttons "Apply valid rows" / cancel (Apply is wired in BI.3). Media is parsed only enough to report matched/unmatched here; no extraction yet.
 
@@ -82,5 +82,5 @@ Implement the queued **Apply** job (§4–§7): upsert products/variants/specs, 
 
 ## Checklist
 - [x] BI.1 done
-- [ ] BI.2 done
+- [x] BI.2 done
 - [ ] BI.3 done

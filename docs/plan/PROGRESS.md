@@ -2,32 +2,28 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `bulk-import` (local only).
-- **Current task:** BI.1 — **DONE**. Next task: **BI.2** (parse + validate + preview + report, dry run).
-- **Last commit:** `BI.1: Template generator, Download template, Export, Import page shell` (see Git line).
-- **Gate result:** 611 tests (609 pass, 2 skip) · Larastan clean · Pint clean · build clean.
-- **BI.1 produced:**
-  - `maatwebsite/excel` 4.0 installed (pulls in PhpSpreadsheet 5.10).
-  - `products.import` + `products.export` added to `config/permissions.php`.
-  - "استيراد المنتجات" nav link added under Catalog in `config/admin_nav.php`.
-  - Route `admin.products.import` (`GET products/import`) added to `routes/admin.php`.
-  - `App\Services\ProductTemplateBuilder` — builds the 8-sheet xlsx template (live dropdowns, row-2 hidden keys, DataValidation formulas without leading `=`).
-  - `App\Services\ProductExportBuilder` — fills template with current product data; escapes formula-injection cells; images column empty.
-  - `App\Livewire\Admin\Products\Import` — page shell with `downloadTemplate()` + `export()` actions.
-  - View `livewire/admin/products/import.blade.php` — shows both buttons; upload card placeholder.
-  - Lang: `admin.import_products.*` in AR + EN; `admin.nav.import_products` in both.
-  - Products list: added "Import" button for users with `products.import`.
-  - 13 feature tests in `tests/Feature/Admin/Products/ProductImportBI1Test.php`.
-- **Open issues:** After seeding (new install or `php artisan db:seed --class=RolesAndAdminSeeder`), the Admin role gains `products.import` + `products.export` automatically. Existing local installs need one manual seed run.
+- **Current task:** BI.2 — **DONE**. Next task: **BI.3** (Apply job + ZIP media).
+- **Last commit:** `df3aa7b` — `BI.2: Parse, validate, preview, report download (dry run, no writes)`
+- **Gate result:** 625 tests (623 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **BI.2 produced:**
+  - `App\Services\ProductImportParser` — maps by row-2 key, validates all §3–§4 rules, returns errors/warnings/counts; **zero DB writes**.
+  - `App\Services\ProductImportReportBuilder` — builds downloadable errors+warnings xlsx report.
+  - `App\Livewire\Admin\Products\Import` — added `WithFileUploads`, `preview()`, `downloadReport()`, `cancel()` actions. `$counts`, `$parseErrors`, `$parseWarnings`, `$hasValidRows` properties stored in component.
+  - View updated: upload form card (replaces placeholder) + preview panel (counts chips, errors table, warnings table, report download, "Apply valid rows" button disabled until BI.3).
+  - Lang: added ~20 new `admin.import_products.*` strings in AR + EN.
+  - 14 feature tests in `tests/Feature/Admin/Products/ProductImportBI2Test.php`.
+- **Open issues (carry-forward from BI.1):** After new install, run `php artisan db:seed --class=RolesAndAdminSeeder` once to grant Admin the import/export permissions.
 - **How to verify on dots.test:**
-  1. Run `php artisan db:seed --class=RolesAndAdminSeeder` (once) to give Admin the new perms.
-  2. Log in → Products (list) → click **"استيراد المنتجات"** button — should load the Import page.
-  3. Click **"تنزيل القالب"** — downloads `DOTS-products-import-template.xlsx`; open it in Excel/LibreOffice, check 8 sheets + dropdowns.
-  4. Click **"تصدير المنتجات"** — downloads `DOTS-products-export-….xlsx`; open it, check data + no `=` injections.
-  5. No 403/500/JS errors.
+  1. Log in → Products → Import page.
+  2. Upload a filled xlsx (include a bad row — e.g. EXAMPLE- SKU or unknown brand).
+  3. Click **"معاينة"** — see preview panel: create/update counts, error table with Arabic messages.
+  4. Click **"تنزيل التقرير"** — downloads `DOTS-import-report-*.xlsx` with errors + warnings sheets.
+  5. Click **"إلغاء"** — resets to the upload form.
+  6. No 403/500/JS errors; DB catalog unchanged.
 
-**Git:** branch `bulk-import` (local, unpushed) · last local commit `BI.1: …` · last tag `phase-9-done` · push state: **not pushed**
+**Git:** branch `bulk-import` (local, unpushed) · last local commit `df3aa7b` · last tag `phase-9-done` · push state: **not pushed**
 
-Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. Next: BI.2. After BI.3 → Phase 10.
+Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. BI.2 done. Next: BI.3. After BI.3 → Phase 10.
 
 ---
 
