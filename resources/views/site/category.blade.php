@@ -39,7 +39,7 @@
 
     {{-- ========== 1. HERO ========== --}}
     <section class="d-cat-hero" style="position:relative;min-height:440px;display:flex;align-items:flex-end;">
-        <x-image-frame :media="$heroMedia" sizes="100vw" :alt="$catName" style="position:absolute;inset:0;" />
+        <x-image-frame :media="$heroMedia" sizes="100vw" :alt="$catName" eager priority style="position:absolute;inset:0;" />
         {{-- Directional gradient: dark on the reading-start side (RTL flips direction) --}}
         <div aria-hidden="true" style="position:absolute;inset:0;background:linear-gradient({{ $dir === 'rtl' ? '270deg' : '90deg' }},rgba(24,24,22,.78),rgba(24,24,22,.1) 75%);"></div>
 
@@ -120,7 +120,7 @@
                 <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($featuredProducts as $i => $product)
                         <div class="d-rv" style="--rv-d:{{ $i * 60 }}ms;">
-                            @include('site._product-card', ['product' => $product])
+                            @include('site._product-card', ['product' => $product, 'eager' => $loop->index < 4, 'priority' => $loop->first])
                         </div>
                     @endforeach
                 </div>

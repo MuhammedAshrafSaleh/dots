@@ -106,6 +106,48 @@ it('renders a webp srcset and sizes from a media item via the image-frame compon
         ->assertSee('loading="lazy"', false);
 });
 
+it('renders eager loading and fetchpriority high when props are set', function () {
+    Storage::fake('public');
+    config(['media-library.queue_connection_name' => 'sync']);
+
+    $brand = Brand::create(['name' => 'Acme2', 'slug' => 'acme2']);
+    $category = Category::create([
+        'level' => 3,
+        'name' => ['ar' => 'ق2', 'en' => 'C2'],
+        'slug' => ['ar' => 'cat-ar-2', 'en' => 'cat-en-2'],
+    ]);
+    $product = Product::create([
+        'brand_id' => $brand->id,
+        'category_id' => $category->id,
+        'sku' => 'LAMP-2',
+        'name' => ['en' => 'Lamp2', 'ar' => 'مصباح2'],
+        'slug' => ['en' => 'lamp-2', 'ar' => 'misbah-2'],
+    ]);
+    $file = UploadedFile::fake()->image('lamp2.jpg', 1600, 1600);
+    $product->addMedia($file->getRealPath())
+        ->preservingOriginal()
+        ->usingFileName('lamp2.jpg')
+        ->toMediaCollection('gallery');
+    $media = $product->getFirstMedia('gallery');
+
+    $html = $this->blade(
+        '<x-image-frame :media="$media" sizes="300px" alt="Lamp" eager priority />',
+        ['media' => $media],
+    );
+
+    $html->assertSee('loading="eager"', false)
+        ->assertSee('fetchpriority="high"', false);
+});
+
+it('lang-switch renders aria-current on active locale and no aria-pressed on anchors', function () {
+    $html = $this->blade('<x-site.lang-switch />');
+
+    $html->assertDontSee('aria-pressed', false);
+
+    // One anchor must have aria-current="true" matching the current locale (ar by default in tests)
+    $html->assertSee('aria-current="true"', false);
+});
+
 it('maps conversion names to ascending widths as a single source of truth', function () {
     expect(ResponsiveImage::SIZES)->toBe([
         'thumb' => 160,

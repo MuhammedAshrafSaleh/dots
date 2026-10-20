@@ -94,7 +94,9 @@
                                         sizes="(max-width: 60rem) 100vw, 560px"
                                         :alt="$captionStr ?: $productName"
                                         ratio="1 / 1"
-                                        :label="$captionStr" />
+                                        :label="$captionStr"
+                                        :eager="$i === 0"
+                                        :priority="$i === 0" />
                                 </div>
                             @endforeach
 

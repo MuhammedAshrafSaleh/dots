@@ -18,7 +18,7 @@
 
     {{-- Header --}}
     <div class="d-filters__head">
-        <h3><x-icon name="sliders-horizontal" :size="18" />{{ __('ui.listing_filters') }}</h3>
+        <h2><x-icon name="sliders-horizontal" :size="18" />{{ __('ui.listing_filters') }}</h2>
         @if ($activeCount > 0)
             <button type="button" class="d-fsec__more" wire:click="clearAll">
                 {{ __('ui.listing_clear_all') }}

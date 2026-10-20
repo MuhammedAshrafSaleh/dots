@@ -39,7 +39,7 @@
 
         {{-- Shop (categories flagged for the footer) --}}
         <div>
-            <h5>{{ __('ui.footer_shop') }}</h5>
+            <h2>{{ __('ui.footer_shop') }}</h2>
             <ul>
                 @foreach ($footerCats as $cat)
                     <li><a href="{{ $catUrl($cat) }}">{{ $cat->getTranslation('name', $locale) }}</a></li>
@@ -50,7 +50,7 @@
 
         {{-- Services --}}
         <div>
-            <h5>{{ __('ui.services') }}</h5>
+            <h2>{{ __('ui.services') }}</h2>
             <ul>
                 <li><a href="{{ route('services') }}">{{ __('ui.all_services') }}</a></li>
             </ul>
@@ -58,7 +58,7 @@
 
         {{-- Company --}}
         <div>
-            <h5>{{ __('ui.footer_company') }}</h5>
+            <h2>{{ __('ui.footer_company') }}</h2>
             <ul>
                 <li><a href="{{ route('about') }}">{{ __('ui.about') }}</a></li>
                 <li><a href="{{ route('projects.current') }}">{{ __('ui.current_projects') }}</a></li>
@@ -69,7 +69,7 @@
 
         {{-- Help (content pages flagged for the footer + track order) --}}
         <div>
-            <h5>{{ __('ui.footer_help') }}</h5>
+            <h2>{{ __('ui.footer_help') }}</h2>
             <ul>
                 <li><a href="{{ route('track') }}">{{ __('ui.track_order') }}</a></li>
                 @foreach ($footerPages as $page)

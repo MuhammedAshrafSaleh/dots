@@ -45,6 +45,11 @@ class AppServiceProvider extends ServiceProvider
         // missing attributes and silently-discarded attributes during dev/tests.
         Model::shouldBeStrict(! $this->app->isProduction());
 
+        // Non-blocking Livewire script: injected at end of </body> by default;
+        // defer lets the browser fetch it concurrently with HTML parsing.
+        // Alpine (bundled in Livewire) starts after DOM parse — correct order.
+        Livewire::useScriptTagAttributes(['defer' => true]);
+
         // Admin Livewire components update via POST /livewire/update, which runs
         // Livewire's own middleware group — NOT the admin route middleware. Mark
         // the admin guard + locale middleware persistent so they re-run on every

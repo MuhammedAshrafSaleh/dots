@@ -32,6 +32,10 @@
 
     $hasPrice = ! $product->price_on_request && $product->min_price !== null;
 
+    // Eager-load control: callers may pass $eager/$priority explicitly.
+    $eager    = $eager ?? false;
+    $priority = $priority ?? false;
+
     // Default variant for quick add-to-cart (full selection lives on the PDP).
     $defaultVariantId = null;
     if ($hasPrice) {
@@ -49,7 +53,7 @@
 
     {{-- Media --}}
     <div class="d-pcard__media">
-        <x-image-frame :media="$img" :alt="$productName" sizes="(max-width: 48rem) 50vw, 300px" />
+        <x-image-frame :media="$img" :alt="$productName" sizes="(max-width: 48rem) 50vw, 300px" :eager="$eager" :priority="$priority" />
         <div class="d-pcard__badges">
             @if ($salePct)
                 <span class="d-badge d-badge--sale">{{ __('ui.pcard_sale_off', ['pct' => $salePct]) }}</span>

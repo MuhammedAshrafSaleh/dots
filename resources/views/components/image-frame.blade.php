@@ -8,6 +8,8 @@
     'ratio' => null,
     'contain' => false,
     'radius' => null,
+    'eager' => false,
+    'priority' => false,
 ])
 @php
     // Mirror of design/website/src/components/core/ImageFrame.jsx.
@@ -32,7 +34,7 @@
     @if ($video)
         <video src="{{ $video }}" @if ($src) poster="{{ $src }}" @endif autoplay muted loop playsinline aria-hidden="true" style="width:100%;height:100%;object-fit:cover;"></video>
     @elseif ($src)
-        <img x-show="!failed" src="{{ $src }}" @if ($srcset) srcset="{{ $srcset }}" sizes="{{ $sizes ?? '100vw' }}" @endif alt="{{ $alt }}" loading="lazy" decoding="async" x-on:error="failed = true">
+        <img x-show="!failed" src="{{ $src }}" @if ($srcset) srcset="{{ $srcset }}" sizes="{{ $sizes ?? '100vw' }}" @endif alt="{{ $alt }}" loading="{{ $eager ? 'eager' : 'lazy' }}" decoding="async" @if ($priority) fetchpriority="high" @endif x-on:error="failed = true">
     @endif
     @if ($src)
         <div class="d-img__ph" x-show="failed" x-cloak aria-hidden="true">@if ($label)<span class="d-img__label">{{ $label }}</span>@endif</div>

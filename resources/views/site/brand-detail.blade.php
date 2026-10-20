@@ -102,7 +102,7 @@
                 <div class="d-brand-products-grid" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;">
                     @foreach ($products as $i => $product)
                         <div style="--rv-d:{{ ($i % 4) * 60 }}ms;">
-                            @include('site._product-card', ['product' => $product])
+                            @include('site._product-card', ['product' => $product, 'eager' => $loop->index < 4, 'priority' => $loop->first])
                         </div>
                     @endforeach
                 </div>

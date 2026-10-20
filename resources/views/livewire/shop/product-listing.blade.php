@@ -194,7 +194,11 @@
             @else
                 <div class="{{ $view === 'list' ? 'd-plist' : 'd-pgrid' }}">
                     @foreach ($products as $product)
-                        @include('site._product-card', ['product' => $product])
+                        @include('site._product-card', [
+                            'product'  => $product,
+                            'eager'    => $loop->index < 4,
+                            'priority' => $loop->first,
+                        ])
                     @endforeach
                 </div>
 

@@ -34,6 +34,8 @@
                 sizes="100vw"
                 :video="$heroVid"
                 :label="$field('hero', 'eyebrow')"
+                eager
+                priority
                 style="position:absolute;inset:0;"
                 x-bind:style="paused ? 'display:block' : ''"
             />
@@ -155,6 +157,8 @@
                                         :media="$cat->getFirstMedia('image')"
                                         :alt="$cat->getTranslation('name', $locale)"
                                         sizes="(max-width: 48rem) 50vw, 300px"
+                                        :eager="$i < 4"
+                                        :priority="$i === 0"
                                     />
                                 </div>
                                 <div class="d-ccard__body">
@@ -199,19 +203,19 @@
                 {{-- New arrivals --}}
                 <div x-show="tab === 'new'" x-cloak class="d-home-prods">
                     @foreach ($newProducts as $product)
-                        @include('site._product-card', ['product' => $product])
+                        @include('site._product-card', ['product' => $product, 'eager' => $loop->index < 4, 'priority' => $loop->first])
                     @endforeach
                 </div>
                 {{-- Best sellers --}}
                 <div x-show="tab === 'best'" x-cloak class="d-home-prods">
                     @foreach ($bestProducts as $product)
-                        @include('site._product-card', ['product' => $product])
+                        @include('site._product-card', ['product' => $product, 'eager' => $loop->index < 4, 'priority' => $loop->first])
                     @endforeach
                 </div>
                 {{-- Smart home --}}
                 <div x-show="tab === 'smart'" x-cloak class="d-home-prods">
                     @foreach ($smartProducts as $product)
-                        @include('site._product-card', ['product' => $product])
+                        @include('site._product-card', ['product' => $product, 'eager' => $loop->index < 4, 'priority' => $loop->first])
                     @endforeach
                 </div>
             </div>
