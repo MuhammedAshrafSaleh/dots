@@ -389,6 +389,9 @@ return [
         'disabled' => 'Account disabled',
         'enabled' => 'Account enabled',
         'disabled_hint' => 'The customer has been signed out and can no longer sign in.',
+        'delete' => 'Delete customer',
+        'delete_confirm' => 'Delete this customer? This cannot be undone.',
+        'deleted' => 'Customer deleted',
     ],
 
     'categories' => [

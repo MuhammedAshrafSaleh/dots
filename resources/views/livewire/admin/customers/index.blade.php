@@ -52,10 +52,16 @@
                     <td class="is-num"><b>{{ number_format((float) $customer->orders_sum_total, 2) }}</b></td>
                     <td><span class="a-mono">{{ $customer->created_at?->translatedFormat('j M Y') }}</span></td>
                     <td><x-badge :tone="$statusTone[$customer->status->value] ?? 'neutral'" dot>{{ __('admin.customers.status_'.$customer->status->value) }}</x-badge></td>
-                    <td class="is-shrink" onclick="event.stopPropagation()">
+                    <td class="is-shrink" onclick="event.stopPropagation()" style="display: flex; align-items: center; gap: 4px;">
                         <a class="d-btn d-btn--ghost d-btn--icon d-btn--sm" style="color: var(--wa-600);" target="_blank" rel="noopener"
                            href="https://wa.me/{{ \App\Services\WhatsApp::normalizeNumber($customer->mobile) }}"
                            aria-label="{{ __('admin.customers.whatsapp_customer') }}"><x-icon name="message-circle" size="16" /></a>
+                        @can('customers.delete')
+                            <button type="button" class="d-btn d-btn--ghost d-btn--icon d-btn--sm" style="color: var(--danger-600);"
+                                wire:click="delete({{ $customer->id }})"
+                                wire:confirm="{{ __('admin.customers.delete_confirm') }}"
+                                aria-label="{{ __('admin.customers.delete') }}"><x-icon name="trash-2" size="16" /></button>
+                        @endcan
                     </td>
                 </tr>
             @endforeach

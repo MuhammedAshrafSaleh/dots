@@ -9,6 +9,7 @@ use App\Models\Governorate;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
 use Livewire\Component;
 
@@ -65,6 +66,12 @@ class Addresses extends Component
 
     public function create(): void
     {
+        if ($this->customer()->addresses()->count() >= CustomerAddress::MAX_PER_CUSTOMER) {
+            throw ValidationException::withMessages([
+                '_limit' => __('account.addresses.limit_reached', ['max' => CustomerAddress::MAX_PER_CUSTOMER]),
+            ]);
+        }
+
         $this->resetForm();
         $this->is_default = $this->customer()->addresses()->count() === 0;
         $this->editingId = 0;
@@ -117,6 +124,12 @@ class Addresses extends Component
 
         $customer = $this->customer();
         $isNew = $this->editingId === 0;
+
+        if ($isNew && $customer->addresses()->count() >= CustomerAddress::MAX_PER_CUSTOMER) {
+            throw ValidationException::withMessages([
+                '_limit' => __('account.addresses.limit_reached', ['max' => CustomerAddress::MAX_PER_CUSTOMER]),
+            ]);
+        }
 
         if ($isNew) {
             /** @var CustomerAddress $address */

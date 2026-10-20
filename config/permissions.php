@@ -33,7 +33,7 @@ return [
 
     // Sales
     'orders.view', 'orders.update', 'orders.delete',
-    'customers.view', 'customers.update',
+    'customers.view', 'customers.update', 'customers.delete',
     'coupons.view', 'coupons.create', 'coupons.update', 'coupons.delete',
 
     // Leads

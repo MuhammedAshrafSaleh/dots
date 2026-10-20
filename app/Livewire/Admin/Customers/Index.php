@@ -72,6 +72,15 @@ class Index extends Component
             ->orderByDesc('id');
     }
 
+    public function delete(int $id): void
+    {
+        $this->authorize('customers.delete');
+
+        Customer::findOrFail($id)->delete();
+
+        $this->dispatch('toast', tone: 'success', title: __('admin.customers.deleted'));
+    }
+
     public function export(): StreamedResponse
     {
         $this->authorize('customers.view');

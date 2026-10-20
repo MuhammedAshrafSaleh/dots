@@ -34,7 +34,7 @@ return [
 
     'save_order' => [
         'title' => 'Save your details for next time',
-        'body' => 'Add a password and we’ll create your account from this order — track it, reorder and check out faster.',
+        'body' => 'Add a password and we’ll create your account from this order — track it and check out faster next time.',
         'password_label' => 'Choose a password',
         'created' => 'Account created — your order and address are saved.',
     ],
@@ -142,8 +142,6 @@ return [
     'order' => [
         'all_orders' => 'All orders',
         'title' => 'Order',
-        'reorder' => 'Reorder',
-        'reordered' => 'Added the items from :number to your cart.',
         'help' => 'Help with this order',
         'status' => 'Order status',
         'items' => 'Items',
@@ -199,6 +197,8 @@ return [
         'delete_confirm' => 'Delete address',
         'empty_title' => 'No saved addresses',
         'empty_body' => 'Save your home, office or site address once and pick it in one tap at checkout.',
+        'limit_reached' => 'You have reached the maximum of :max saved addresses. Delete one to add a new one.',
+        'limit_reached_short' => 'You have reached the maximum of :max addresses.',
     ],
 
     'profile' => [
