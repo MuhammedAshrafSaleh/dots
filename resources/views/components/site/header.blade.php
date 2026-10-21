@@ -32,6 +32,7 @@
     // Active nav section for the current route (highlights the matching link).
     $active = $active ?? null;
     $isActive = fn ($key) => $active === $key ? 'd-nav__link--active' : '';
+    $logoUrl = (string) ($settings->get('brand.logo_url') ?? '');
 @endphp
 
 {{-- ========================= Full (desktop) ========================= --}}
@@ -47,7 +48,11 @@
     </div>
     <div class="d-container d-nav__main">
         <a href="{{ route('home') }}" class="d-nav__logo" aria-label="Dots — {{ __('ui.home') }}">
-            <span style="font:700 26px/1 var(--font-display);">Dots</span>
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="Dots" style="max-height:40px;max-width:120px;object-fit:contain;display:block;">
+            @else
+                <span style="font:700 26px/1 var(--font-display);">Dots</span>
+            @endif
         </a>
         <x-site.search-bar class="d-nav__search" />
         <div class="d-nav__actions">
@@ -131,7 +136,11 @@
             <x-icon x-show="open" x-cloak name="x" :size="20" />
         </button>
         <a href="{{ route('home') }}" class="d-nav__logo" aria-label="Dots — {{ __('ui.home') }}">
-            <span style="font:700 22px/1 var(--font-display);">Dots</span>
+            @if ($logoUrl)
+                <img src="{{ $logoUrl }}" alt="Dots" style="max-height:32px;max-width:100px;object-fit:contain;display:block;">
+            @else
+                <span style="font:700 22px/1 var(--font-display);">Dots</span>
+            @endif
         </a>
         <div class="d-nav__actions">
             <x-site.lang-switch />

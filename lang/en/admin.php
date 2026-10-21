@@ -937,6 +937,10 @@ return [
         'seo_og_image' => 'Default share image URL',
         'seo_og_help' => 'og-default-1200x630.jpg · 1200×630 px recommended',
         'seo_hint' => 'Used when a page has no SEO of its own',
+        'tab_brand' => 'Branding',
+        'card_brand' => 'Site logo',
+        'brand_logo_url' => 'Site logo',
+        'brand_logo_help' => 'Shown in header, footer, and preloader — leave empty to use the text name',
         // WhatsApp templates
         'wa_tpl_product' => 'Product share',
         'wa_tpl_cart' => 'Cart checkout',

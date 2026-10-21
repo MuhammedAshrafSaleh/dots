@@ -4,12 +4,17 @@ namespace App\Livewire\Admin\Settings;
 
 use App\Services\Settings;
 use Illuminate\Contracts\View\View;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
+use Livewire\WithFileUploads;
 
 #[Layout('components.layouts.admin')]
 class Edit extends Component
 {
+    use WithFileUploads;
+
     public string $activeTab = 'contact';
 
     // --- contact ---
@@ -98,6 +103,11 @@ class Edit extends Component
     /** @var array<string, string> */
     public array $footer_copyright = ['ar' => '', 'en' => ''];
 
+    // --- brand ---
+    public string $brand_logo_url = '';   // stored URL from settings (persisted)
+
+    public mixed $logoUpload = null;      // temp upload this session
+
     // --- seo ---
     /** @var array<string, string> */
     public array $seo_default_title = ['ar' => '', 'en' => ''];
@@ -176,6 +186,9 @@ class Edit extends Component
         $this->footer_payments_line = $this->bi($settings->get('footer.payments_line'));
         $this->footer_copyright = $this->bi($settings->get('footer.copyright'));
 
+        // Brand
+        $this->brand_logo_url = (string) ($settings->get('brand.logo_url') ?? '');
+
         // SEO
         $this->seo_default_title = $this->bi($settings->get('seo.default_title'));
         $this->seo_default_description = $this->bi($settings->get('seo.default_description'));
@@ -197,6 +210,7 @@ class Edit extends Component
             'order_prefix' => ['required', 'string', 'max:20', 'regex:/^[A-Za-z0-9_-]+$/'],
             'currency' => ['required', 'string', 'max:10'],
             'seo_og_image' => ['nullable', 'max:500'],
+            'logoUpload' => ['nullable', 'image', 'max:5120'],
         ]);
 
         // Contact
@@ -235,6 +249,15 @@ class Edit extends Component
         $settings->set('footer.payments_line', $this->footer_payments_line);
         $settings->set('footer.copyright', $this->footer_copyright);
 
+        // Brand logo
+        if ($this->logoUpload instanceof TemporaryUploadedFile) {
+            $this->deleteStoredLogo();
+            $path = $this->logoUpload->storeAs('brand', 'logo.'.$this->logoUpload->getClientOriginalExtension(), 'public');
+            $this->brand_logo_url = Storage::disk('public')->url($path);
+            $settings->set('brand.logo_url', $this->brand_logo_url);
+            $this->logoUpload = null;
+        }
+
         // SEO
         $settings->set('seo.default_title', $this->seo_default_title);
         $settings->set('seo.default_description', $this->seo_default_description);
@@ -248,6 +271,23 @@ class Edit extends Component
         return view('livewire.admin.settings.edit', [
             'templateVars' => self::templateVars(),
         ]);
+    }
+
+    public function removeLogo(Settings $settings): void
+    {
+        $this->authorize('settings.update');
+        $this->deleteStoredLogo();
+        $this->brand_logo_url = '';
+        $this->logoUpload = null;
+        $settings->set('brand.logo_url', '');
+        $this->dispatch('toast', tone: 'success', title: __('admin.settings.saved'));
+    }
+
+    private function deleteStoredLogo(): void
+    {
+        if ($this->brand_logo_url && str_contains($this->brand_logo_url, '/storage/brand/')) {
+            Storage::disk('public')->delete('brand/'.basename($this->brand_logo_url));
+        }
     }
 
     /** @return array<string, string> */

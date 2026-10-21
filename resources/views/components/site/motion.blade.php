@@ -19,7 +19,10 @@
     <div class="d-pre__accent"></div>
     <div class="d-pre__panel">
         <div class="d-pre__in">
-            <div class="d-pre__brand"><span>Dots</span></div>
+            <div class="d-pre__brand" dir="ltr">
+                <img src="{{ asset('images/mark.png') }}" alt="" aria-hidden="true">
+                <span>Dots</span>
+            </div>
             <div class="d-pre__line"><span style="width:0%"><i></i></span></div>
             <div class="d-pre__meta"><span>Lighting · Smart Home · Electrical</span><b data-pre-count>000</b></div>
         </div>

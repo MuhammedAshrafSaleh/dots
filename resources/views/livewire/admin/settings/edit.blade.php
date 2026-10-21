@@ -1,5 +1,5 @@
 @php
-    $tabs = ['contact', 'commerce', 'whatsapp', 'footer', 'seo'];
+    $tabs = ['contact', 'commerce', 'whatsapp', 'footer', 'seo', 'brand'];
 @endphp
 <div class="a-page">
     <x-admin.head :title="__('admin.settings.title')" :sub="__('admin.settings.subtitle')">
@@ -128,6 +128,24 @@
             <x-admin.field-bilingual :label="__('admin.settings.footer_about')" model="footer_about_text" :multiline="true" :rows="3" />
             <x-admin.field-bilingual :label="__('admin.settings.footer_payments')" model="footer_payments_line" />
             <x-admin.field-bilingual :label="__('admin.settings.footer_copyright')" model="footer_copyright" />
+        </x-admin.card>
+    </div>
+
+    {{-- Brand --}}
+    <div @class(['a-hidden' => $activeTab !== 'brand'])>
+        <x-admin.card :title="__('admin.settings.card_brand')">
+            @php
+                $previewUrl = $logoUpload ? $logoUpload->temporaryUrl() : ($brand_logo_url ?: null);
+            @endphp
+            <x-admin.image
+                :label="__('admin.settings.brand_logo_url')"
+                :url="$previewUrl"
+                model="logoUpload"
+                remove="removeLogo"
+                :help="__('admin.settings.brand_logo_help')"
+                ratio="3 / 1"
+                contain
+            />
         </x-admin.card>
     </div>
 
