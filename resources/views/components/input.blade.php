@@ -23,7 +23,7 @@
     @if ($label)
         <label class="d-label" for="{{ $fid }}">{{ $label }}@if ($optional)<span class="d-label__opt"> · {{ __('ui.optional') }}</span>@endif</label>
     @endif
-    <div class="d-control">
+    <div class="d-control" @if ($attributes->has('dir')) dir="{{ $attributes->get('dir') }}" @endif>
         @if ($icon)<span class="d-control__lead"><x-icon :name="$icon" size="18" /></span>@endif
         <{{ $tag }}
             id="{{ $fid }}"
