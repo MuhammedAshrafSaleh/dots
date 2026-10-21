@@ -50,6 +50,9 @@
                 <div wire:poll.1500ms="refreshStatus" style="display: grid; gap: 10px; text-align: center; padding: 24px;">
                     <div style="font-weight: 700; font-size: 16px;">{{ __('admin.import_products.applying') }}</div>
                     <div style="color: #555;">{{ __('admin.import_products.applying_desc') }}</div>
+                    @if ($applyStalled)
+                        <x-admin.alert tone="warning">{{ __('admin.import_products.apply_stalled') }}</x-admin.alert>
+                    @endif
                 </div>
             @elseif ($applied)
                 {{-- Applied (result summary) --}}

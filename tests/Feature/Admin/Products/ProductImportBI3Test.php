@@ -409,3 +409,18 @@ it('apply dispatches the job and records an import log', function () {
     expect(ImportLog::where('status', 'completed')->count())->toBe(1)
         ->and(Product::where('sku', 'LW-1')->exists())->toBeTrue();
 });
+
+it('refreshStatus sets applyStalled after 30s with a pending log', function () {
+    $log = ImportLog::create([
+        'user_id' => auth('admin')->id(),
+        'filename' => 'test.xlsx',
+        'status' => 'pending',
+    ]);
+
+    Livewire::test(Import::class)
+        ->set('importLogId', $log->id)
+        ->set('applying', true)
+        ->set('applyDispatchedAt', time() - 35)
+        ->call('refreshStatus')
+        ->assertSet('applyStalled', true);
+});

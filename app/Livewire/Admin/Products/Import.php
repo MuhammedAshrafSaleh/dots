@@ -47,6 +47,11 @@ class Import extends Component
 
     public bool $applyFailed = false;
 
+    public bool $applyStalled = false;
+
+    /** Unix timestamp set when the job is dispatched — used to detect a stalled queue worker. */
+    public ?int $applyDispatchedAt = null;
+
     /** @var array{created:int, updated:int, variants:int, specs:int, images:int, warnings:int} */
     public array $applyResult = ['created' => 0, 'updated' => 0, 'variants' => 0, 'specs' => 0, 'images' => 0, 'warnings' => 0];
 
@@ -139,6 +144,8 @@ class Import extends Component
         $this->applying = true;
         $this->applied = false;
         $this->applyFailed = false;
+        $this->applyStalled = false;
+        $this->applyDispatchedAt = time();
 
         ApplyProductImport::dispatch(
             $log->id,
@@ -158,12 +165,22 @@ class Import extends Component
         }
 
         $log = ImportLog::find($this->importLogId);
+
         if ($log === null || ! in_array($log->status, ['completed', 'failed'], true)) {
+            if (
+                $this->applyDispatchedAt !== null
+                && (time() - $this->applyDispatchedAt) > 30
+                && ($log === null || $log->status === 'pending')
+            ) {
+                $this->applyStalled = true;
+            }
+
             return;
         }
 
         $this->applying = false;
         $this->applied = true;
+        $this->applyStalled = false;
         $this->applyFailed = $log->status === 'failed';
         $this->applyResult = [
             'created' => $log->created_count,
@@ -191,7 +208,7 @@ class Import extends Component
     {
         $this->reset([
             'xlsxFile', 'zipFile', 'showPreview', 'parseErrors', 'parseWarnings', 'hasValidRows',
-            'importLogId', 'applying', 'applied', 'applyFailed',
+            'importLogId', 'applying', 'applied', 'applyFailed', 'applyStalled', 'applyDispatchedAt',
         ]);
         $this->counts = ['create' => 0, 'update' => 0, 'variants' => 0, 'specs' => 0, 'images' => 0];
         $this->applyResult = ['created' => 0, 'updated' => 0, 'variants' => 0, 'specs' => 0, 'images' => 0, 'warnings' => 0];

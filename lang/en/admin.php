@@ -1264,6 +1264,7 @@ return [
         // apply / progress
         'applying' => 'Applying…',
         'applying_desc' => 'Importing your products. This can take a moment for large files.',
+        'apply_stalled' => 'Processing has not started — make sure the queue worker is running',
         'applied_title' => 'Import complete',
         'applied_failed' => 'Import failed. Nothing was changed — check the server log and try again.',
         'applied_created' => 'Created',
