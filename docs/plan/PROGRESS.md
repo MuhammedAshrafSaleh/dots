@@ -3,8 +3,8 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `bulk-import` (local only).
 - **Current task:** BI.3 — **DONE**. Bulk import complete (BI.1–BI.3). Next: **Phase 10**.
-- **Last commit:** `1ff73e8` — `BI.3: Apply job + ZIP media (upsert in one txn, variant sync, media pipeline, import log)`.
-- **Gate result:** 638 tests (636 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Last commit:** `15b5f63` — `BI.3 pre-approval: queue stall warning + browser test selector fix`.
+- **Gate result:** 639 tests (637 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **BI.3 produced:**
   - `App\Services\ProductImportParser` — now also returns a `plan` (products + their valid variant/spec rows, with resolved attribute value IDs). Added partial-translation + plan builder; captured variant/spec data. Existing return keys unchanged (BI.2 tests still pass).
   - `App\Services\ProductImportApplier` — upserts products/variants/specs in one transaction (empty cell keeps value; simple ⇒ one default variant sku=product sku; variant sync deactivates missing variants, never deletes; specs replace-all; overview plain-text → escaped `<p>` → purifier). Recomputes cache columns + flushes LISTINGS/FACETS/CATEGORIES/BRANDS. Attaches media **after** commit; NEW product with zero valid images forced to draft.
@@ -24,7 +24,7 @@
   4. Open the imported products on the public site: prices + images show immediately; deactivated variants are gone from the picker; a NEW product with no valid image is a draft (not public).
   5. No 403/500/JS errors.
 
-**Git:** branch `bulk-import` (local, unpushed) · last local commit `1ff73e8` · last tag `phase-9-done` · push state: **not pushed**
+**Git:** branch `bulk-import` (local, unpushed) · last local commit `15b5f63` · last tag `phase-9-done` · push state: **not pushed**
 
 Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. BI.2 done. BI.3 done. Next: Phase 10.
 
