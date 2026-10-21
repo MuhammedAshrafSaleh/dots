@@ -52,12 +52,17 @@ final class ProductExportBuilder
         $products = Product::with([
             'brand',
             'category.parent.parent',
-            'variants' => fn ($q) => $q->where('is_default', true)->limit(1),
+            'variants',
         ])->orderBy('id')->lazy();
 
         $row = 3;
         foreach ($products as $product) {
-            $defaultVariant = $product->variants->first();
+            // Product-level price/stock belong to a simple product only (one
+            // variant whose SKU = the product SKU). Variant products leave them
+            // empty so a round-trip re-import is not flagged as a conflict.
+            $variants = $product->variants;
+            $isSimple = $variants->count() === 1 && $variants->first()?->sku === $product->sku;
+            $defaultVariant = $isSimple ? $variants->first() : null;
             $boolStatus = fn (bool $b): string => $b ? 'نعم' : 'لا';
 
             $data = [

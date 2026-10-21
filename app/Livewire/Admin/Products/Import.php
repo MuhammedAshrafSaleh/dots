@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Admin\Products;
 
+use App\Jobs\ApplyProductImport;
+use App\Models\ImportLog;
 use App\Services\ProductExportBuilder;
 use App\Services\ProductImportParser;
 use App\Services\ProductImportReportBuilder;
 use App\Services\ProductTemplateBuilder;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Livewire\Component;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
@@ -19,6 +23,8 @@ class Import extends Component
 
     public ?TemporaryUploadedFile $xlsxFile = null;
 
+    public ?TemporaryUploadedFile $zipFile = null;
+
     public bool $showPreview = false;
 
     /** @var array{create:int, update:int, variants:int, specs:int, images:int} */
@@ -31,6 +37,18 @@ class Import extends Component
     public array $parseWarnings = [];
 
     public bool $hasValidRows = false;
+
+    // Apply state
+    public ?int $importLogId = null;
+
+    public bool $applying = false;
+
+    public bool $applied = false;
+
+    public bool $applyFailed = false;
+
+    /** @var array{created:int, updated:int, variants:int, specs:int, images:int, warnings:int} */
+    public array $applyResult = ['created' => 0, 'updated' => 0, 'variants' => 0, 'specs' => 0, 'images' => 0, 'warnings' => 0];
 
     // -------------------------------------------------------------------------
 
@@ -93,14 +111,90 @@ class Import extends Component
         ]);
     }
 
+    /**
+     * Persist the uploaded files to a private working dir and dispatch the
+     * queued Apply job. With QUEUE_CONNECTION=sync it runs inline, so the
+     * status is refreshed immediately; in production the view polls.
+     */
+    public function apply(): void
+    {
+        $this->authorize('products.import');
+
+        $this->validate([
+            'xlsxFile' => ['required', 'file', 'mimes:xlsx', 'max:65536'],
+            'zipFile' => ['nullable', 'file', 'mimes:zip', 'max:65536'],
+        ]);
+
+        $dir = 'imports/'.Str::uuid();
+        $xlsxStored = $this->xlsxFile->storeAs($dir, 'data.xlsx', 'local');
+        $zipStored = $this->zipFile?->storeAs($dir, 'media.zip', 'local');
+
+        $log = ImportLog::create([
+            'user_id' => auth('admin')->id(),
+            'filename' => $this->xlsxFile->getClientOriginalName(),
+            'status' => 'pending',
+        ]);
+
+        $this->importLogId = $log->id;
+        $this->applying = true;
+        $this->applied = false;
+        $this->applyFailed = false;
+
+        ApplyProductImport::dispatch(
+            $log->id,
+            Storage::disk('local')->path($xlsxStored),
+            $zipStored !== null ? Storage::disk('local')->path($zipStored) : null,
+            app()->getLocale(),
+        );
+
+        $this->refreshStatus();
+    }
+
+    /** Poll the import log; reflect the final counts once the job finishes. */
+    public function refreshStatus(): void
+    {
+        if ($this->importLogId === null) {
+            return;
+        }
+
+        $log = ImportLog::find($this->importLogId);
+        if ($log === null || ! in_array($log->status, ['completed', 'failed'], true)) {
+            return;
+        }
+
+        $this->applying = false;
+        $this->applied = true;
+        $this->applyFailed = $log->status === 'failed';
+        $this->applyResult = [
+            'created' => $log->created_count,
+            'updated' => $log->updated_count,
+            'variants' => $log->variants_count,
+            'specs' => $log->specs_count,
+            'images' => $log->images_count,
+            'warnings' => $log->warnings_count,
+        ];
+    }
+
+    public function downloadAppliedReport(): ?StreamedResponse
+    {
+        $this->authorize('products.import');
+
+        $log = $this->importLogId !== null ? ImportLog::find($this->importLogId) : null;
+        if ($log === null || $log->report_path === null || ! Storage::disk('local')->exists($log->report_path)) {
+            return null;
+        }
+
+        return Storage::disk('local')->download($log->report_path, 'DOTS-import-report-'.$log->id.'.xlsx');
+    }
+
     public function cancel(): void
     {
-        $this->xlsxFile = null;
-        $this->showPreview = false;
+        $this->reset([
+            'xlsxFile', 'zipFile', 'showPreview', 'parseErrors', 'parseWarnings', 'hasValidRows',
+            'importLogId', 'applying', 'applied', 'applyFailed',
+        ]);
         $this->counts = ['create' => 0, 'update' => 0, 'variants' => 0, 'specs' => 0, 'images' => 0];
-        $this->parseErrors = [];
-        $this->parseWarnings = [];
-        $this->hasValidRows = false;
+        $this->applyResult = ['created' => 0, 'updated' => 0, 'variants' => 0, 'specs' => 0, 'images' => 0, 'warnings' => 0];
     }
 
     public function render(): View

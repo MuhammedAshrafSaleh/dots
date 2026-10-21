@@ -45,7 +45,45 @@
         {{-- Upload --}}
         @can('products.import')
         <x-admin.card :title="__('admin.import_products.card_upload')">
-            @if ($showPreview)
+            @if ($applying)
+                {{-- Applying (job running) --}}
+                <div wire:poll.1500ms="refreshStatus" style="display: grid; gap: 10px; text-align: center; padding: 24px;">
+                    <div style="font-weight: 700; font-size: 16px;">{{ __('admin.import_products.applying') }}</div>
+                    <div style="color: #555;">{{ __('admin.import_products.applying_desc') }}</div>
+                </div>
+            @elseif ($applied)
+                {{-- Applied (result summary) --}}
+                <div style="display: grid; gap: 16px;">
+                    @if ($applyFailed)
+                        <x-admin.alert tone="danger">{{ __('admin.import_products.applied_failed') }}</x-admin.alert>
+                    @else
+                        <x-admin.alert tone="success">{{ __('admin.import_products.applied_title') }}</x-admin.alert>
+                        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            @foreach ([
+                                ['label' => __('admin.import_products.applied_created'),  'value' => $applyResult['created'],  'bg' => '#d4edda'],
+                                ['label' => __('admin.import_products.applied_updated'),  'value' => $applyResult['updated'],  'bg' => '#d1ecf1'],
+                                ['label' => __('admin.import_products.applied_variants'), 'value' => $applyResult['variants'], 'bg' => '#f8f9fa'],
+                                ['label' => __('admin.import_products.applied_specs'),    'value' => $applyResult['specs'],    'bg' => '#f8f9fa'],
+                                ['label' => __('admin.import_products.applied_images'),   'value' => $applyResult['images'],   'bg' => '#f8f9fa'],
+                                ['label' => __('admin.import_products.applied_warnings'), 'value' => $applyResult['warnings'], 'bg' => '#fff3cd'],
+                            ] as $stat)
+                                <div style="background: {{ $stat['bg'] }}; border: 1px solid #dee2e6; border-radius: 6px; padding: 10px 16px; min-width: 100px; text-align: center;">
+                                    <div style="font-size: 22px; font-weight: 700;">{{ $stat['value'] }}</div>
+                                    <div style="font-size: 12px; color: #555; margin-top: 2px;">{{ $stat['label'] }}</div>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                        <x-button variant="outline" icon="download" wire:click="downloadAppliedReport" wire:loading.attr="disabled">
+                            {{ __('admin.import_products.download_report') }}
+                        </x-button>
+                        <x-button variant="ghost" wire:click="cancel">
+                            {{ __('admin.import_products.apply_another') }}
+                        </x-button>
+                    </div>
+                </div>
+            @elseif ($showPreview)
                 {{-- Preview panel --}}
                 <div style="display: grid; gap: 16px;">
 
@@ -133,13 +171,12 @@
 
                     {{-- Action buttons --}}
                     <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px;">
-                        {{-- Apply (wired in BI.3) --}}
                         @if ($hasValidRows)
                             <x-button
                                 variant="primary"
                                 icon="check"
-                                disabled
-                                title="{{ __('admin.import_products.apply_coming') }}"
+                                wire:click="apply"
+                                wire:loading.attr="disabled"
                             >
                                 {{ __('admin.import_products.apply') }}
                             </x-button>
@@ -179,6 +216,22 @@
                             style="display: block; width: 100%;"
                         >
                         @error('xlsxFile')
+                            <p style="color: var(--color-danger, #c00); font-size: 13px; margin-top: 4px;">{{ $message }}</p>
+                        @enderror
+                    </div>
+
+                    <div>
+                        <label style="display: block; font-weight: 600; margin-bottom: 6px;">
+                            {{ __('admin.import_products.label_zip') }}
+                        </label>
+                        <input
+                            type="file"
+                            accept=".zip,application/zip"
+                            wire:model="zipFile"
+                            style="display: block; width: 100%;"
+                        >
+                        <p style="color: #666; font-size: 12px; margin-top: 4px;">{{ __('admin.import_products.zip_desc') }}</p>
+                        @error('zipFile')
                             <p style="color: var(--color-danger, #c00); font-size: 13px; margin-top: 4px;">{{ $message }}</p>
                         @enderror
                     </div>

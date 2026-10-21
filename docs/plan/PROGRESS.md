@@ -2,28 +2,31 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `bulk-import` (local only).
-- **Current task:** BI.2 — **DONE**. Next task: **BI.3** (Apply job + ZIP media).
-- **Last commit:** `df3aa7b` — `BI.2: Parse, validate, preview, report download (dry run, no writes)`
-- **Gate result:** 625 tests (623 pass, 2 skip) · Larastan clean · Pint clean · build clean.
-- **BI.2 produced:**
-  - `App\Services\ProductImportParser` — maps by row-2 key, validates all §3–§4 rules, returns errors/warnings/counts; **zero DB writes**.
-  - `App\Services\ProductImportReportBuilder` — builds downloadable errors+warnings xlsx report.
-  - `App\Livewire\Admin\Products\Import` — added `WithFileUploads`, `preview()`, `downloadReport()`, `cancel()` actions. `$counts`, `$parseErrors`, `$parseWarnings`, `$hasValidRows` properties stored in component.
-  - View updated: upload form card (replaces placeholder) + preview panel (counts chips, errors table, warnings table, report download, "Apply valid rows" button disabled until BI.3).
-  - Lang: added ~20 new `admin.import_products.*` strings in AR + EN.
-  - 14 feature tests in `tests/Feature/Admin/Products/ProductImportBI2Test.php`.
-- **Open issues (carry-forward from BI.1):** After new install, run `php artisan db:seed --class=RolesAndAdminSeeder` once to grant Admin the import/export permissions.
+- **Current task:** BI.3 — **DONE**. Bulk import complete (BI.1–BI.3). Next: **Phase 10**.
+- **Last commit:** _pending BI.3 commit (see Git line below)_.
+- **Gate result:** 638 tests (636 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **BI.3 produced:**
+  - `App\Services\ProductImportParser` — now also returns a `plan` (products + their valid variant/spec rows, with resolved attribute value IDs). Added partial-translation + plan builder; captured variant/spec data. Existing return keys unchanged (BI.2 tests still pass).
+  - `App\Services\ProductImportApplier` — upserts products/variants/specs in one transaction (empty cell keeps value; simple ⇒ one default variant sku=product sku; variant sync deactivates missing variants, never deletes; specs replace-all; overview plain-text → escaped `<p>` → purifier). Recomputes cache columns + flushes LISTINGS/FACETS/CATEGORIES/BRANDS. Attaches media **after** commit; NEW product with zero valid images forced to draft.
+  - `App\Services\ProductMediaExtractor` + `App\Exceptions\MediaImportException` — private ZIP extraction with all §6 limits/security (zip-slip, size/entry caps, duplicate basenames = whole-ZIP reject; fake-MIME / oversized / disallowed file = per-file warning). Real-MIME verified by content.
+  - `App\Jobs\ApplyProductImport` (ShouldQueue) — parses stored xlsx, extracts ZIP, applies, writes the report xlsx, records the `ImportLog`, cleans up working files.
+  - `App\Models\ImportLog` + migration `import_logs` (who/when/filename/counts/report_path).
+  - `App\Livewire\Admin\Products\Import` — `zipFile` input, `apply()` (persists files, dispatches job), `refreshStatus()` (wire:poll), `downloadAppliedReport()`. View: ZIP input + Apply wired + applying/applied panels.
+  - `config/import.php` (media limits) · `config/livewire.php` temp-upload rule raised to 64 MB · `ProductExportBuilder` fixed so variant products export **no** product-level price (round-trip safe).
+  - Lang: ~28 new `admin.import_products.*` strings (AR + EN).
+  - Tests: 13 feature tests in `tests/Feature/Admin/Products/ProductImportBI3Test.php` + browser E2E `tests/Browser/Admin/ProductImportE2ETest.php` (**unrun** — browser tests paused; feature tests cover the same flow).
+- **Herd PHP settings (owner, for large uploads):** raise `upload_max_filesize=64M`, `post_max_size=80M` in the active Herd PHP `php.ini`, then restart Herd (IMPORT_SPEC §8).
+- **Open issues (carry-forward from BI.1):** After a fresh install, run `php artisan db:seed --class=RolesAndAdminSeeder` once to grant Admin the import/export permissions. Also run `php artisan migrate` for the new `import_logs` table (already done locally).
 - **How to verify on dots.test:**
-  1. Log in → Products → Import page.
-  2. Upload a filled xlsx (include a bad row — e.g. EXAMPLE- SKU or unknown brand).
-  3. Click **"معاينة"** — see preview panel: create/update counts, error table with Arabic messages.
-  4. Click **"تنزيل التقرير"** — downloads `DOTS-import-report-*.xlsx` with errors + warnings sheets.
-  5. Click **"إلغاء"** — resets to the upload form.
-  6. No 403/500/JS errors; DB catalog unchanged.
+  1. Log in → Products → Import. Upload a filled xlsx **and** a media ZIP (English filenames, e.g. `SKU.jpg`, `SKU-2.jpg`, `SKU-datasheet.pdf`). Include one bad row + one product whose image is missing from the ZIP.
+  2. Click **"معاينة"** → preview counts + error/warning tables.
+  3. Click **"تطبيق الصفوف الصحيحة"** → watch the "جارٍ التطبيق…" panel → "اكتمل الاستيراد" summary (created/updated/variants/specs/images/warnings). Download the report.
+  4. Open the imported products on the public site: prices + images show immediately; deactivated variants are gone from the picker; a NEW product with no valid image is a draft (not public).
+  5. No 403/500/JS errors.
 
-**Git:** branch `bulk-import` (local, unpushed) · last local commit `df3aa7b` · last tag `phase-9-done` · push state: **not pushed**
+**Git:** branch `bulk-import` (local, unpushed) · last local commit _pending BI.3_ · last tag `phase-9-done` · push state: **not pushed**
 
-Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. BI.2 done. Next: BI.3. After BI.3 → Phase 10.
+Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. BI.2 done. BI.3 done. Next: Phase 10.
 
 ---
 

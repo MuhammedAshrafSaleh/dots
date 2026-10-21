@@ -55,7 +55,7 @@ Parse the uploaded xlsx mapping **by row-2 key, never by position** (§1). Valid
 ---
 
 ## BI.3 — Apply job + ZIP media  _(Opus)_
-- [ ] Done
+- [x] Done
 
 Implement the queued **Apply** job (§4–§7): upsert products/variants/specs, variant sync + deactivation, specs replace-all, cache recompute + flush, single DB transaction, import log, then attach media after commit. Full ZIP media pipeline (§6): private extraction, all limits/security, basename/SKU matching, gallery replace, file slots, warnings. Configure Livewire upload rules/sizes and document the Herd PHP settings (§8).
 
@@ -83,4 +83,4 @@ Implement the queued **Apply** job (§4–§7): upsert products/variants/specs, 
 ## Checklist
 - [x] BI.1 done
 - [x] BI.2 done
-- [ ] BI.3 done
+- [x] BI.3 done

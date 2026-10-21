@@ -108,6 +108,12 @@ final class ProductImportParser
     /** @var array<string, true> sku → true for products with parse errors */
     private array $erroredProductSkus = [];
 
+    /** @var array<string, list<array<string, mixed>>> productSku → valid variant rows (for the apply plan) */
+    private array $validVariantRows = [];
+
+    /** @var array<string, list<array<string, mixed>>> productSku → valid spec rows (for the apply plan) */
+    private array $validSpecRows = [];
+
     private int $variantCount = 0;
 
     private int $specCount = 0;
@@ -116,7 +122,7 @@ final class ProductImportParser
 
     // -------------------------------------------------------------------------
 
-    /** @return array{errors: list<array<string,mixed>>, warnings: list<array<string,mixed>>, counts: array<string,int>, hasValidRows: bool} */
+    /** @return array{errors: list<array<string,mixed>>, warnings: list<array<string,mixed>>, counts: array<string,int>, hasValidRows: bool, plan: list<array<string,mixed>>} */
     public function parse(string $filePath): array
     {
         $this->loadLookups();
@@ -154,7 +160,72 @@ final class ProductImportParser
                 'images' => $this->imageCount,
             ],
             'hasValidRows' => $createCount + $updateCount > 0,
+            'plan' => $this->buildPlan(),
         ];
+    }
+
+    /**
+     * Shape the valid rows into the structure the Apply job consumes. Only
+     * products still valid after cross-validation are included, each with its
+     * valid variant and spec rows.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function buildPlan(): array
+    {
+        $plan = [];
+
+        foreach ($this->validProductRows as $sku => $row) {
+            $cells = $row['raw'];
+            $plan[] = [
+                'excel_row' => $row['excel_row'],
+                'sku' => $sku,
+                'is_simple' => ! isset($this->productHasVariants[$sku]),
+                'name' => ['ar' => $row['name_ar'], 'en' => $row['name_en']],
+                'brand_id' => $row['brand_id'],
+                'category_id' => $row['category_id'],
+                'status' => $row['status'],
+                'price_on_request' => $row['price_on_request'],
+                'price' => $row['price'],
+                'compare_at_price' => $row['compare_at_price'],
+                'stock_qty' => $row['stock_qty'],
+                // Optional translatable text — only locales whose cell was filled.
+                'overview' => $this->partialTranslation($cells, 'overview'),
+                'warranty' => $this->partialTranslation($cells, 'warranty'),
+                'meta_title' => $this->partialTranslation($cells, 'meta_title'),
+                'meta_description' => $this->partialTranslation($cells, 'meta_description'),
+                // Optional booleans — null means "cell empty → keep current".
+                'flags' => [
+                    'is_new' => $this->parseBool($cells['is_new'] ?? null),
+                    'is_best_seller' => $this->parseBool($cells['is_best_seller'] ?? null),
+                    'is_smart_pick' => $this->parseBool($cells['is_smart_pick'] ?? null),
+                    'is_dimmable' => $this->parseBool($cells['is_dimmable'] ?? null),
+                    'ships_24h' => $this->parseBool($cells['ships_24h'] ?? null),
+                ],
+                'image_files' => $row['image_files'],
+                'variants' => $this->validVariantRows[$sku] ?? [],
+                'specs' => $this->validSpecRows[$sku] ?? [],
+            ];
+        }
+
+        return $plan;
+    }
+
+    /**
+     * @param  array<string, mixed>  $cells
+     * @return array<string, string> only the locales whose `<base>_<locale>` cell was non-empty
+     */
+    private function partialTranslation(array $cells, string $base): array
+    {
+        $out = [];
+        foreach (['ar', 'en'] as $locale) {
+            $value = $this->str($cells[$base.'_'.$locale] ?? null);
+            if ($value !== '') {
+                $out[$locale] = $value;
+            }
+        }
+
+        return $out;
     }
 
     // -------------------------------------------------------------------------
@@ -414,6 +485,7 @@ final class ProductImportParser
             }
 
             // Attribute values
+            $valueIds = [];
             foreach ($keyMap as $key => $col) {
                 if (! str_starts_with($key, 'attr:')) {
                     continue;
@@ -423,10 +495,13 @@ final class ProductImportParser
                 if ($cellVal === '') {
                     continue; // optional
                 }
-                if (! isset($this->attrValueMap[$attrCode][mb_strtolower($cellVal)])) {
+                $valueId = $this->attrValueMap[$attrCode][mb_strtolower($cellVal)] ?? null;
+                if ($valueId === null) {
                     $colLabel = $this->attrNames[$attrCode] ?? $key;
                     $this->addError(self::SHEET_VARIANTS, $row, $colLabel, self::ERR_ATTR_VALUE_NOT_FOUND);
                     $rowValid = false;
+                } else {
+                    $valueIds[] = $valueId;
                 }
             }
 
@@ -450,19 +525,23 @@ final class ProductImportParser
 
             // compare_at_price
             $capRaw = $this->str($cells['compare_at_price'] ?? null);
+            $cap = null;
             if ($capRaw !== '') {
                 $cap = $this->parseDecimal($capRaw);
                 if ($cap === false) {
                     $this->addError(self::SHEET_VARIANTS, $row, 'compare_at_price', self::ERR_COMPARE_NOT_NUMERIC);
                     $rowValid = false;
+                    $cap = null;
                 } elseif ($price !== null && $cap <= $price) {
                     $this->addError(self::SHEET_VARIANTS, $row, 'compare_at_price', self::ERR_COMPARE_NOT_GREATER);
                     $rowValid = false;
+                    $cap = null;
                 }
             }
 
             // stock_qty (required)
             $stockRaw = $this->str($cells['stock_qty'] ?? null);
+            $stock = null;
             if ($stockRaw === '') {
                 $this->addError(self::SHEET_VARIANTS, $row, 'stock_qty', self::ERR_REQUIRED);
                 $rowValid = false;
@@ -471,12 +550,21 @@ final class ProductImportParser
                 if ($stock === false) {
                     $this->addError(self::SHEET_VARIANTS, $row, 'stock_qty', self::ERR_STOCK_INVALID);
                     $rowValid = false;
+                    $stock = null;
                 }
             }
 
             if ($rowValid) {
                 $this->productHasVariants[$productSku] = true;
                 $this->variantCount++;
+                $this->validVariantRows[$productSku][] = [
+                    'variant_sku' => $variantSku,
+                    'value_ids' => $valueIds,
+                    'price' => $price,
+                    'compare_at_price' => $cap,
+                    'stock_qty' => $stock,
+                    'is_default' => $this->parseBool($cells['is_default'] ?? null) === true,
+                ];
             }
         }
     }
@@ -523,6 +611,10 @@ final class ProductImportParser
 
             if ($rowValid) {
                 $this->specCount++;
+                $this->validSpecRows[$productSku][] = [
+                    'name' => ['ar' => $this->str($cells['name_ar'] ?? null), 'en' => $this->str($cells['name_en'] ?? null)],
+                    'value' => ['ar' => $this->str($cells['value_ar'] ?? null), 'en' => $this->str($cells['value_en'] ?? null)],
+                ];
             }
         }
     }
