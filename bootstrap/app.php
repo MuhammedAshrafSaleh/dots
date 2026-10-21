@@ -44,6 +44,17 @@ return Application::configure(basePath: dirname(__DIR__))
             return route('login', ['locale' => $locale]);
         });
 
+        // Admin password-reset and login routes use `guest:admin`; if an
+        // authenticated admin lands on them, redirect to the dashboard instead
+        // of falling through to route('home') which requires a locale param.
+        $middleware->redirectUsersTo(function (Request $request): string {
+            if ($request->is('admin/*')) {
+                return route('admin.dashboard');
+            }
+
+            return route('home', ['locale' => $request->route('locale') ?? Locale::DEFAULT]);
+        });
+
         // AdminAuth makes `admin` the default guard; it must run before the
         // `can:` (Authorize) and permission middleware, which resolve the
         // current user from that guard.
