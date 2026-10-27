@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.1 — **DONE** (incl. re-add-to-cart feedback follow-up + webhook-atomicity hardening from independent review). Next: **PAY.4**.
-- **Last commit:** `PAY.1: make webhook idempotency marker transactional and lock the order on settle`
+- **Last commit:** `d375e9b` — `PAY.1: make webhook idempotency marker transactional and lock the order on settle`
 - **Gate result:** 672 tests (670 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.1 produced:**
@@ -20,7 +20,7 @@
 - **How to verify (owner clicks):** Admin → Payments → edit the **Card** method → the "Card payment window (minutes)" field saves; entering `29` (or a decimal) shows a validation error, `60`+ saves. (Stock release itself is time/scheduled — covered by the sweep tests.)
 - **Next session:** Open a new session and say `start PAY.4`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `92f523b` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `d375e9b` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
