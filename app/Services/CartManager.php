@@ -112,7 +112,8 @@ class CartManager
                 continue;
             }
 
-            $name = $item->getTranslation('product_name', $locale);
+            $name = $item->getTranslation('product_name', $locale, false)
+                ?: $item->getTranslation('product_name', $locale === 'ar' ? 'en' : 'ar', false);
             $variant = ProductVariant::active()->whereNotNull('price')->find($variantId);
 
             if ($variant === null || (int) $variant->stock_qty < 1) {

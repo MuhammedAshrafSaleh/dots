@@ -126,7 +126,7 @@
                         <div class="d-confirm-cells" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;">
                             <div style="display:grid;gap:6px;align-content:start;">
                                 <span style="display:inline-flex;align-items:center;gap:8px;font:800 12px/1 var(--font-body);letter-spacing:var(--tracking-overline);text-transform:var(--text-transform-overline);color:var(--fg-3);"><x-icon name="truck" :size="16" />{{ __('ui.delivery') }}</span>
-                                <b style="font:800 15px/1.35 var(--font-body);">{{ $order->delivery_method_name }}</b>
+                                <b style="font:800 15px/1.35 var(--font-body);">{{ $order->getTranslation('delivery_method_name', $locale) }}</b>
                                 <span style="font:500 14px/1.5 var(--font-body);color:var(--fg-2);">
                                     @if ((float) $order->delivery_fee == 0.0){{ __('ui.delivery_free') }}@else{{ number_format((float) $order->delivery_fee, 0) }} {{ __('ui.egp') }}@endif
                                 </span>

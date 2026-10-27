@@ -88,11 +88,11 @@
                             <span style="width:72px;height:72px;border-radius:8px;border:1px solid var(--border-1);background:var(--white) center/contain no-repeat;@if ($item->image_url) background-image:url('{{ $item->image_url }}');@endif"></span>
                             <div style="display:grid;gap:3px;min-width:0;">
                                 @if ($item->product)
-                                    <a href="{{ route('product.show', [$locale, $item->product->getTranslation('slug', $locale)]) }}" wire:navigate style="font:700 14px/1.35 var(--font-body);color:var(--fg-1);text-decoration:none;">{{ $item->product_name }}</a>
+                                    <a href="{{ route('product.show', [$locale, $item->product->getTranslation('slug', $locale)]) }}" wire:navigate style="font:700 14px/1.35 var(--font-body);color:var(--fg-1);text-decoration:none;">{{ $item->getTranslation('product_name', $locale) }}</a>
                                 @else
-                                    <span style="font:700 14px/1.35 var(--font-body);color:var(--fg-1);">{{ $item->product_name }}</span>
+                                    <span style="font:700 14px/1.35 var(--font-body);color:var(--fg-1);">{{ $item->getTranslation('product_name', $locale) }}</span>
                                 @endif
-                                <span style="font:500 13px var(--font-body);color:var(--fg-2);">@if ($item->variant_label){{ $item->variant_label }} · @endif{{ __('account.order.qty') }} {{ $item->qty }} × {{ number_format((float) $item->unit_price, 0) }} {{ __('ui.egp') }}</span>
+                                <span style="font:500 13px var(--font-body);color:var(--fg-2);">@if ($item->getTranslation('variant_label', $locale)){{ $item->getTranslation('variant_label', $locale) }} · @endif{{ __('account.order.qty') }} {{ $item->qty }} × {{ number_format((float) $item->unit_price, 0) }} {{ __('ui.egp') }}</span>
                                 <span style="font:500 12px var(--font-mono);color:var(--fg-3);" dir="ltr">{{ $item->sku }}</span>
                             </div>
                             <b style="font:800 14px var(--font-body);white-space:nowrap;">{{ number_format((float) $item->line_total, 0) }} {{ __('ui.egp') }}</b>

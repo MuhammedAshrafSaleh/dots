@@ -318,3 +318,50 @@ it('shows no reason line when there is no failed payment', function () {
 
     expect($html)->not->toContain('data-reason');
 });
+
+// ---------------------------------------------------------------------------
+// Translatable snapshot rendering
+// ---------------------------------------------------------------------------
+
+it('renders the Arabic product name in the expired order summary without raw JSON', function () {
+    app()->setLocale('ar');
+
+    $v = pfVariant('AR-NAME', stock: 5, name: ['ar' => 'نجفة كريستال', 'en' => 'Crystal Pendant']);
+    $order = pfOrderFor([[$v, 1]]);
+    session(['orders.placed' => [$order->id]]);
+
+    $html = Livewire::test(PaymentFailed::class, ['number' => $order->number])->html();
+
+    expect($html)
+        ->toContain('نجفة كريستال')
+        ->not->toContain('{"ar"');
+});
+
+it('renders the English product name in the expired order summary without raw JSON', function () {
+    app()->setLocale('en');
+
+    $v = pfVariant('EN-NAME', stock: 5, name: ['ar' => 'نجفة كريستال', 'en' => 'Crystal Pendant']);
+    $order = pfOrderFor([[$v, 1]]);
+    session(['orders.placed' => [$order->id]]);
+
+    $html = Livewire::test(PaymentFailed::class, ['number' => $order->number])->html();
+
+    expect($html)
+        ->toContain('Crystal Pendant')
+        ->not->toContain('{"en"');
+});
+
+it('cart notice for a reduced item shows the translated name without raw JSON', function () {
+    app()->setLocale('ar');
+
+    $v = pfVariant('AR-REDUCED', stock: 1, name: ['ar' => 'كشاف مدمج', 'en' => 'Recessed Downlight']);
+    $order = pfOrderFor([[$v, 3]]); // qty 3, stock 1 → reduced notice
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])->call('reAddToCart');
+
+    $notices = implode(' ', session('cart_notices', []));
+    expect($notices)
+        ->toContain('كشاف مدمج')
+        ->not->toContain('{');
+});

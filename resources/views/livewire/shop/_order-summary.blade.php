@@ -11,9 +11,9 @@
                     <span class="d-summary__qty">{{ $it->qty }}</span>
                 </div>
                 <div style="min-width:0;">
-                    <p class="d-line__name" style="font-size:13px;">{{ $it->product_name }}</p>
-                    @if ($it->variant_label)
-                        <div class="d-line__var">{{ $it->variant_label }} · {{ __('ui.pdp_qty') }} {{ $it->qty }}</div>
+                    <p class="d-line__name" style="font-size:13px;">{{ $it->getTranslation('product_name', $locale) }}</p>
+                    @if ($it->getTranslation('variant_label', $locale))
+                        <div class="d-line__var">{{ $it->getTranslation('variant_label', $locale) }} · {{ __('ui.pdp_qty') }} {{ $it->qty }}</div>
                     @endif
                     <div class="d-line__var" style="font-family:var(--font-mono);">{{ $it->sku }}</div>
                 </div>
