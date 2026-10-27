@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.5 — **DONE**. Next: **PAY.6**.
-- **Last commit:** _(see git log — PAY.5 commit pending below)_
+- **Last commit:** `bfce905` — `PAY.5: show InstaPay address + deadline on the order confirmation page`
 - **Gate result:** 680 tests (678 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.5 produced:**
@@ -17,7 +17,7 @@
 - **How to verify (owner clicks — PAY.5):** Admin → Payments → set an InstaPay address → place an InstaPay order → confirmation shows address + amount + deadline. Blank the address → fallback copy. COD and card confirmations unchanged.
 - **Next session:** Open a new session and say `start PAY.6`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit: PAY.5 · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `bfce905` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
