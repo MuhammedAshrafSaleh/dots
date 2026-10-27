@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.3 — **DONE**. Next: **PAY.2**.
-- **Last commit:** _(see below — committing after this update)_
+- **Last commit:** `40766ea` — `PAY.3: Remove dead Paymob env keys`
 - **Gate result:** 648 tests (646 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.3 produced:** Removed dead keys `PAYMOB_API_KEY` and `PAYMOB_IFRAME_ID` from `config/services.php` and `.env.example`. Grep confirms zero remaining references in `app/` and `config/`.
