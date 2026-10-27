@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.7 — **DONE**. Next: **PAY.8**.
-- **Last commit:** `<pending>` — `PAY.7: close remaining payment test gaps`
+- **Last commit:** `bbf11fa` — `PAY.7: close remaining payment test gaps`
 - **Gate result:** 688 tests (686 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.7 produced (tests only — no production code changed):**
@@ -16,7 +16,7 @@
 - **How to verify (owner clicks — PAY.7):** none (tests only).
 - **Next session:** Open a new session and say `start PAY.8`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.7>` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `bbf11fa` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
