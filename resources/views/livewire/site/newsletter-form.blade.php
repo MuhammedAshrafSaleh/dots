@@ -11,8 +11,8 @@
         </div>
     @else
         <form wire:submit="subscribe" novalidate style="display:flex;gap:8px;flex-wrap:wrap;">
-            {{-- Honeypot: visually hidden, screen-reader hidden --}}
-            <div aria-hidden="true" style="position:absolute;left:-9999px;width:1px;height:1px;overflow:hidden;">
+            {{-- Honeypot: visually hidden, screen-reader hidden (RTL-safe clip, not off-screen left) --}}
+            <div aria-hidden="true" style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">
                 <label for="hp-nl-website">Website</label>
                 <input id="hp-nl-website" type="text" wire:model="website" autocomplete="off" tabindex="-1" />
             </div>

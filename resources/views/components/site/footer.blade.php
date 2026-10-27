@@ -16,6 +16,7 @@
     $payments = $settings->translated('footer.payments_line', $locale);
     $copyright = $settings->translated('footer.copyright', $locale);
 
+    $logoUrl = (string) ($settings->get('brand.logo_url') ?? '');
     $socials = array_filter([
         'instagram' => $settings->get('contact.social_instagram'),
         'facebook' => $settings->get('contact.social_facebook'),
@@ -27,7 +28,13 @@
 <footer class="d-footer">
     <div class="d-container d-footer__top">
         <div style="display:grid;gap:18px;align-content:start;">
-            <a href="{{ route('home') }}" class="d-nav__logo" style="font:700 30px/1 var(--font-display);text-decoration:none;color:inherit;">Dots</a>
+            <a href="{{ route('home') }}" class="d-nav__logo" style="text-decoration:none;color:inherit;">
+                @if ($logoUrl)
+                    <img src="{{ $logoUrl }}" alt="Dots" style="max-height:48px;max-width:160px;object-fit:contain;display:block;">
+                @else
+                    <span style="font:700 30px/1 var(--font-display);">Dots</span>
+                @endif
+            </a>
             <p style="margin:0;font:500 14px/1.6 var(--font-body);color:var(--fg-2);max-width:340px;">{{ $aboutText }}</p>
             <livewire:site.newsletter-form source="footer" :placeholder="$newsletter?->field('title', $locale) ?: __('ui.newsletter_placeholder')" />
         </div>

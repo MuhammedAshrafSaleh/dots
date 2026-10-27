@@ -5,9 +5,8 @@
 Rules: read only this file + PROGRESS.md at session start; open refs only when a task needs them; one commit per task; STOP at the end of the phase.
 
 ## T11.1 — Products Excel import/export
-- When the client's Excel file arrives: define column mapping with the owner, maatwebsite/excel queued import keyed by SKU (create/update products + variants), row-level error report, downloadable template, export of the same columns. Show the Import button in AProducts.
+- **PULLED FORWARD — see `docs/plan/bulk-import.md` (BI.1–BI.3) and `docs/IMPORT_SPEC.md`.** Built on branch `bulk-import` off main ahead of the client meeting; no longer part of Phase 11.
 - **Design/docs:** PRD §15
-- **Done when:** Import of the client's real file succeeds with an error report.
 
 ## T11.2 — Google Drive backups
 - When the account email/credentials arrive: configure the Drive filesystem disk and switch backup destination.

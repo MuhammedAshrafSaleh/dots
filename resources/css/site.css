@@ -199,7 +199,7 @@ html:not(.d-preload) .d-pre { display: none; }
 .d-filter-toggle { display: none; }
 .d-compact .d-filter-toggle { display: inline-flex; }
 .d-filter-drawer { position: fixed; inset-block: 0; inset-inline-start: 0; width: min(85vw, 320px); background: var(--white); z-index: var(--z-modal, 400); overflow-y: auto; padding: 24px; box-shadow: var(--shadow-xl); transform: translateX(-100%); transition: transform .25s var(--ease-out); }
-[dir="rtl"] .d-filter-drawer { inset-inline-start: auto; inset-inline-end: 0; transform: translateX(100%); }
+[dir="rtl"] .d-filter-drawer { transform: translateX(100%); }
 .d-filter-drawer.is-open { transform: translateX(0); }
 [dir="rtl"] .d-filter-drawer.is-open { transform: translateX(0); }
 html:not(.d-compact) .d-filter-drawer { display: none; }

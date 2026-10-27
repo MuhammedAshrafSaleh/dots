@@ -27,6 +27,7 @@ use App\Livewire\Admin\Orders\Index as OrderIndex;
 use App\Livewire\Admin\PageContent\Edit as PageContentEdit;
 use App\Livewire\Admin\Payments\Index as PaymentIndex;
 use App\Livewire\Admin\Products\Edit as ProductEdit;
+use App\Livewire\Admin\Products\Import as ProductImport;
 use App\Livewire\Admin\Products\Index as ProductIndex;
 use App\Livewire\Admin\Projects\Edit as ProjectEdit;
 use App\Livewire\Admin\Projects\Index as ProjectIndex;
@@ -137,8 +138,9 @@ Route::prefix('admin')
             Route::get('delivery', DeliveryIndex::class)->middleware('can:delivery_methods.view')->name('delivery');
             Route::get('payments', PaymentIndex::class)->middleware('can:payment_methods.view')->name('payments');
 
-            // Catalog — Products (T3.6).
+            // Catalog — Products (T3.6, BI.1).
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');
+            Route::get('products/import', ProductImport::class)->middleware('can:products.import')->name('products.import');
             Route::get('products/create', ProductEdit::class)->middleware('can:products.create')->name('products.create');
             Route::get('products/{product}/edit', ProductEdit::class)->middleware('can:products.update')->name('products.edit');
         });

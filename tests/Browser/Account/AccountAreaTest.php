@@ -20,10 +20,13 @@ use App\Models\ProductVariant;
 /** Log in as customer and return the chained page so navigation can continue. */
 function signInCustomer(Customer $customer, string $locale = 'en'): mixed
 {
+    $firstName = explode(' ', trim((string) $customer->name))[0];
+
     return visit("/{$locale}/login")
         ->fill('[wire\\:model="identifier"]', $customer->email)
         ->fill('[wire\\:model="password"]', 'password')
-        ->click('button[type=submit]');
+        ->click('button.d-btn--block[type=submit]')
+        ->waitForText($firstName);
 }
 
 /** Minimal product + variant for wishlist and reorder tests. */

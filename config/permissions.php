@@ -18,6 +18,7 @@ return [
 
     // Catalog
     'products.view', 'products.create', 'products.update', 'products.delete', 'products.publish',
+    'products.import', 'products.export',
     'categories.view', 'categories.create', 'categories.update', 'categories.delete',
     'brands.view', 'brands.create', 'brands.update', 'brands.delete',
     'attributes.view', 'attributes.create', 'attributes.update', 'attributes.delete',

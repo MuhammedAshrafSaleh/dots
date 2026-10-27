@@ -83,7 +83,24 @@
                     <span class="t-body-sm" style="color:var(--fg-2);">{{ __('ui.share') }}</span>
                     <button type="button" class="d-icon-btn"
                             aria-label="{{ __('ui.copy_link') }}"
-                            x-on:click="navigator.clipboard.writeText(window.location.href); copied = true; setTimeout(() => copied = false, 2000)">
+                            x-on:click="
+                                const url = window.location.href;
+                                if (navigator.clipboard) {
+                                    navigator.clipboard.writeText(url);
+                                } else {
+                                    const el = document.createElement('textarea');
+                                    el.value = url;
+                                    el.style.position = 'fixed';
+                                    el.style.opacity = '0';
+                                    document.body.appendChild(el);
+                                    el.focus();
+                                    el.select();
+                                    document.execCommand('copy');
+                                    document.body.removeChild(el);
+                                }
+                                copied = true;
+                                setTimeout(() => copied = false, 2000);
+                            ">
                         <x-icon name="link" :size="16" />
                     </button>
                     <span x-show="copied" x-cloak class="t-body-sm" style="color:var(--fg-2);">{{ __('ui.link_copied') }}</span>
