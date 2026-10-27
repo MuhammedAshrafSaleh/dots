@@ -88,17 +88,23 @@ class CartManager
     /**
      * Repopulates the current cart from a (cancelled) order's line items, each
      * clamped to the variant's current stock. Variants now inactive, unpriced
-     * or out of stock are skipped; their snapshot names are returned so the
-     * caller can tell the customer what was dropped. Does not touch the order,
-     * its coupon or stock — the customer checks out fresh.
+     * or out of stock are skipped (reported as `dropped`); lines whose quantity
+     * had to be lowered to the available stock are reported as `reduced`. Does
+     * not touch the order, its coupon or stock — the customer checks out fresh.
      *
-     * @return array<int, string> snapshot names of lines that could not be re-added
+     * @return array{
+     *     added: int,
+     *     dropped: array<int, string>,
+     *     reduced: array<int, array{name: string, requested: int, actual: int}>
+     * }
      */
     public function reAddFromOrder(Order $order, ?string $locale = null): array
     {
         $locale ??= app()->getLocale();
         $cart = $this->current();
+        $added = 0;
         $dropped = [];
+        $reduced = [];
 
         foreach ($order->items as $item) {
             $variantId = $item->product_variant_id;
@@ -106,19 +112,29 @@ class CartManager
                 continue;
             }
 
+            $name = $item->getTranslation('product_name', $locale);
             $variant = ProductVariant::active()->whereNotNull('price')->find($variantId);
+
             if ($variant === null || (int) $variant->stock_qty < 1) {
-                $dropped[] = $item->getTranslation('product_name', $locale);
+                $dropped[] = $name;
 
                 continue;
             }
 
+            $requested = (int) $item->qty;
+            $actual = min(99, $requested, (int) $variant->stock_qty);
+
             $line = $cart->items()->firstOrNew(['product_variant_id' => $variantId]);
-            $line->qty = min(99, (int) $item->qty, (int) $variant->stock_qty);
+            $line->qty = $actual;
             $line->save();
+            $added++;
+
+            if ($actual < $requested) {
+                $reduced[] = ['name' => $name, 'requested' => $requested, 'actual' => $actual];
+            }
         }
 
-        return $dropped;
+        return ['added' => $added, 'dropped' => $dropped, 'reduced' => $reduced];
     }
 
     public function updateQty(int $itemId, int $qty): void

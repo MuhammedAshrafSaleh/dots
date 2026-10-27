@@ -454,4 +454,6 @@ return [
     'pf_expired_body' => 'Order :number wasn’t paid in time, so we returned the items to stock. You can add them to a new cart and check out again.',
     'pf_expired_readd_cta' => 'Re-add items to cart',
     'pf_expired_readd_dropped' => 'Some items are no longer available and were left out: :items',
+    'pf_expired_readd_reduced' => 'We lowered some quantities to match what’s in stock now: :items',
+    'pf_expired_readd_none' => 'None of the items could be added back to your cart — they’re no longer available.',
 ];

@@ -2,15 +2,16 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.1 — **DONE**. Next: **PAY.4**.
-- **Last commit:** `2825030` — `PAY.1: Auto-release stock for failed & abandoned card payments (+ Gap A re-check, Gap B coupon soft-release)`
-- **Gate result:** 666 tests (664 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.1 — **DONE** (incl. re-add-to-cart feedback follow-up). Next: **PAY.4**.
+- **Last commit:** `<pending feedback>` — `PAY.1: clearer feedback when restoring an expired order to the cart`
+- **Gate result:** 670 tests (668 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.1 produced:**
   - New setting `commerce.card_payment_window_minutes` (default 60, admin field on the **card** method, validated `required|integer|min:30`; seeded in SiteSeeder).
   - `PlaceOrder` sets `reserved_until = now + window` for card orders (InstaPay/COD unchanged); `PaymobGateway::createCheckout()` refreshes it every attempt; `recordTransaction()` clears it on paid and, on a late success after auto-cancel, records payment + `paid` but keeps `cancelled` and writes a manual-review note (no un-cancel, no stock move).
   - `ReleaseExpiredReservations` broadened to sweep card `pending`/`failed` + InstaPay `awaiting_transfer` with a non-null expired `reserved_until`; each order locked + re-checked under the lock; reason-aware cancel note (card vs InstaPay). COD (null deadline) never swept.
   - **Gap A:** `PaymentFailed` re-checks (row-locked) the order is not cancelled in all 3 branches; cancelled → `expired` state in the view + "re-add items to cart" action (`CartManager::reAddFromOrder`, clamps to current stock, lists dropped items).
+  - **Re-add feedback (follow-up):** `reAddFromOrder` now returns `{added, dropped, reduced}`; `PaymentFailed::reAddToCart` flashes `cart_notices` (session flash, survives the `wire:navigate` redirect — not a Livewire toast) rendered in a new notice block on `site/cart.blade.php`. Three bilingual messages: dropped (left out), reduced (qty lowered, shows `requested → actual`), and an all-unavailable "nothing could be restored" line. Locale-aware list separator (`، ` ar / `, ` en).
   - **Gap B (soft-release):** new `coupon_redemptions.released_at` column + migration; `ReleaseOrderCoupon` action stamps `released_at` and decrements `used_count` (floored, idempotent) on both auto- and admin-cancel; `Coupons` once-per-customer gate now ignores released rows. Guest exemption unchanged. Docs: ERD + Decisions log + Gap B text updated.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?

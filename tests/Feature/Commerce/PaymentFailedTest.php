@@ -117,3 +117,142 @@ it('marks the order expired on mount when it is already cancelled', function () 
     Livewire::test(PaymentFailed::class, ['number' => $order->number])
         ->assertSet('expired', true);
 });
+
+/**
+ * A variant with its product scaffolding, product relation pre-loaded so the
+ * snapshot name is readable without a (blocked) lazy load.
+ *
+ * @param  array<string, string>  $name
+ */
+function pfVariant(string $sku, int $stock, bool $active = true, array $name = ['ar' => 'منتج', 'en' => 'Item']): ProductVariant
+{
+    $brand = Brand::create(['name' => 'B'.$sku, 'slug' => 'b-'.strtolower($sku)]);
+    $category = Category::create([
+        'level' => 3,
+        'name' => ['ar' => 'ق', 'en' => 'C'],
+        'slug' => ['ar' => 'ق-'.$sku, 'en' => 'c-'.strtolower($sku)],
+    ]);
+    $product = Product::create([
+        'brand_id' => $brand->id,
+        'category_id' => $category->id,
+        'name' => $name,
+        'slug' => ['ar' => 'م-'.$sku, 'en' => 'p-'.strtolower($sku)],
+        'sku' => $sku,
+        'status' => ProductStatus::Active,
+        'published_at' => now(),
+        'price_on_request' => false,
+        'min_price' => 1000,
+    ]);
+    $variant = ProductVariant::create([
+        'product_id' => $product->id,
+        'sku' => $sku.'-V',
+        'price' => 1000,
+        'stock_qty' => $stock,
+        'is_active' => $active,
+        'is_default' => true,
+        'sort_order' => 0,
+    ]);
+    $variant->setRelation('product', $product);
+
+    return $variant;
+}
+
+/**
+ * A cancelled card order with the given [variant, qty] lines, each snapshotting
+ * the variant's current product name.
+ *
+ * @param  array<int, array{0: ProductVariant, 1: int}>  $lines
+ */
+function pfOrderFor(array $lines): Order
+{
+    $order = Order::create([
+        'contact_name' => 'Karim',
+        'contact_mobile' => '01000000000',
+        'is_company' => false,
+        'locale' => 'en',
+        'status' => OrderStatus::Cancelled,
+        'payment_status' => OrderPaymentStatus::Failed,
+        'payment_method_code' => PaymentMethodCode::Card->value,
+        'subtotal' => 1000,
+        'discount_total' => 0,
+        'delivery_fee' => 0,
+        'total' => 1000,
+        'vat_rate' => 14,
+        'vat_amount' => 0,
+        'reserved_until' => null,
+        'placed_at' => now(),
+    ]);
+
+    foreach ($lines as [$variant, $qty]) {
+        $order->items()->create([
+            'product_id' => $variant->product_id,
+            'product_variant_id' => $variant->id,
+            'product_name' => $variant->product->getTranslations('name'),
+            'variant_label' => ['ar' => '', 'en' => ''],
+            'sku' => $variant->sku,
+            'unit_price' => 1000,
+            'qty' => $qty,
+            'line_total' => 1000 * $qty,
+        ]);
+    }
+
+    return $order;
+}
+
+it('drops an inactive line, keeps the rest, and names the dropped item', function () {
+    app()->setLocale('en');
+
+    $ok = pfVariant('OK', stock: 5, name: ['ar' => 'كشاف', 'en' => 'Track light']);
+    $gone = pfVariant('GONE', stock: 5, active: false, name: ['ar' => 'سبوت', 'en' => 'Spotlight']);
+    $order = pfOrderFor([[$ok, 2], [$gone, 1]]);
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->call('reAddToCart')
+        ->assertRedirect(route('cart', 'en'));
+
+    expect(app(CartManager::class)->itemCount())->toBe(2); // only the available line
+
+    $msg = implode(' ', session('cart_notices'));
+    expect($msg)->toContain('Spotlight')
+        ->and($msg)->toContain('no longer available')
+        ->and($msg)->not->toContain('None of the items');
+});
+
+it('lands on an empty cart with a clear message when nothing can be restored', function () {
+    app()->setLocale('en');
+
+    $a = pfVariant('A', stock: 0, name: ['ar' => 'لمبة', 'en' => 'Lamp A']);
+    $b = pfVariant('B', stock: 0, name: ['ar' => 'لمبة', 'en' => 'Lamp B']);
+    $order = pfOrderFor([[$a, 1], [$b, 2]]);
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])->call('reAddToCart');
+
+    expect(app(CartManager::class)->itemCount())->toBe(0);
+    expect(implode(' ', session('cart_notices')))->toContain('None of the items could be added back');
+});
+
+it('reports reduced quantities with requested and actual counts', function () {
+    app()->setLocale('en');
+
+    $v = pfVariant('RED', stock: 1, name: ['ar' => 'نجفة', 'en' => 'Pendant']);
+    $order = pfOrderFor([[$v, 3]]);
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])->call('reAddToCart');
+
+    expect(app(CartManager::class)->itemCount())->toBe(1); // clamped 3 -> 1
+
+    $msg = implode(' ', session('cart_notices'));
+    expect($msg)->toContain('Pendant')
+        ->and($msg)->toContain('(3 → 1)')
+        ->and($msg)->toContain('lowered some quantities');
+});
+
+it('renders flashed cart notices on the cart page', function () {
+    $this->withSession(['cart_notices' => ['Heads up: an item was left out of your cart.']])
+        ->get(route('cart', 'en'))
+        ->assertOk()
+        ->assertSee('Heads up: an item was left out of your cart.');
+});

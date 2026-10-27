@@ -132,13 +132,35 @@ class PaymentFailed extends Component
      */
     public function reAddToCart(CartManager $cart): void
     {
-        $dropped = $cart->reAddFromOrder($this->order());
+        $locale = app()->getLocale();
+        $result = $cart->reAddFromOrder($this->order(), $locale);
+        $separator = $locale === 'ar' ? '، ' : ', ';
 
-        if ($dropped !== []) {
-            $this->dispatch('toast', type: 'info', title: __('ui.pf_expired_readd_dropped', ['items' => implode('، ', $dropped)]));
+        $notices = [];
+
+        if ($result['added'] === 0 && $result['dropped'] !== []) {
+            // Nothing could come back — the whole order is unavailable now.
+            $notices[] = __('ui.pf_expired_readd_none');
+        } else {
+            if ($result['dropped'] !== []) {
+                $notices[] = __('ui.pf_expired_readd_dropped', ['items' => implode($separator, $result['dropped'])]);
+            }
+            if ($result['reduced'] !== []) {
+                $items = array_map(
+                    fn (array $r): string => $r['name'].' ('.$r['requested'].' → '.$r['actual'].')',
+                    $result['reduced'],
+                );
+                $notices[] = __('ui.pf_expired_readd_reduced', ['items' => implode($separator, $items)]);
+            }
         }
 
-        $this->redirectRoute('cart', [app()->getLocale()], navigate: true);
+        // Flash (not a Livewire toast) so the message survives the wire:navigate
+        // redirect and renders on the cart page itself.
+        if ($notices !== []) {
+            session()->flash('cart_notices', $notices);
+        }
+
+        $this->redirectRoute('cart', [$locale], navigate: true);
     }
 
     private function isCancelled(): bool
