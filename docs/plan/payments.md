@@ -99,7 +99,7 @@
 ---
 
 ## PAY.3 — Remove dead Paymob env keys  _(Sonnet)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** Delete `PAYMOB_API_KEY` and `PAYMOB_IFRAME_ID` — declared but read nowhere — so the go-live `.env` has only keys that matter.
 
@@ -233,7 +233,7 @@
 ---
 
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8)_
-- [ ] PAY.3 Remove dead Paymob env keys (Sonnet)
+- [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [ ] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
 - [ ] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
 - [ ] PAY.4 Safe bilingual failure reason (Sonnet)

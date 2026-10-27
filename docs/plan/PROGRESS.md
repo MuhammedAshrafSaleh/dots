@@ -1,32 +1,21 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `bulk-import` (local only).
-- **Current task:** BI.3 — **DONE**. Bulk import complete (BI.1–BI.3). Next: **Phase 10**.
-- **Last commit:** `15b5f63` — `BI.3 pre-approval: queue stall warning + browser test selector fix`.
-- **Gate result:** 639 tests (637 pass, 2 skip) · Larastan clean · Pint clean · build clean.
-- **BI.3 produced:**
-  - `App\Services\ProductImportParser` — now also returns a `plan` (products + their valid variant/spec rows, with resolved attribute value IDs). Added partial-translation + plan builder; captured variant/spec data. Existing return keys unchanged (BI.2 tests still pass).
-  - `App\Services\ProductImportApplier` — upserts products/variants/specs in one transaction (empty cell keeps value; simple ⇒ one default variant sku=product sku; variant sync deactivates missing variants, never deletes; specs replace-all; overview plain-text → escaped `<p>` → purifier). Recomputes cache columns + flushes LISTINGS/FACETS/CATEGORIES/BRANDS. Attaches media **after** commit; NEW product with zero valid images forced to draft.
-  - `App\Services\ProductMediaExtractor` + `App\Exceptions\MediaImportException` — private ZIP extraction with all §6 limits/security (zip-slip, size/entry caps, duplicate basenames = whole-ZIP reject; fake-MIME / oversized / disallowed file = per-file warning). Real-MIME verified by content.
-  - `App\Jobs\ApplyProductImport` (ShouldQueue) — parses stored xlsx, extracts ZIP, applies, writes the report xlsx, records the `ImportLog`, cleans up working files.
-  - `App\Models\ImportLog` + migration `import_logs` (who/when/filename/counts/report_path).
-  - `App\Livewire\Admin\Products\Import` — `zipFile` input, `apply()` (persists files, dispatches job), `refreshStatus()` (wire:poll), `downloadAppliedReport()`. View: ZIP input + Apply wired + applying/applied panels.
-  - `config/import.php` (media limits) · `config/livewire.php` temp-upload rule raised to 64 MB · `ProductExportBuilder` fixed so variant products export **no** product-level price (round-trip safe).
-  - Lang: ~28 new `admin.import_products.*` strings (AR + EN).
-  - Tests: 13 feature tests in `tests/Feature/Admin/Products/ProductImportBI3Test.php` + browser E2E `tests/Browser/Admin/ProductImportE2ETest.php` (**unrun** — browser tests paused; feature tests cover the same flow).
-- **Herd PHP settings (owner, for large uploads):** raise `upload_max_filesize=64M`, `post_max_size=80M` in the active Herd PHP `php.ini`, then restart Herd (IMPORT_SPEC §8).
-- **Open issues (carry-forward from BI.1):** After a fresh install, run `php artisan db:seed --class=RolesAndAdminSeeder` once to grant Admin the import/export permissions. Also run `php artisan migrate` for the new `import_logs` table (already done locally).
-- **How to verify on dots.test:**
-  1. Log in → Products → Import. Upload a filled xlsx **and** a media ZIP (English filenames, e.g. `SKU.jpg`, `SKU-2.jpg`, `SKU-datasheet.pdf`). Include one bad row + one product whose image is missing from the ZIP.
-  2. Click **"معاينة"** → preview counts + error/warning tables.
-  3. Click **"تطبيق الصفوف الصحيحة"** → watch the "جارٍ التطبيق…" panel → "اكتمل الاستيراد" summary (created/updated/variants/specs/images/warnings). Download the report.
-  4. Open the imported products on the public site: prices + images show immediately; deactivated variants are gone from the picker; a NEW product with no valid image is a draft (not public).
-  5. No 403/500/JS errors.
+- **Branch:** `payments-hardening` (local only).
+- **Current task:** PAY.3 — **DONE**. Next: **PAY.2**.
+- **Last commit:** _(see below — committing after this update)_
+- **Gate result:** 648 tests (646 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
+- **PAY.3 produced:** Removed dead keys `PAYMOB_API_KEY` and `PAYMOB_IFRAME_ID` from `config/services.php` and `.env.example`. Grep confirms zero remaining references in `app/` and `config/`.
+- **Open questions from payments.md (decide before PAY.1):**
+  1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
+  2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
+- **How to verify:** No owner clicks required for PAY.3 (config only).
+- **Next session:** Open a new session and say `start PAY.2`.
 
-**Git:** branch `bulk-import` (local, unpushed) · last local commit `15b5f63` · last tag `phase-9-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last tag `bulk-import-done` · push state: **not pushed**
 
-Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. BI.2 done. BI.3 done. Next: Phase 10.
+Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
 ---
 
