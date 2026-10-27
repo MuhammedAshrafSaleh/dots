@@ -3,8 +3,8 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.5 — **DONE**. Next: **PAY.6**.
-- **Last commit:** `bfce905` — `PAY.5: show InstaPay address + deadline on the order confirmation page`
-- **Gate result:** 680 tests (678 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Last commit:** `1581980` — `fix: render translatable order item names instead of raw JSON` (PAY.1 hotfix)
+- **Gate result:** 683 tests (681 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.5 produced:**
   - `OrderConfirmationController` now resolves `commerce.instapay_address` from Settings and passes `$instapayAddress` to the view.
