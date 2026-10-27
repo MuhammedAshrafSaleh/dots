@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.1 — **DONE**. Next: **PAY.4**.
-- **Last commit:** `<pending>` — `PAY.1: Auto-release stock for failed & abandoned card payments (+ Gap A re-check, Gap B coupon soft-release)`
+- **Last commit:** `2825030` — `PAY.1: Auto-release stock for failed & abandoned card payments (+ Gap A re-check, Gap B coupon soft-release)`
 - **Gate result:** 666 tests (664 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.1 produced:**
@@ -18,7 +18,7 @@
 - **How to verify (owner clicks):** Admin → Payments → edit the **Card** method → the "Card payment window (minutes)" field saves; entering `29` (or a decimal) shows a validation error, `60`+ saves. (Stock release itself is time/scheduled — covered by the sweep tests.)
 - **Next session:** Open a new session and say `start PAY.4`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.1>` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `2825030` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
