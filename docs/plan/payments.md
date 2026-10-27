@@ -79,7 +79,7 @@
 ---
 
 ## PAY.2 — Card option can never show with partial credentials  _(Sonnet)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** `CheckoutForm` must gate the card method on full gateway configuration, not just the secret key.
 
@@ -234,7 +234,7 @@
 
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
-- [ ] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
+- [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
 - [ ] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
 - [ ] PAY.4 Safe bilingual failure reason (Sonnet)
 - [ ] PAY.5 InstaPay address + deadline on confirmation (Sonnet)

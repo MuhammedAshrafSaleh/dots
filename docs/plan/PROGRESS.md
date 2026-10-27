@@ -2,16 +2,16 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.3 — **DONE**. Next: **PAY.2**.
-- **Last commit:** `40766ea` — `PAY.3: Remove dead Paymob env keys`
-- **Gate result:** 648 tests (646 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.2 — **DONE**. Next: **PAY.1**.
+- **Last commit:** `268bec4` — `PAY.2: Gate card method on full PaymobGateway::isConfigured()`
+- **Gate result:** 650 tests (648 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
-- **PAY.3 produced:** Removed dead keys `PAYMOB_API_KEY` and `PAYMOB_IFRAME_ID` from `config/services.php` and `.env.example`. Grep confirms zero remaining references in `app/` and `config/`.
+- **PAY.2 produced:** `CheckoutForm::cardConfigured()` now delegates to `app(PaymobGateway::class)->isConfigured()` (checks secret + public + integration_id_card). Updated existing test to set all 3 keys for full-config case; added 2 new tests for partial-config cases (public blank, integration_id blank).
 - **Open questions from payments.md (decide before PAY.1):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify:** No owner clicks required for PAY.3 (config only).
-- **Next session:** Open a new session and say `start PAY.2`.
+- **How to verify (owner clicks):** With only `PAYMOB_SECRET_KEY` filled in `.env` (public and integration id blank), open checkout on dots.test → card option must **not** appear. Fill all three → it appears.
+- **Next session:** Open a new session and say `start PAY.1`.
 
 **Git:** branch `payments-hardening` (local, unpushed) · last tag `bulk-import-done` · push state: **not pushed**
 
