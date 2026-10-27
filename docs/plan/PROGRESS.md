@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.6 — **DONE**. Next: **PAY.7**.
-- **Last commit:** `<pending>` — `PAY.6: verify callback HMAC before any order lookup on return`
+- **Last commit:** `425e579` — `PAY.6: verify callback HMAC before any order lookup on return`
 - **Gate result:** 685 tests (683 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.6 produced:**
@@ -15,7 +15,7 @@
 - **How to verify (owner clicks — PAY.6):** none (covered by tests; manual verification folded into PAY.8 real-transaction run).
 - **Next session:** Open a new session and say `start PAY.7`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `bfce905` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `425e579` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
