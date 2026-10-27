@@ -456,4 +456,13 @@ return [
     'pf_expired_readd_dropped' => 'Some items are no longer available and were left out: :items',
     'pf_expired_readd_reduced' => 'We lowered some quantities to match what’s in stock now: :items',
     'pf_expired_readd_none' => 'None of the items could be added back to your cart — they’re no longer available.',
+
+    // Payment-failed page: curated failure reasons (never raw gateway text).
+    // Every line ends by pointing at a next action available on the page.
+    'pf_reason_declined' => 'This payment wasn’t approved. Try a different card, switch to cash on delivery, or pay via InstaPay.',
+    'pf_reason_insufficient_funds' => 'There wasn’t enough balance for this transaction. Try a different card, switch to cash on delivery, or pay via InstaPay.',
+    'pf_reason_expired_card' => 'The card may be expired. Try a different card, switch to cash on delivery, or pay via InstaPay.',
+    'pf_reason_3ds_failed' => 'The payment verification step didn’t complete. Try again, switch to cash on delivery, or pay via InstaPay.',
+    'pf_reason_auth_error' => 'There was an issue processing this payment. Try again, switch to cash on delivery, or pay via InstaPay.',
+    'pf_reason_generic' => 'This payment couldn’t go through. Try again, switch to cash on delivery, or pay via InstaPay.',
 ];

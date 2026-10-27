@@ -5,7 +5,9 @@ namespace App\Livewire\Shop;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethodCode;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Services\CartManager;
 use App\Services\Payments\PaymentException;
@@ -163,6 +165,47 @@ class PaymentFailed extends Component
         $this->redirectRoute('cart', [$locale], navigate: true);
     }
 
+    /**
+     * Map the latest failed payment's `failure_code` to a bilingual lang key.
+     * Returns null when there is no failed payment (e.g. gateway threw before
+     * recording anything). Raw `failure_message` is never returned or rendered.
+     */
+    private function failureReasonKey(): ?string
+    {
+        // ISO 8583 numeric codes and Paymob string codes → curated key.
+        static $map = [
+            '51' => 'pf_reason_insufficient_funds', // insufficient funds
+            '61' => 'pf_reason_insufficient_funds', // exceeds withdrawal amount limit
+            '65' => 'pf_reason_insufficient_funds', // exceeds withdrawal frequency limit
+            'INSUFFICIENT_FUNDS' => 'pf_reason_insufficient_funds',
+            '54' => 'pf_reason_expired_card',        // expired card
+            'EXPIRED_CARD' => 'pf_reason_expired_card',
+            'CARD_EXPIRED' => 'pf_reason_expired_card',
+            '3DS_FAILED' => 'pf_reason_3ds_failed',
+            'AUTHENTICATION_FAILED' => 'pf_reason_3ds_failed',
+            'A5' => 'pf_reason_3ds_failed',
+            'AUTH_FAILED' => 'pf_reason_auth_error',
+            'AUTHORIZATION_FAILED' => 'pf_reason_auth_error',
+            '05' => 'pf_reason_declined',            // do not honor
+            '14' => 'pf_reason_declined',            // invalid card number
+            '15' => 'pf_reason_declined',            // no such issuer
+            '57' => 'pf_reason_declined',            // transaction not permitted
+            '62' => 'pf_reason_declined',            // restricted card
+            'DECLINED' => 'pf_reason_declined',
+        ];
+
+        $payment = Payment::where('order_id', $this->orderId)
+            ->where('status', PaymentStatus::Failed)
+            ->latest()
+            ->first();
+
+        if ($payment === null) {
+            return null;
+        }
+
+        return $map[$payment->failure_code] ?? 'pf_reason_generic';
+    }
+
     private function isCancelled(): bool
     {
         return (bool) DB::transaction(function (): bool {
@@ -177,6 +220,7 @@ class PaymentFailed extends Component
         return view('livewire.shop.payment-failed', [
             'order' => $this->order(),
             'locale' => app()->getLocale(),
+            'reasonKey' => $this->expired ? null : $this->failureReasonKey(),
         ]);
     }
 }

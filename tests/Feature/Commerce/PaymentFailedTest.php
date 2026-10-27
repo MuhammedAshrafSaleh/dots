@@ -3,6 +3,7 @@
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethodCode;
+use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Livewire\Shop\PaymentFailed;
 use App\Models\Brand;
@@ -255,4 +256,65 @@ it('renders flashed cart notices on the cart page', function () {
         ->get(route('cart', 'en'))
         ->assertOk()
         ->assertSee('Heads up: an item was left out of your cart.');
+});
+
+// ---------------------------------------------------------------------------
+// PAY.4 — failure reason display
+// ---------------------------------------------------------------------------
+
+it('shows a curated reason for a known failure code', function () {
+    app()->setLocale('en');
+
+    $order = pfOrder();
+    Payment::create([
+        'order_id' => $order->id,
+        'transaction_id' => 'txn-known',
+        'gateway' => 'paymob',
+        'amount' => $order->total,
+        'currency' => 'EGP',
+        'status' => PaymentStatus::Failed,
+        'failure_code' => '51', // insufficient funds
+        'failure_message' => 'Raw gateway text that must never appear',
+        'hmac_verified' => true,
+    ]);
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->assertSee('enough balance for this transaction')
+        ->assertDontSee('Raw gateway text that must never appear');
+});
+
+it('shows the generic reason for an unknown failure code', function () {
+    app()->setLocale('en');
+
+    $order = pfOrder();
+    Payment::create([
+        'order_id' => $order->id,
+        'transaction_id' => 'txn-unknown',
+        'gateway' => 'paymob',
+        'amount' => $order->total,
+        'currency' => 'EGP',
+        'status' => PaymentStatus::Failed,
+        'failure_code' => 'SOME_UNKNOWN_CODE',
+        'failure_message' => 'Raw gateway text that must never appear',
+        'hmac_verified' => true,
+    ]);
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->assertSee('go through. Try again')
+        ->assertDontSee('Raw gateway text that must never appear');
+});
+
+it('shows no reason line when there is no failed payment', function () {
+    app()->setLocale('en');
+
+    $order = pfOrder();
+    session(['orders.placed' => [$order->id]]);
+
+    // No Payment row at all — gateway threw before recording anything.
+    $html = Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->html();
+
+    expect($html)->not->toContain('data-reason');
 });

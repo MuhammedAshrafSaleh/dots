@@ -1,6 +1,7 @@
 @php
     /** @var \App\Models\Order $order */
     /** @var string $locale */
+    /** @var string|null $reasonKey */
 
     $options = [
         'retry' => ['icon' => 'credit-card', 'title' => __('ui.pf_retry_t'), 'desc' => __('ui.pf_retry_d'), 'meta' => null],
@@ -24,6 +25,11 @@
                     <p style="margin:0;font:500 15px/1.6 var(--font-body);color:var(--fg-2);text-wrap:pretty;">
                         {{ $expired ? __('ui.pf_expired_body', ['number' => $order->number]) : __('ui.pf_body', ['number' => $order->number]) }}
                     </p>
+                    @if ($reasonKey)
+                        <p style="margin:0;font:500 14px/1.6 var(--font-body);color:var(--fg-3);text-wrap:pretty;" data-reason>
+                            {{ __('ui.'.$reasonKey) }}
+                        </p>
+                    @endif
                 </div>
             </section>
 
