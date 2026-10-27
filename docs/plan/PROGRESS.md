@@ -2,25 +2,22 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.1 — **DONE** (incl. re-add-to-cart feedback follow-up + webhook-atomicity hardening from independent review). Next: **PAY.4**.
-- **Last commit:** `d375e9b` — `PAY.1: make webhook idempotency marker transactional and lock the order on settle`
-- **Gate result:** 672 tests (670 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.4 — **DONE**. Next: **PAY.5**.
+- **Last commit:** `4577c0a` — `PAY.4: safe bilingual failure reason on the payment-failed page`
+- **Gate result:** 675 tests (673 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
-- **PAY.1 produced:**
-  - New setting `commerce.card_payment_window_minutes` (default 60, admin field on the **card** method, validated `required|integer|min:30`; seeded in SiteSeeder).
-  - `PlaceOrder` sets `reserved_until = now + window` for card orders (InstaPay/COD unchanged); `PaymobGateway::createCheckout()` refreshes it every attempt; `recordTransaction()` clears it on paid and, on a late success after auto-cancel, records payment + `paid` but keeps `cancelled` and writes a manual-review note (no un-cancel, no stock move).
-  - `ReleaseExpiredReservations` broadened to sweep card `pending`/`failed` + InstaPay `awaiting_transfer` with a non-null expired `reserved_until`; each order locked + re-checked under the lock; reason-aware cancel note (card vs InstaPay). COD (null deadline) never swept.
-  - **Gap A:** `PaymentFailed` re-checks (row-locked) the order is not cancelled in all 3 branches; cancelled → `expired` state in the view + "re-add items to cart" action (`CartManager::reAddFromOrder`, clamps to current stock, lists dropped items).
-  - **Re-add feedback (follow-up):** `reAddFromOrder` now returns `{added, dropped, reduced}`; `PaymentFailed::reAddToCart` flashes `cart_notices` (session flash, survives the `wire:navigate` redirect — not a Livewire toast) rendered in a new notice block on `site/cart.blade.php`. Three bilingual messages: dropped (left out), reduced (qty lowered, shows `requested → actual`), and an all-unavailable "nothing could be restored" line. Locale-aware list separator (`، ` ar / `, ` en).
-  - **Gap B (soft-release):** new `coupon_redemptions.released_at` column + migration; `ReleaseOrderCoupon` action stamps `released_at` and decrements `used_count` (floored, idempotent) on both auto- and admin-cancel; `Coupons` once-per-customer gate now ignores released rows. Guest exemption unchanged. Docs: ERD + Decisions log + Gap B text updated.
-  - **Webhook-atomicity hardening (from independent review of PAY.1):** `PaymobGateway::recordTransaction()` now (a) creates the `webhook_events` idempotency marker **inside** the same `DB::transaction` as the payment + order update — a mid-transaction failure rolls the marker back so Paymob's retry re-processes instead of being swallowed as a duplicate; and (b) re-reads the order with `lockForUpdate()` inside that transaction and computes `lateAfterCancel` from the **locked** row, so a concurrent sweep that cancels first is seen and the manual-review note wins (no stale unlocked read). Two new feature tests cover the rollback-then-retry and the concurrent-cancel paths.
+- **PAY.4 produced:**
+  - `PaymentFailed::failureReasonKey()` maps the latest failed `Payment.failure_code` (ISO 8583 numeric codes + Paymob string codes) to one of five curated keys (`pf_reason_declined`, `pf_reason_insufficient_funds`, `pf_reason_expired_card`, `pf_reason_3ds_failed`, `pf_reason_auth_error`) or a generic fallback. Returns null when no failed payment exists (gateway threw before recording anything).
+  - View renders the reason in a `data-reason` paragraph between the heading copy and the options section — shown only when `$reasonKey` is non-null and the order is not expired. Raw `failure_message` is never passed to the view.
+  - 6 new bilingual lang keys in `pf_reason_*` (EN + AR). Arabic is natural/non-literal. Every line ends pointing at a next action on the page. No bank names mentioned.
+  - 3 new tests: known code → curated reason; unknown code → generic, raw text absent; no payment row → no data-reason element.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks):** Admin → Payments → edit the **Card** method → the "Card payment window (minutes)" field saves; entering `29` (or a decimal) shows a validation error, `60`+ saves. (Stock release itself is time/scheduled — covered by the sweep tests.)
-- **Next session:** Open a new session and say `start PAY.4`.
+- **How to verify (owner clicks — PAY.4):** With sandbox keys, force a decline → payment-failed page shows a human reason (AR + EN), no technical codes. With `APP_URL` tunnelled and a real card, cause each known decline type to confirm the curated copy appears.
+- **Next session:** Open a new session and say `start PAY.5`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `d375e9b` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `4577c0a` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 

@@ -128,7 +128,7 @@
 ---
 
 ## PAY.4 — Safe, bilingual failure reason on the payment-failed page  _(Sonnet)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** Tell the customer *why* the card failed when we can do so safely — never echo raw gateway text.
 
@@ -247,7 +247,7 @@
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
 - [x] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
-- [ ] PAY.4 Safe bilingual failure reason (Sonnet)
+- [x] PAY.4 Safe bilingual failure reason (Sonnet)
 - [ ] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
 - [ ] PAY.6 HMAC verified before order lookup on return (Opus)
 - [ ] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
