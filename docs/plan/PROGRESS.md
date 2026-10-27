@@ -2,20 +2,21 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.6 — **DONE**. Next: **PAY.7**.
-- **Last commit:** `425e579` — `PAY.6: verify callback HMAC before any order lookup on return`
-- **Gate result:** 685 tests (683 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.7 — **DONE**. Next: **PAY.8**.
+- **Last commit:** `<pending>` — `PAY.7: close remaining payment test gaps`
+- **Gate result:** 688 tests (686 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
-- **PAY.6 produced:**
-  - `PaymobReturnController` reordered: `verifyCallback()` runs **first**; an unverified/forged callback redirects to cart with **no order query**. The merchant ref is now derived from the **verified `obj`** (`obj['order']['merchant_order_id']`), not the untrusted `merchant_order_id` query param, so a tampered callback can neither drive a lookup nor leak order existence. Happy path unchanged (verified paid → confirmation; verified failed → payment-failed).
-  - 2 new feature tests in `PaymobGatewayTest`: invalid HMAC with a real `merchant_order_id` → redirect to cart, order untouched (still `pending`), no `Payment`/`WebhookEvent` row; missing HMAC → same.
+- **PAY.7 produced (tests only — no production code changed):**
+  - `CheckoutTest`: card order whose gateway intention throws → redirect to `order.payment-failed`, order placed, stock already decremented, no `paid` payment (a `pending` payment row still exists, as `createCheckout()` writes it before the API call). Also: configured `commerce.instapay_hold_hours` (set to 48) actually drives `reserved_until ≈ now + 48h`.
+  - `ReleaseExpiredReservationsTest`: full chain — place a card order holding stock → declined Paymob webhook flips it to `failed` (stock + deadline retained) → time-travel past the window → sweeper cancels, clears `reserved_until`, restores stock, writes the "Card payment not completed" note. New file-local `relFailedWebhook()` helper builds a correctly-signed declined webhook.
+  - Invalid-HMAC and missing-HMAC browser-return scenarios were already covered by the two tests added in PAY.6 (`PaymobGatewayTest`), so no duplicates added.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks — PAY.6):** none (covered by tests; manual verification folded into PAY.8 real-transaction run).
-- **Next session:** Open a new session and say `start PAY.7`.
+- **How to verify (owner clicks — PAY.7):** none (tests only).
+- **Next session:** Open a new session and say `start PAY.8`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `425e579` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.7>` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 

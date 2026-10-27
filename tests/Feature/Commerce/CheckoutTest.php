@@ -4,6 +4,7 @@ use App\Enums\CouponType;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethodCode;
+use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Livewire\Shop\CheckoutForm;
 use App\Models\Brand;
@@ -17,6 +18,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CartManager;
+use App\Services\Settings;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
@@ -319,6 +321,56 @@ it('sends a card order to the Paymob hosted checkout', function () {
     expect($order->payment_method_code)->toBe('card')
         ->and($order->payment_status)->toBe(OrderPaymentStatus::Pending)
         ->and($order->payments()->count())->toBe(1);
+});
+
+it('sends a card order to payment-failed when the gateway throws, keeping stock decremented and no paid payment', function () {
+    app()->setLocale('en');
+    config()->set('services.paymob.base_url', 'https://pay.test');
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', '55555');
+    config()->set('services.paymob.hmac_secret', 'hmac');
+    // The intention API rejects: createCheckout() throws PaymentException.
+    Http::fake(['pay.test/v1/intention/*' => Http::response(['detail' => 'bad'], 401)]);
+
+    $variant = coVariant('THROW', 1000, stock: 5);
+    $pickup = coPickup();
+    coPayment(PaymentMethodCode::Card);
+    app(CartManager::class)->add($variant->id, 2);
+
+    $component = Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $pickup->id, 'paymentCode' => 'card']))
+        ->call('place');
+
+    // The order was placed (stock already decremented) before the gateway hop;
+    // the throw routes the customer to payment-failed, not an error page.
+    $order = Order::first();
+    expect($order)->not->toBeNull();
+    $component->assertRedirect(route('order.payment-failed', ['en', $order->number]));
+
+    expect($order->payment_method_code)->toBe('card')
+        ->and($order->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and($variant->fresh()->stock_qty)->toBe(3)
+        ->and($order->payments()->where('status', PaymentStatus::Paid)->count())->toBe(0);
+});
+
+it('uses the configured instapay_hold_hours for the reservation deadline', function () {
+    app(Settings::class)->set('commerce.instapay_hold_hours', 48);
+
+    $variant = coVariant('HOLD', 1000);
+    $pickup = coPickup();
+    coPayment(PaymentMethodCode::InstapayWhatsapp);
+    app(CartManager::class)->add($variant->id, 1);
+
+    Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $pickup->id, 'paymentCode' => 'instapay_whatsapp']))
+        ->call('place')
+        ->assertRedirect();
+
+    $order = Order::first();
+    expect($order->reserved_until)->not->toBeNull()
+        ->and($order->reserved_until->between(now()->addHours(48)->subMinute(), now()->addHours(48)->addMinute()))
+        ->toBeTrue();
 });
 
 it('only offers delivery methods serving the chosen governorate', function () {

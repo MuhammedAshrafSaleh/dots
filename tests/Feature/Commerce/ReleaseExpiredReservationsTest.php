@@ -124,6 +124,48 @@ function relCardOrder(ProductVariant $variant, int $qty, ?Carbon $reservedUntil,
     return $order;
 }
 
+/**
+ * Build a declined Paymob webhook `obj` + matching HMAC for `$order`, the same
+ * ordered-field concatenation Paymob signs with.
+ *
+ * @return array{obj: array<string, mixed>, hmac: string}
+ */
+function relFailedWebhook(Order $order): array
+{
+    $obj = [
+        'id' => '905001',
+        'amount_cents' => (int) round(((float) $order->total) * 100),
+        'created_at' => '2026-10-15T10:00:00',
+        'currency' => 'EGP',
+        'error_occured' => true,
+        'has_parent_transaction' => false,
+        'integration_id' => 55555,
+        'is_3d_secure' => true,
+        'is_auth' => false,
+        'is_capture' => false,
+        'is_refunded' => false,
+        'is_standalone_payment' => true,
+        'is_voided' => false,
+        'owner' => 100,
+        'pending' => false,
+        'success' => false,
+        'order' => ['id' => 700, 'merchant_order_id' => $order->number],
+        'source_data' => ['pan' => '2346', 'sub_type' => 'MasterCard', 'type' => 'card'],
+        'data' => ['message' => 'Declined'],
+        'txn_response_code' => '51',
+    ];
+
+    $ordered = [
+        $obj['amount_cents'], $obj['created_at'], $obj['currency'],
+        'true', 'false', $obj['id'], $obj['integration_id'], 'true',
+        'false', 'false', 'false', 'true', 'false', $obj['order']['id'],
+        $obj['owner'], 'false', $obj['source_data']['pan'],
+        $obj['source_data']['sub_type'], $obj['source_data']['type'], 'false',
+    ];
+
+    return ['obj' => $obj, 'hmac' => hash_hmac('sha512', implode('', $ordered), 'hmac_secret')];
+}
+
 it('cancels an expired reservation, restores stock and notes it on the timeline', function () {
     $variant = relVariant('A', stock: 7); // 3 already reserved out of 10
     $order = relAwaitingOrder($variant, qty: 3, reservedUntil: now()->subMinute());
@@ -260,6 +302,44 @@ it('ignores a paid card order with its reservation cleared', function () {
     expect(app(ReleaseExpiredReservations::class)->handle())->toBe(0);
     expect($order->fresh()->status)->toBe(OrderStatus::New)
         ->and($variant->fresh()->stock_qty)->toBe(5);
+});
+
+it('sweeps a card order to cancellation after a declined webhook (full chain)', function () {
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', '55555');
+    config()->set('services.paymob.hmac_secret', 'hmac_secret');
+
+    $variant = relVariant('J', stock: 7); // 3 reserved out of 10
+    $order = relCardOrder($variant, qty: 3, reservedUntil: now()->addMinutes(60), status: OrderPaymentStatus::Pending);
+    $order->statusHistories()->create(['status' => OrderStatus::New->value, 'created_at' => now()]);
+
+    // Paymob delivers a declined webhook: the order flips to failed but still
+    // holds its stock and its pay-by deadline, awaiting a retry that never comes.
+    $w = relFailedWebhook($order);
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])
+        ->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Failed)
+        ->and($order->status)->toBe(OrderStatus::New)
+        ->and($order->reserved_until)->not->toBeNull()
+        ->and($variant->fresh()->stock_qty)->toBe(7);
+
+    // The window passes with no retry: the sweeper cancels and restores the stock.
+    $this->travel(61)->minutes();
+
+    expect(app(ReleaseExpiredReservations::class)->handle())->toBe(1);
+
+    $order->refresh();
+    expect($order->status)->toBe(OrderStatus::Cancelled)
+        ->and($order->reserved_until)->toBeNull()
+        ->and($variant->fresh()->stock_qty)->toBe(10);
+
+    $last = $order->statusHistories()->get()->last();
+    expect($last->getTranslation('note', 'en'))->toContain('Card payment not completed');
+
+    $this->travelBack();
 });
 
 it('soft-releases a coupon on auto-cancel, decrements used_count, and frees the customer', function () {

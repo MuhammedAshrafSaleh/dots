@@ -200,7 +200,7 @@
 ---
 
 ## PAY.7 — Close the remaining test gaps  _(Opus for the webhook/HMAC & release assertions; Sonnet for the checkout-throw UI test)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** Cover the critical paths this audit found untested.
 
@@ -250,7 +250,7 @@
 - [x] PAY.4 Safe bilingual failure reason (Sonnet)
 - [x] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
 - [x] PAY.6 HMAC verified before order lookup on return (Opus)
-- [ ] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
+- [x] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
 - [ ] PAY.8 Go-live checklist doc (Sonnet)
 
 ---
