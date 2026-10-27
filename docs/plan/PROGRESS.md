@@ -2,9 +2,9 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.1 — **DONE** (incl. re-add-to-cart feedback follow-up). Next: **PAY.4**.
-- **Last commit:** `92f523b` — `PAY.1: clearer feedback when restoring an expired order to the cart`
-- **Gate result:** 670 tests (668 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.1 — **DONE** (incl. re-add-to-cart feedback follow-up + webhook-atomicity hardening from independent review). Next: **PAY.4**.
+- **Last commit:** `PAY.1: make webhook idempotency marker transactional and lock the order on settle`
+- **Gate result:** 672 tests (670 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
 - **PAY.1 produced:**
   - New setting `commerce.card_payment_window_minutes` (default 60, admin field on the **card** method, validated `required|integer|min:30`; seeded in SiteSeeder).
@@ -13,6 +13,7 @@
   - **Gap A:** `PaymentFailed` re-checks (row-locked) the order is not cancelled in all 3 branches; cancelled → `expired` state in the view + "re-add items to cart" action (`CartManager::reAddFromOrder`, clamps to current stock, lists dropped items).
   - **Re-add feedback (follow-up):** `reAddFromOrder` now returns `{added, dropped, reduced}`; `PaymentFailed::reAddToCart` flashes `cart_notices` (session flash, survives the `wire:navigate` redirect — not a Livewire toast) rendered in a new notice block on `site/cart.blade.php`. Three bilingual messages: dropped (left out), reduced (qty lowered, shows `requested → actual`), and an all-unavailable "nothing could be restored" line. Locale-aware list separator (`، ` ar / `, ` en).
   - **Gap B (soft-release):** new `coupon_redemptions.released_at` column + migration; `ReleaseOrderCoupon` action stamps `released_at` and decrements `used_count` (floored, idempotent) on both auto- and admin-cancel; `Coupons` once-per-customer gate now ignores released rows. Guest exemption unchanged. Docs: ERD + Decisions log + Gap B text updated.
+  - **Webhook-atomicity hardening (from independent review of PAY.1):** `PaymobGateway::recordTransaction()` now (a) creates the `webhook_events` idempotency marker **inside** the same `DB::transaction` as the payment + order update — a mid-transaction failure rolls the marker back so Paymob's retry re-processes instead of being swallowed as a duplicate; and (b) re-reads the order with `lockForUpdate()` inside that transaction and computes `lateAfterCancel` from the **locked** row, so a concurrent sweep that cancels first is seen and the manual-review note wins (no stale unlocked read). Two new feature tests cover the rollback-then-retry and the concurrent-cancel paths.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?

@@ -173,29 +173,38 @@ class PaymobGateway implements PaymentGateway
             return;
         }
 
-        $event = WebhookEvent::firstOrCreate(
-            ['provider' => 'paymob', 'event_id' => $transactionId],
-            ['payload' => $obj, 'processed_at' => now()],
-        );
-
-        if (! $event->wasRecentlyCreated) {
-            return; // duplicate delivery — already processed
-        }
-
-        $order = Order::where('number', $merchantRef)->first();
-        if ($order === null) {
-            return;
-        }
-
         $success = $this->asBool($obj['success'] ?? null);
         $pan = isset($obj['source_data']['pan']) ? (string) $obj['source_data']['pan'] : null;
-        // Money may land after the reservation sweeper already cancelled the
-        // order (pathological late retry — Paymob normally fires within
-        // seconds). We record the payment and flag it for manual review, but
-        // never un-cancel the order or move stock. A human decides.
-        $lateAfterCancel = $success && $order->status === OrderStatus::Cancelled;
 
-        DB::transaction(function () use ($order, $obj, $transactionId, $success, $pan, $hmacVerified, $lateAfterCancel): void {
+        DB::transaction(function () use ($merchantRef, $obj, $transactionId, $success, $pan, $hmacVerified): void {
+            // The idempotency marker lives INSIDE this transaction: if anything
+            // below throws, the webhook_events row rolls back with it, so
+            // Paymob's retry of the same event is re-processed rather than
+            // swallowed as a duplicate. A genuinely already-committed event is
+            // still a no-op (firstOrCreate finds the existing row).
+            $event = WebhookEvent::firstOrCreate(
+                ['provider' => 'paymob', 'event_id' => $transactionId],
+                ['payload' => $obj, 'processed_at' => now()],
+            );
+
+            if (! $event->wasRecentlyCreated) {
+                return; // duplicate delivery — already processed
+            }
+
+            // Lock the order row for the life of the transaction so an in-flight
+            // reservation sweep cannot cancel it between our read and our write.
+            $order = Order::where('number', $merchantRef)->lockForUpdate()->first();
+            if ($order === null) {
+                return;
+            }
+
+            // Money may land after the reservation sweeper already cancelled the
+            // order (pathological late retry — Paymob normally fires within
+            // seconds). Judged from the LOCKED row so a concurrent sweep that
+            // committed first is seen. We record the payment and flag it for
+            // manual review, but never un-cancel the order or move stock.
+            $lateAfterCancel = $success && $order->status === OrderStatus::Cancelled;
+
             Payment::updateOrCreate(
                 ['order_id' => $order->id, 'transaction_id' => $transactionId],
                 [

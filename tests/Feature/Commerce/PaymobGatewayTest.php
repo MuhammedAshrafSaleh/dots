@@ -270,3 +270,59 @@ it('records a late success after auto-cancellation without un-cancelling or movi
     $last = $order->statusHistories()->get()->last();
     expect($last->getTranslation('note', 'en'))->toContain('AFTER auto-cancellation');
 });
+
+it('rolls back the webhook_events marker when the work transaction fails, then a retry settles the order', function () {
+    $order = pgOrder();
+    $w = pgWebhook($order, success: true, txnId: '900700');
+
+    // Force the work transaction to fail AFTER the idempotency marker and the
+    // payment have been written, by throwing on the order update. Isolate the
+    // listener on a cloned dispatcher so it can never leak into later tests.
+    $dispatcher = Order::getEventDispatcher();
+    Order::setEventDispatcher(clone $dispatcher);
+    Order::updating(fn () => throw new RuntimeException('simulated mid-transaction failure'));
+
+    try {
+        expect(fn () => app(PaymobGateway::class)->recordTransaction($w['obj'], hmacVerified: true))
+            ->toThrow(RuntimeException::class);
+    } finally {
+        Order::setEventDispatcher($dispatcher);
+    }
+
+    // The whole transaction rolled back: no marker left behind, no payment, and
+    // the order is untouched — so Paymob's retry is NOT swallowed as a duplicate.
+    expect(WebhookEvent::where('event_id', '900700')->count())->toBe(0)
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(0)
+        ->and($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Pending);
+
+    // Retry of the same event, failure gone: it now processes fully and settles.
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])
+        ->assertOk()
+        ->assertJson(['ok' => true]);
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and(WebhookEvent::where('event_id', '900700')->count())->toBe(1)
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(1);
+});
+
+it('flags a payment landing on a concurrently cancelled order for manual review, not the ordinary note', function () {
+    // The reservation sweep committed first (status Cancelled, stock already
+    // restored) just before our webhook acquires the locked row. lateAfterCancel
+    // is judged from the locked state, so the manual-review note must win.
+    $order = pgOrder(status: OrderPaymentStatus::Failed);
+    $order->update(['status' => OrderStatus::Cancelled, 'reserved_until' => null]);
+
+    $w = pgWebhook($order, success: true, txnId: '900800');
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])
+        ->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->status)->toBe(OrderStatus::Cancelled);
+
+    $note = $order->statusHistories()->get()->last()->getTranslation('note', 'en');
+    expect($note)->toContain('AFTER auto-cancellation')
+        ->and($note)->not->toContain('received via Paymob');
+});
