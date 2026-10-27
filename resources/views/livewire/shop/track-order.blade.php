@@ -140,9 +140,9 @@
                         <div style="display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;">
                             <span style="width:44px;height:44px;border-radius:6px;border:1px solid var(--border-1);background:var(--bg-subtle) center/cover no-repeat;@if ($item->image_url) background-image:url('{{ $item->image_url }}');@endif"></span>
                             <span style="font:700 13px/1.35 var(--font-body);min-width:0;">
-                                {{ $item->getTranslation('product_name', $locale) }}
+                                {{ $item->product_name }}
                                 <span style="display:block;font:500 12px var(--font-body);color:var(--fg-3);">
-                                    @if ($item->getTranslation('variant_label', $locale)){{ $item->getTranslation('variant_label', $locale) }} · @endif×{{ $item->qty }}
+                                    @if ($item->variant_label){{ $item->variant_label }} · @endif×{{ $item->qty }}
                                 </span>
                             </span>
                             <b style="font:800 13px var(--font-body);white-space:nowrap;">{{ number_format((float) $item->line_total, 0) }} {{ __('ui.egp') }}</b>
