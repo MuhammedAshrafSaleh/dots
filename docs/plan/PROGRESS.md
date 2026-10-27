@@ -2,22 +2,22 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.4 — **DONE**. Next: **PAY.5**.
-- **Last commit:** `4577c0a` — `PAY.4: safe bilingual failure reason on the payment-failed page`
-- **Gate result:** 675 tests (673 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.5 — **DONE**. Next: **PAY.6**.
+- **Last commit:** _(see git log — PAY.5 commit pending below)_
+- **Gate result:** 680 tests (678 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
-- **PAY.4 produced:**
-  - `PaymentFailed::failureReasonKey()` maps the latest failed `Payment.failure_code` (ISO 8583 numeric codes + Paymob string codes) to one of five curated keys (`pf_reason_declined`, `pf_reason_insufficient_funds`, `pf_reason_expired_card`, `pf_reason_3ds_failed`, `pf_reason_auth_error`) or a generic fallback. Returns null when no failed payment exists (gateway threw before recording anything).
-  - View renders the reason in a `data-reason` paragraph between the heading copy and the options section — shown only when `$reasonKey` is non-null and the order is not expired. Raw `failure_message` is never passed to the view.
-  - 6 new bilingual lang keys in `pf_reason_*` (EN + AR). Arabic is natural/non-literal. Every line ends pointing at a next action on the page. No bank names mentioned.
-  - 3 new tests: known code → curated reason; unknown code → generic, raw text absent; no payment row → no data-reason element.
+- **PAY.5 produced:**
+  - `OrderConfirmationController` now resolves `commerce.instapay_address` from Settings and passes `$instapayAddress` to the view.
+  - New `data-instapay-details` section in `order-confirmation.blade.php` (InstaPay only, before "What happens next") shows: address (or bilingual fallback when blank), amount, order number, and deadline (`reserved_until` localised). COD and card variants visually unchanged.
+  - 5 new bilingual lang keys: `confirm_instapay_details_title`, `confirm_instapay_address_label`, `confirm_instapay_amount_label`, `confirm_instapay_deadline_label`, `confirm_instapay_address_fallback`. `instapay_step1_t/b` updated to reference the on-page address instead of "we send in chat".
+  - 5 new feature tests in `OrderConfirmationTest`: address set → shown; address blank → fallback, no address string; no reserved_until → no deadline row; unauthorised viewer → 404 + address absent; switch-to-InstaPay from payment-failed then confirm → address shown.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks — PAY.4):** With sandbox keys, force a decline → payment-failed page shows a human reason (AR + EN), no technical codes. With `APP_URL` tunnelled and a real card, cause each known decline type to confirm the curated copy appears.
-- **Next session:** Open a new session and say `start PAY.5`.
+- **How to verify (owner clicks — PAY.5):** Admin → Payments → set an InstaPay address → place an InstaPay order → confirmation shows address + amount + deadline. Blank the address → fallback copy. COD and card confirmations unchanged.
+- **Next session:** Open a new session and say `start PAY.6`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `4577c0a` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit: PAY.5 · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 

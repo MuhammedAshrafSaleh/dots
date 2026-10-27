@@ -248,7 +248,7 @@
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
 - [x] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
 - [x] PAY.4 Safe bilingual failure reason (Sonnet)
-- [ ] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
+- [x] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
 - [ ] PAY.6 HMAC verified before order lookup on return (Opus)
 - [ ] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
 - [ ] PAY.8 Go-live checklist doc (Sonnet)

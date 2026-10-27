@@ -403,9 +403,15 @@ return [
     'card_step2_b' => 'We check every fitting before packing — usually the same working day.',
     'card_step3_t' => 'Delivery — nothing to pay',
     'card_step3_b' => 'Next-day in Cairo & Giza, 2–4 working days elsewhere.',
+    // InstaPay confirmation details box
+    'confirm_instapay_details_title' => 'Transfer details',
+    'confirm_instapay_address_label' => 'InstaPay address',
+    'confirm_instapay_amount_label' => 'Amount',
+    'confirm_instapay_deadline_label' => 'Pay by',
+    'confirm_instapay_address_fallback' => "We'll send the InstaPay address on WhatsApp shortly.",
     // InstaPay
-    'instapay_step1_t' => 'Continue on WhatsApp',
-    'instapay_step1_b' => 'We send the InstaPay address and the exact amount in a chat, with your order attached.',
+    'instapay_step1_t' => 'Send the transfer',
+    'instapay_step1_b' => 'Transfer the exact amount to the InstaPay address shown above before the deadline.',
     'instapay_step2_t' => 'Send the transfer receipt',
     'instapay_step2_b' => 'Reply in the same chat. We hold your items while we wait.',
     'instapay_step3_t' => 'We confirm and prepare',
