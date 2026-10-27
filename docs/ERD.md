@@ -524,6 +524,7 @@ Indexes: `code unique`, `(is_active, ends_at)`
 | `customer_id` | FK → customers | null للـ Guest |
 | `amount` | decimal(12,2) |  |
 | `created_at` | timestamp |  |
+| `released_at` | timestamp null | set when the order is cancelled (auto-sweep or admin); the redemption no longer counts toward the once-per-customer gate. Row is kept (not deleted) to preserve the history of a coupon used on a later-cancelled order. |
 
 Indexes: `(coupon_id, customer_id)`, `order_id`
 

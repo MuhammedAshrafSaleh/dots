@@ -97,6 +97,32 @@ it('rejects a once-per-customer coupon the customer already redeemed', function 
     expect(app(Coupons::class)->resolve('ONCE', 1000, $customer->id)->error)->toBe('ui.coupon_used');
 });
 
+it('does not count a released redemption against a once-per-customer coupon', function () {
+    $coupon = makeCoupon('ONCE3', ['once_per_customer' => true]);
+    $customer = Customer::factory()->create();
+
+    $pm = PaymentMethod::create(['code' => PaymentMethodCode::Cod, 'name' => ['ar' => 'عند الاستلام', 'en' => 'COD']]);
+    $order = Order::create([
+        'customer_id' => $customer->id,
+        'contact_name' => 'Sara',
+        'contact_mobile' => '01111111111',
+        'payment_method_id' => $pm->id,
+        'status' => OrderStatus::Cancelled,
+        'payment_status' => OrderPaymentStatus::Failed,
+        'delivery_method_name' => ['ar' => 'توصيل', 'en' => 'Courier'],
+    ]);
+    // Redemption released because the order was later cancelled.
+    CouponRedemption::create([
+        'coupon_id' => $coupon->id,
+        'order_id' => $order->id,
+        'customer_id' => $customer->id,
+        'amount' => 50,
+        'released_at' => now(),
+    ]);
+
+    expect(app(Coupons::class)->resolve('ONCE3', 1000, $customer->id)->error)->toBeNull();
+});
+
 it('allows a once-per-customer coupon for a different / guest customer', function () {
     makeCoupon('ONCE2', ['once_per_customer' => true]);
 

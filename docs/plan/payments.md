@@ -20,7 +20,7 @@
 ---
 
 ## PAY.1 — Auto-release stock for failed & abandoned card payments  _(Opus)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** Extend the existing reservation sweeper so unpaid **card** orders return their stock, exactly as InstaPay orders already do — without ever sweeping legitimate COD holds, and without a stock/webhook race.
 
@@ -39,11 +39,22 @@
   - show a bilingual message (`pf_expired_*`) that the reservation expired and the order was released;
   - offer a **"re-add items to cart"** action. **What that path does with the cart:** it re-adds each `OrderItem` (by `product_variant_id` + `qty`) to the current cart via `CartManager`, clamping each line to the variant's **current** `stock_qty` (skipping variants now inactive/out of stock, with a bilingual note listing anything dropped), then redirects to the cart page. It does **not** resurrect the cancelled order, re-apply the old coupon, or touch stock directly — the customer checks out fresh. The cancelled order stays cancelled for the record.
 
-**Gap B — coupon redemption on an auto-cancelled order (investigated).** Confirmed in code: `PlaceOrder` both inserts a `CouponRedemption` row and `increment`s `coupon.used_count` (`app/Actions/PlaceOrder.php:98-105`). **Neither** `ReleaseExpiredReservations.release()` **nor** `UpdateOrderStatus.restoreStock()` rolls either back, and `app/Services/Coupons.php:35` enforces `used_count >= usage_limit` — so an auto-cancelled order **permanently consumes a coupon use** (and, for limited coupons, can exhaust them). This is a real bug and is **in scope for PAY.1**: on cancel, inside the same locked transaction, delete the order's `CouponRedemption` row(s) and `decrement` `coupon.used_count` by the number removed (never below 0), idempotently (a re-run finds no redemption and no-ops). Apply the same rollback to the admin cancel path (`UpdateOrderStatus`) so both routes behave identically. If an order carries no coupon, this is a no-op.
+**Gap B — coupon redemption on an auto-cancelled order (investigated).** Confirmed in code: `PlaceOrder` both inserts a `CouponRedemption` row and `increment`s `coupon.used_count` (`app/Actions/PlaceOrder.php:97-106`). **Neither** `ReleaseExpiredReservations.release()` **nor** `UpdateOrderStatus.restoreStock()` rolls either back — so an auto-cancelled order **permanently consumes a coupon use** (and, for limited coupons, can exhaust them). This is a real bug and is **in scope for PAY.1**.
+
+**Two gates consume a coupon — both must be handled (the original plan named only the first):**
+1. **Usage-limit gate — reads the `coupon.used_count` *counter*.** `app/Services/Coupons.php:35` (`used_count >= usage_limit`) and `Coupon::scopeValid` (`app/Models/Coupon.php:53`, `used_count < usage_limit`). Fixed by decrementing `used_count`.
+2. **Once-per-customer gate — reads redemption *rows* via `exists()`.** `app/Services/Coupons.php:44-51` does `CouponRedemption::where('coupon_id',…)->where('customer_id',…)->exists()` with no status filter — so a kept row would permanently block that customer even after the order is cancelled. Fixed by making the gate release-aware.
+
+**Resolution = soft-release, not delete (owner-approved 2026-10-27).** A new nullable `released_at` timestamp is added to `coupon_redemptions` (ERD updated; **not** Laravel `SoftDeletes`/`deleted_at`, which would hide the row globally — `released_at` keeps the row visible and labelled "released", preserving the history of a coupon used on a later-cancelled order). On cancel, inside the same locked transaction: stamp `released_at = now()` on the order's redemption row(s) that are still active (`whereNull('released_at')`), count how many that touched, and `decrement('used_count')` by exactly that count (never below 0). Then add `->whereNull('released_at')` to the once-per-customer `exists()` check in `Coupons.php`. Idempotent: a re-run finds no active rows, releases nothing, and does not double-decrement. Apply the same rollback to the admin cancel path (`UpdateOrderStatus`) so both routes behave identically. If an order carries no coupon, this is a no-op.
+
+**Guest observation (behaviour NOT changed by PAY.1).** The once-per-customer gate is wrapped in `$customerId !== null` (`Coupons.php:44`), so a **guest** order (null `customer_id`) is exempt from the once-per-customer rule today. The new `whereNull('released_at')` clause lives inside that same block, so it runs only for non-null customers and does not alter guest behaviour either way. Changing the guest exemption is out of scope for PAY.1.
 
 **Files to touch:**
-- `app/Actions/ReleaseExpiredReservations.php` — broaden query; `lockForUpdate()` + in-lock re-check; reason-aware note; coupon rollback (Gap B).
-- `app/Actions/UpdateOrderStatus.php` — add the same coupon rollback to `restoreStock()`/cancel path (Gap B).
+- New migration — add nullable `released_at` timestamp to `coupon_redemptions` (Gap B soft-release).
+- `app/Models/CouponRedemption.php` — cast/allow `released_at` (model is `$guarded = ['id']`, so writable; add a `datetime` cast).
+- `app/Services/Coupons.php` — add `->whereNull('released_at')` to the once-per-customer `exists()` gate (Gap B).
+- `app/Actions/ReleaseExpiredReservations.php` — broaden query; `lockForUpdate()` + in-lock re-check; reason-aware note; coupon soft-release + `used_count` decrement (Gap B).
+- `app/Actions/UpdateOrderStatus.php` — add the same coupon soft-release rollback to `restoreStock()`/cancel path (Gap B).
 - `app/Actions/PlaceOrder.php` — set initial `reserved_until` for card orders from the new setting.
 - `app/Services/Payments/PaymobGateway.php` — `recordTransaction()`: clear `reserved_until` on success; late-success-after-cancel path (record + flag, no un-cancel). **Money + signature code → Opus.**
 - `app/Livewire/Shop/PaymentFailed.php` — lock + re-check all three branches (Gap A); cancelled → expired message + re-add-to-cart; switching to COD sets `reserved_until = NULL`; InstaPay resets it; retry relies on `createCheckout()` refreshing it.
@@ -60,7 +71,7 @@
 - A late success webhook on an already-cancelled order records the payment, sets `paid`, keeps `cancelled`, writes the review note, and does **not** change stock.
 - Retrying from the payment-failed page refreshes the deadline (no mid-retry cancel).
 - Card window field rejects values below 30 and non-integers.
-- Cancelling an order (auto or admin) removes its coupon redemption and decrements `used_count`, idempotently; an order with no coupon is unaffected.
+- Cancelling an order (auto or admin) soft-releases its coupon redemption (`released_at` stamped, row kept) and decrements `used_count`, idempotently; the once-per-customer gate ignores released rows so the customer may reuse the coupon; an order with no coupon is unaffected.
 - Choosing any option on the payment-failed page for an already-cancelled order mutates nothing and shows the expired message; the re-add action repopulates the cart from the order's items clamped to current stock.
 
 **Required tests (feature, with time travel)**
@@ -71,7 +82,7 @@
 - Late success webhook after auto-cancel → payment recorded, `paid`+`cancelled`, review note present, stock unchanged.
 - `orders:release-reservations` command still releases an expired InstaPay order (no regression).
 - Card window below 30 rejected by admin validation.
-- Auto-cancel of a coupon order → redemption row gone, `used_count` decremented; re-run does not double-decrement; the coupon is usable again within its limit.
+- Auto-cancel of a coupon order → redemption row `released_at` stamped (row kept), `used_count` decremented; re-run does not double-decrement; the coupon is usable again within its limit (once-per-customer gate skips released rows).
 - **Gap A:** order auto-cancelled while the customer is on the payment-failed page, then the customer picks **COD** → order untouched (still cancelled, no new payment), correct expired message shown, **no stock movement**; re-add action repopulates the cart.
 
 **Owner clicks (dots.test):** Admin → Payments → confirm the "card payment window (minutes)" field saves and rejects a value under 30. (Release itself is time-based/scheduled — verify via the sweep test output, not a click.)
@@ -235,7 +246,7 @@
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
-- [ ] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
+- [x] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
 - [ ] PAY.4 Safe bilingual failure reason (Sonnet)
 - [ ] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
 - [ ] PAY.6 HMAC verified before order lookup on return (Opus)

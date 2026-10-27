@@ -3,9 +3,11 @@
 namespace App\Livewire\Shop;
 
 use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentMethodCode;
 use App\Models\Order;
 use App\Models\PaymentMethod;
+use App\Services\CartManager;
 use App\Services\Payments\PaymentException;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Settings;
@@ -15,15 +17,24 @@ use Livewire\Component;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
- * Shown when a card payment is declined: offer to retry the card (wired to
- * Paymob in T7.5), or switch to cash on delivery / InstaPay via WhatsApp. The
- * order is kept intact; switching only changes its payment method + status.
+ * Shown when a card payment is declined: offer to retry the card, or switch to
+ * cash on delivery / InstaPay via WhatsApp. The order is kept intact; switching
+ * only changes its payment method + status.
+ *
+ * The reservation sweeper can cancel the order in the seconds the customer
+ * spends choosing here, so every branch re-loads the order under a row lock and
+ * re-checks it is not cancelled before mutating anything. If it was released,
+ * nothing is touched and the customer is offered a fresh cart from the order's
+ * items.
  */
 class PaymentFailed extends Component
 {
     public int $orderId;
 
     public string $option = 'retry';
+
+    /** Set once the sweeper has cancelled the order out from under the page. */
+    public bool $expired = false;
 
     public function mount(string $number): void
     {
@@ -34,6 +45,7 @@ class PaymentFailed extends Component
         }
 
         $this->orderId = $order->id;
+        $this->expired = $order->status === OrderStatus::Cancelled;
     }
 
     private function order(): Order
@@ -43,8 +55,16 @@ class PaymentFailed extends Component
 
     public function proceed(): void
     {
+        if ($this->isCancelled()) {
+            $this->expired = true;
+
+            return;
+        }
+
         if ($this->option === 'retry') {
             try {
+                // createCheckout refreshes reserved_until, so retrying can never
+                // be swept underneath the customer.
                 $url = app(PaymentGateway::class)->createCheckout($this->order());
             } catch (PaymentException $e) {
                 $this->dispatch('toast', type: 'error', title: __('ui.pf_gateway_error'));
@@ -66,10 +86,20 @@ class PaymentFailed extends Component
             return;
         }
 
-        $order = $this->order();
         $instapay = $code === PaymentMethodCode::InstapayWhatsapp;
+        $expired = false;
 
-        DB::transaction(function () use ($order, $method, $code, $instapay): void {
+        DB::transaction(function () use ($method, $code, $instapay, &$expired): void {
+            $order = Order::lockForUpdate()->find($this->orderId);
+
+            // Re-check under the lock: the sweeper may have cancelled it while
+            // the customer was choosing. If so, mutate nothing.
+            if ($order === null || $order->status === OrderStatus::Cancelled) {
+                $expired = true;
+
+                return;
+            }
+
             $order->update([
                 'payment_method_id' => $method->id,
                 'payment_method_code' => $code->value,
@@ -86,7 +116,38 @@ class PaymentFailed extends Component
             ]);
         });
 
-        $this->redirectRoute('order.confirmation', [app()->getLocale(), $order->number], navigate: true);
+        if ($expired) {
+            $this->expired = true;
+
+            return;
+        }
+
+        $this->redirectRoute('order.confirmation', [app()->getLocale(), $this->order()->number], navigate: true);
+    }
+
+    /**
+     * Re-add the cancelled order's items to the current cart (clamped to current
+     * stock) and send the customer to the cart to check out fresh. The order
+     * stays cancelled; its coupon is not re-applied and stock is not touched.
+     */
+    public function reAddToCart(CartManager $cart): void
+    {
+        $dropped = $cart->reAddFromOrder($this->order());
+
+        if ($dropped !== []) {
+            $this->dispatch('toast', type: 'info', title: __('ui.pf_expired_readd_dropped', ['items' => implode('، ', $dropped)]));
+        }
+
+        $this->redirectRoute('cart', [app()->getLocale()], navigate: true);
+    }
+
+    private function isCancelled(): bool
+    {
+        return (bool) DB::transaction(function (): bool {
+            $order = Order::lockForUpdate()->find($this->orderId);
+
+            return $order === null || $order->status === OrderStatus::Cancelled;
+        });
     }
 
     public function render(): View

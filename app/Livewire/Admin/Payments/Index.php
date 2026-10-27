@@ -37,6 +37,9 @@ class Index extends Component
 
     public string $instapay_hold_hours = '24';
 
+    // Card payment window in minutes (shown only for the card method).
+    public string $card_payment_window_minutes = '60';
+
     public function openEdit(int $id, Settings $settings): void
     {
         $this->authorize('payment_methods.update');
@@ -52,6 +55,7 @@ class Index extends Component
 
         $this->instapay_address = (string) ($settings->get('commerce.instapay_address') ?? '');
         $this->instapay_hold_hours = (string) ($settings->get('commerce.instapay_hold_hours') ?? '24');
+        $this->card_payment_window_minutes = (string) ($settings->get('commerce.card_payment_window_minutes') ?? '60');
 
         $this->resetErrorBag();
         $this->showDrawer = true;
@@ -71,6 +75,7 @@ class Index extends Component
             'sort_order' => ['integer', 'min:0'],
             'instapay_address' => ['nullable', 'string', 'max:255'],
             'instapay_hold_hours' => ['required', 'integer', 'min:1'],
+            'card_payment_window_minutes' => ['required', 'integer', 'min:30'],
         ]);
 
         $method = PaymentMethod::findOrFail($this->editingId);
@@ -93,6 +98,10 @@ class Index extends Component
         if ($method->code === PaymentMethodCode::InstapayWhatsapp) {
             $settings->set('commerce.instapay_address', $this->instapay_address);
             $settings->set('commerce.instapay_hold_hours', (int) $this->instapay_hold_hours);
+        }
+
+        if ($method->code === PaymentMethodCode::Card) {
+            $settings->set('commerce.card_payment_window_minutes', (int) $data['card_payment_window_minutes']);
         }
 
         $this->is_active = $active;

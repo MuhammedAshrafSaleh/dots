@@ -18,7 +18,10 @@ use Illuminate\Support\Facades\DB;
  */
 class UpdateOrderStatus
 {
-    public function __construct(private readonly UpdateProductCacheColumns $cache) {}
+    public function __construct(
+        private readonly UpdateProductCacheColumns $cache,
+        private readonly ReleaseOrderCoupon $coupon,
+    ) {}
 
     /**
      * @param  array<string, string>  $customerNote  translatable ['ar' => .., 'en' => ..]
@@ -37,6 +40,7 @@ class UpdateOrderStatus
 
             if ($cancelling) {
                 $this->restoreStock($order);
+                $this->coupon->handle($order);
             }
 
             $order->status = $status;

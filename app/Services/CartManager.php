@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\DeliveryMethod;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Support\CartTotals;
@@ -82,6 +83,42 @@ class CartManager
         $existing = $item->exists ? $item->qty : 0;
         $item->qty = min(99, $existing + $qty);
         $item->save();
+    }
+
+    /**
+     * Repopulates the current cart from a (cancelled) order's line items, each
+     * clamped to the variant's current stock. Variants now inactive, unpriced
+     * or out of stock are skipped; their snapshot names are returned so the
+     * caller can tell the customer what was dropped. Does not touch the order,
+     * its coupon or stock — the customer checks out fresh.
+     *
+     * @return array<int, string> snapshot names of lines that could not be re-added
+     */
+    public function reAddFromOrder(Order $order, ?string $locale = null): array
+    {
+        $locale ??= app()->getLocale();
+        $cart = $this->current();
+        $dropped = [];
+
+        foreach ($order->items as $item) {
+            $variantId = $item->product_variant_id;
+            if ($variantId === null) {
+                continue;
+            }
+
+            $variant = ProductVariant::active()->whereNotNull('price')->find($variantId);
+            if ($variant === null || (int) $variant->stock_qty < 1) {
+                $dropped[] = $item->getTranslation('product_name', $locale);
+
+                continue;
+            }
+
+            $line = $cart->items()->firstOrNew(['product_variant_id' => $variantId]);
+            $line->qty = min(99, (int) $item->qty, (int) $variant->stock_qty);
+            $line->save();
+        }
+
+        return $dropped;
     }
 
     public function updateQty(int $itemId, int $qty): void

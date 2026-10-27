@@ -449,4 +449,9 @@ return [
     'pf_get_help' => 'Get help on WhatsApp',
     'pf_retry_soon' => 'Card payment will be available shortly.',
     'pf_gateway_error' => 'We couldn’t reach the card payment provider. Please try again or choose another method.',
+    'pf_expired_eyebrow' => 'Reservation expired',
+    'pf_expired_heading' => 'This order was released.',
+    'pf_expired_body' => 'Order :number wasn’t paid in time, so we returned the items to stock. You can add them to a new cart and check out again.',
+    'pf_expired_readd_cta' => 'Re-add items to cart',
+    'pf_expired_readd_dropped' => 'Some items are no longer available and were left out: :items',
 ];

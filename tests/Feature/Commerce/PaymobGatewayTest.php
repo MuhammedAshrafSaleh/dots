@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
@@ -217,4 +218,55 @@ it('redirects the browser return to confirmation after a verified paid callback'
         ->assertRedirect(route('order.confirmation', ['en', $order->number]));
 
     expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Paid);
+});
+
+it('refreshes the reservation deadline on every createCheckout', function () {
+    Http::fake([
+        'pay.test/v1/intention/*' => Http::response(['id' => 'int_99', 'client_secret' => 'cs_x'], 200),
+    ]);
+    config()->set('services.paymob.base_url', 'https://pay.test');
+
+    $order = pgOrder(1000);
+    expect($order->reserved_until)->toBeNull();
+
+    app(PaymentGateway::class)->createCheckout($order);
+
+    $order->refresh();
+    expect($order->reserved_until)->not->toBeNull()
+        ->and($order->reserved_until->isFuture())->toBeTrue()
+        // default window is 60 minutes
+        ->and($order->reserved_until->greaterThan(now()->addMinutes(55)))->toBeTrue();
+});
+
+it('clears the reservation deadline when a card payment settles paid', function () {
+    $order = pgOrder();
+    $order->update(['reserved_until' => now()->addMinutes(60)]);
+    $w = pgWebhook($order, success: true, txnId: '900500');
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->reserved_until)->toBeNull();
+});
+
+it('records a late success after auto-cancellation without un-cancelling or moving stock', function () {
+    $order = pgOrder(status: OrderPaymentStatus::Failed);
+    // The sweeper already cancelled it (stock restored) before the money landed.
+    $order->update(['status' => OrderStatus::Cancelled, 'reserved_until' => null]);
+
+    $w = pgWebhook($order, success: true, txnId: '900600');
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->status)->toBe(OrderStatus::Cancelled);
+
+    $payment = Payment::where('order_id', $order->id)->first();
+    expect($payment->status)->toBe(PaymentStatus::Paid)
+        ->and($payment->hmac_verified)->toBeTrue();
+
+    $last = $order->statusHistories()->get()->last();
+    expect($last->getTranslation('note', 'en'))->toContain('AFTER auto-cancellation');
 });

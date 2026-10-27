@@ -74,3 +74,45 @@ it('updates a payment method name and order', function () {
     expect($cod->fresh()->getTranslation('name', 'en', false))->toBe('Pay cash')
         ->and((int) $cod->fresh()->sort_order)->toBe(3);
 });
+
+it('rejects a card payment window below 30 minutes', function () {
+    $card = makePaymentMethod(PaymentMethodCode::Card, false);
+
+    Livewire::test(Index::class)
+        ->call('openEdit', $card->id)
+        ->set('name.en', 'Card')
+        ->set('name.ar', 'بطاقة')
+        ->set('card_payment_window_minutes', '29')
+        ->call('save')
+        ->assertHasErrors(['card_payment_window_minutes']);
+});
+
+it('rejects a non-integer card payment window', function () {
+    $card = makePaymentMethod(PaymentMethodCode::Card, false);
+
+    Livewire::test(Index::class)
+        ->call('openEdit', $card->id)
+        ->set('name.en', 'Card')
+        ->set('name.ar', 'بطاقة')
+        ->set('card_payment_window_minutes', '45.5')
+        ->call('save')
+        ->assertHasErrors(['card_payment_window_minutes']);
+});
+
+it('saves a valid card payment window', function () {
+    $card = makePaymentMethod(PaymentMethodCode::Card, false);
+
+    Livewire::test(Index::class)
+        ->call('openEdit', $card->id)
+        ->set('name.en', 'Card')
+        ->set('name.ar', 'بطاقة')
+        ->set('card_payment_window_minutes', '90')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertSet('showDrawer', false);
+
+    $settings = app(Settings::class);
+    $settings->forget('commerce.card_payment_window_minutes');
+
+    expect((int) $settings->get('commerce.card_payment_window_minutes'))->toBe(90);
+});

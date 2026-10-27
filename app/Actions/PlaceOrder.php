@@ -50,6 +50,7 @@ class PlaceOrder
 
         $order = DB::transaction(function () use ($items, $delivery, $payment, $contact, $address, $locale, $coupon, $totals, $customerId): Order {
             $instapay = $payment->code === PaymentMethodCode::InstapayWhatsapp;
+            $card = $payment->code === PaymentMethodCode::Card;
 
             $order = Order::create([
                 'customer_id' => $customerId,
@@ -73,7 +74,15 @@ class PlaceOrder
                 'total' => $totals->total,
                 'vat_rate' => $totals->vatRate,
                 'vat_amount' => $totals->vat,
-                'reserved_until' => $instapay ? now()->addHours($this->holdHours()) : null,
+                // reserved_until is the universal pay-by deadline the sweeper
+                // reads. InstaPay keeps its transfer window; card orders get a
+                // payment window so an unpaid (or checkout-throwing) card order
+                // still returns its stock; COD stays null → never swept.
+                'reserved_until' => match (true) {
+                    $instapay => now()->addHours($this->holdHours()),
+                    $card => now()->addMinutes($this->cardWindowMinutes()),
+                    default => null,
+                },
                 'ip' => request()->ip(),
                 'user_agent' => substr((string) request()->userAgent(), 0, 500),
                 'placed_at' => now(),
@@ -193,5 +202,10 @@ class PlaceOrder
     private function holdHours(): int
     {
         return (int) $this->settings->get('commerce.instapay_hold_hours', 24);
+    }
+
+    private function cardWindowMinutes(): int
+    {
+        return (int) $this->settings->get('commerce.card_payment_window_minutes', 60);
     }
 }

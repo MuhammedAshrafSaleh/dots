@@ -2,18 +2,23 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.2 — **DONE**. Next: **PAY.1**.
-- **Last commit:** `268bec4` — `PAY.2: Gate card method on full PaymobGateway::isConfigured()`
-- **Gate result:** 650 tests (648 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.1 — **DONE**. Next: **PAY.4**.
+- **Last commit:** `<pending>` — `PAY.1: Auto-release stock for failed & abandoned card payments (+ Gap A re-check, Gap B coupon soft-release)`
+- **Gate result:** 666 tests (664 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
-- **PAY.2 produced:** `CheckoutForm::cardConfigured()` now delegates to `app(PaymobGateway::class)->isConfigured()` (checks secret + public + integration_id_card). Updated existing test to set all 3 keys for full-config case; added 2 new tests for partial-config cases (public blank, integration_id blank).
-- **Open questions from payments.md (decide before PAY.1):**
+- **PAY.1 produced:**
+  - New setting `commerce.card_payment_window_minutes` (default 60, admin field on the **card** method, validated `required|integer|min:30`; seeded in SiteSeeder).
+  - `PlaceOrder` sets `reserved_until = now + window` for card orders (InstaPay/COD unchanged); `PaymobGateway::createCheckout()` refreshes it every attempt; `recordTransaction()` clears it on paid and, on a late success after auto-cancel, records payment + `paid` but keeps `cancelled` and writes a manual-review note (no un-cancel, no stock move).
+  - `ReleaseExpiredReservations` broadened to sweep card `pending`/`failed` + InstaPay `awaiting_transfer` with a non-null expired `reserved_until`; each order locked + re-checked under the lock; reason-aware cancel note (card vs InstaPay). COD (null deadline) never swept.
+  - **Gap A:** `PaymentFailed` re-checks (row-locked) the order is not cancelled in all 3 branches; cancelled → `expired` state in the view + "re-add items to cart" action (`CartManager::reAddFromOrder`, clamps to current stock, lists dropped items).
+  - **Gap B (soft-release):** new `coupon_redemptions.released_at` column + migration; `ReleaseOrderCoupon` action stamps `released_at` and decrements `used_count` (floored, idempotent) on both auto- and admin-cancel; `Coupons` once-per-customer gate now ignores released rows. Guest exemption unchanged. Docs: ERD + Decisions log + Gap B text updated.
+- **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks):** With only `PAYMOB_SECRET_KEY` filled in `.env` (public and integration id blank), open checkout on dots.test → card option must **not** appear. Fill all three → it appears.
-- **Next session:** Open a new session and say `start PAY.1`.
+- **How to verify (owner clicks):** Admin → Payments → edit the **Card** method → the "Card payment window (minutes)" field saves; entering `29` (or a decimal) shows a validation error, `60`+ saves. (Stock release itself is time/scheduled — covered by the sweep tests.)
+- **Next session:** Open a new session and say `start PAY.4`.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.1>` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
@@ -154,6 +159,7 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-27 — Coupon rollback on cancel = soft-release, not delete (PAY.1, Gap B):** Owner decision. When an order is cancelled (auto-sweep in `ReleaseExpiredReservations` or admin cancel in `UpdateOrderStatus`), its `CouponRedemption` row(s) are **soft-released** — a new nullable `released_at` timestamp is stamped (not hard-deleted, not Laravel `SoftDeletes`/`deleted_at`) — so the history of a coupon used on a later-cancelled order is preserved and the row stays visible/labelled. **Two gates consume a coupon and both must be handled:** (1) the **usage-limit** gate reads the `coupon.used_count` *counter* (`Coupons::resolve` + `Coupon::scopeValid`), so we `decrement('used_count')` by the number of rows actually released (floored at 0); (2) the **once-per-customer** gate reads redemption *rows* via `exists()` (`Coupons.php`), so it gains `->whereNull('released_at')` to free the customer after a cancel. Idempotent: a re-run finds no active rows and no-ops. **Guest observation (behaviour unchanged by PAY.1):** the once-per-customer gate is wrapped in `$customerId !== null`, so a guest order (null `customer_id`) is exempt from the rule today; the `whereNull('released_at')` clause lives inside that block and does not alter guest behaviour either way. ERD updated (`coupon_redemptions.released_at`).
 - **2026-10-20 — Bulk import pulled forward from Phase 11 (T11.1):** Owner decision. Built now on branch `bulk-import` (off main after `phase-9-done`) ahead of the client meeting, as 3 tasks BI.1–BI.3 (`docs/plan/bulk-import.md`), spec in `docs/IMPORT_SPEC.md`. After BI.3 the next step is **Phase 10** (Phase 9 does not resume). Release works like a phase: on "approved, push bulk-import" → push, `merge --no-ff` into main, tag `bulk-import-done`, push. T11.1 in the Phase 11 file is now a pointer. Key spec decisions:
   - **Columns mapped by the hidden row-2 system key, never by position** — reordered/renamed row-1 headers don't break import.
   - **Reference data is never created by import** — unknown brand/category/attribute value = row error ("add in admin, re-download the template"); import never writes to brands/categories/attributes/attribute_values, and never deletes products.

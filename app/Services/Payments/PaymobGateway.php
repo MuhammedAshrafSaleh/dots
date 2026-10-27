@@ -3,10 +3,12 @@
 namespace App\Services\Payments;
 
 use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\WebhookEvent;
+use App\Services\Settings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -47,6 +49,13 @@ class PaymobGateway implements PaymentGateway
     public function createCheckout(Order $order): string
     {
         $amountCents = (int) round(((float) $order->total) * 100);
+
+        // Refresh the pay-by deadline on every attempt (initial and every retry
+        // from the payment-failed page) so the reservation sweeper can never
+        // cancel an order mid-payment.
+        $order->update([
+            'reserved_until' => now()->addMinutes($this->cardWindowMinutes()),
+        ]);
 
         $payment = $order->payments()->create([
             'gateway' => 'paymob',
@@ -180,8 +189,13 @@ class PaymobGateway implements PaymentGateway
 
         $success = $this->asBool($obj['success'] ?? null);
         $pan = isset($obj['source_data']['pan']) ? (string) $obj['source_data']['pan'] : null;
+        // Money may land after the reservation sweeper already cancelled the
+        // order (pathological late retry — Paymob normally fires within
+        // seconds). We record the payment and flag it for manual review, but
+        // never un-cancel the order or move stock. A human decides.
+        $lateAfterCancel = $success && $order->status === OrderStatus::Cancelled;
 
-        DB::transaction(function () use ($order, $obj, $transactionId, $success, $pan, $hmacVerified): void {
+        DB::transaction(function () use ($order, $obj, $transactionId, $success, $pan, $hmacVerified, $lateAfterCancel): void {
             Payment::updateOrCreate(
                 ['order_id' => $order->id, 'transaction_id' => $transactionId],
                 [
@@ -198,15 +212,27 @@ class PaymobGateway implements PaymentGateway
                 ],
             );
 
-            $order->update([
-                'payment_status' => $success ? OrderPaymentStatus::Paid : OrderPaymentStatus::Failed,
-            ]);
+            // On success clear the pay-by deadline so a paid order drops out of
+            // the sweep immediately. Leave it set on failure so the sweeper can
+            // still collect the unpaid stock. Never un-cancel a cancelled order.
+            $attributes = ['payment_status' => $success ? OrderPaymentStatus::Paid : OrderPaymentStatus::Failed];
+            if ($success) {
+                $attributes['reserved_until'] = null;
+            }
+            $order->update($attributes);
+
+            $note = match (true) {
+                $lateAfterCancel => [
+                    'en' => 'Card payment received AFTER auto-cancellation — review and refund or re-fulfil.',
+                    'ar' => 'تم استلام الدفع بالبطاقة بعد الإلغاء التلقائي — يُرجى المراجعة والاسترجاع أو إعادة التجهيز.',
+                ],
+                $success => ['en' => 'Card payment received via Paymob.', 'ar' => 'تم استلام الدفع بالبطاقة عبر Paymob.'],
+                default => ['en' => 'Card payment failed at Paymob.', 'ar' => 'فشل الدفع بالبطاقة في Paymob.'],
+            };
 
             $order->statusHistories()->create([
                 'status' => $order->status->value,
-                'note' => $success
-                    ? ['en' => 'Card payment received via Paymob.', 'ar' => 'تم استلام الدفع بالبطاقة عبر Paymob.']
-                    : ['en' => 'Card payment failed at Paymob.', 'ar' => 'فشل الدفع بالبطاقة في Paymob.'],
+                'note' => $note,
                 'created_at' => now(),
             ]);
         });
@@ -264,6 +290,11 @@ class PaymobGateway implements PaymentGateway
             'apartment' => 'NA',
             'postal_code' => 'NA',
         ];
+    }
+
+    private function cardWindowMinutes(): int
+    {
+        return (int) app(Settings::class)->get('commerce.card_payment_window_minutes', 60);
     }
 
     private function config(string $key): ?string

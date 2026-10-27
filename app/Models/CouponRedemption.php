@@ -15,6 +15,7 @@ class CouponRedemption extends Model
     {
         return [
             'amount' => 'decimal:2',
+            'released_at' => 'datetime',
         ];
     }
 

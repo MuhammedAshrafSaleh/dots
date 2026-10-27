@@ -42,8 +42,12 @@ class Coupons
         }
 
         if ($coupon->once_per_customer && $customerId !== null) {
+            // Released redemptions (order later cancelled) do not count — the
+            // customer may use the coupon again. Guests (null $customerId) are
+            // exempt from this gate entirely, so this block never runs for them.
             $alreadyUsed = CouponRedemption::where('coupon_id', $coupon->id)
                 ->where('customer_id', $customerId)
+                ->whereNull('released_at')
                 ->exists();
             if ($alreadyUsed) {
                 return CouponResult::fail('ui.coupon_used');
