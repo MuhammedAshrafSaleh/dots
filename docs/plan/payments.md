@@ -220,7 +220,7 @@
 ---
 
 ## PAY.8 — Go-live checklist `docs/PAYMOB_GOLIVE.md`  _(Sonnet)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** A single document the owner follows to go live with zero code changes.
 
@@ -251,7 +251,7 @@
 - [x] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
 - [x] PAY.6 HMAC verified before order lookup on return (Opus)
 - [x] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
-- [ ] PAY.8 Go-live checklist doc (Sonnet)
+- [x] PAY.8 Go-live checklist doc (Sonnet)
 
 ---
 
