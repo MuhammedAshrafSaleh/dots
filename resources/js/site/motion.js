@@ -125,9 +125,30 @@ function initCurtain() {
     });
 }
 
+// ---- Page-in: drop the animation once it finishes --------------------------
+// `.d-pagein` animates transform with fill-mode `both`; it ends visually at
+// `transform: none` but the retained computed value is `matrix(1,0,0,1,0,0)`,
+// which is non-none. A non-none transform makes <main> a containing block for
+// `position: fixed` descendants, so the mobile filter drawer anchors to <main>
+// instead of the viewport. Removing the animation (CSS animations outrank inline
+// styles, so we can't just set transform) drops the retained fill value and lets
+// <main> revert to transform:none.
+function initPageIn() {
+    const el = document.querySelector('.d-pagein');
+    if (!el) return;
+    const clear = (e) => {
+        if (e && e.animationName && e.animationName !== 'd-page-in') return;
+        el.style.animation = 'none';
+    };
+    el.addEventListener('animationend', clear, { once: true });
+    // Fallback if the animation was skipped/already finished (reduced motion,
+    // bfcache restore) so the transform can never linger.
+    setTimeout(clear, 1200);
+}
+
 export function initMotion() {
     initCompact();
-    const run = () => { initReveal(); initCursor(); initPreloader(); initCurtain(); };
+    const run = () => { initReveal(); initCursor(); initPreloader(); initCurtain(); initPageIn(); };
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', run);
     } else {
