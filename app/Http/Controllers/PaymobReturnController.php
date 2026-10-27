@@ -18,16 +18,18 @@ class PaymobReturnController extends Controller
 {
     public function __invoke(Request $request, string $locale, PaymobGateway $gateway): RedirectResponse
     {
+        // Verify the callback HMAC BEFORE any order lookup: a tampered or forged
+        // callback must not drive a query or leak whether an order exists. Only a
+        // verified transaction yields a merchant ref we trust to load the order.
         $obj = $gateway->verifyCallback($request->query());
-
-        $merchantRef = $request->query('merchant_order_id');
-        $order = is_string($merchantRef) ? Order::where('number', $merchantRef)->first() : null;
-
-        if ($obj !== null) {
-            $gateway->recordTransaction($obj, hmacVerified: true);
-            $order?->refresh();
+        if ($obj === null) {
+            return redirect()->route('cart', $locale);
         }
 
+        $gateway->recordTransaction($obj, hmacVerified: true);
+
+        $merchantRef = $obj['order']['merchant_order_id'] ?? null;
+        $order = is_string($merchantRef) ? Order::where('number', $merchantRef)->first() : null;
         if ($order === null) {
             return redirect()->route('cart', $locale);
         }

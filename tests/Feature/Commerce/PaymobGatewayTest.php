@@ -220,6 +220,45 @@ it('redirects the browser return to confirmation after a verified paid callback'
     expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Paid);
 });
 
+it('redirects the browser return to cart without touching the order when the callback HMAC is invalid', function () {
+    $order = pgOrder();
+
+    // A real merchant_order_id is present, but the HMAC does not match. The
+    // controller must verify first and never run an order lookup or mutation.
+    $query = [
+        'amount_cents' => (int) round(((float) $order->total) * 100),
+        'id' => '900100',
+        'order' => '700',
+        'success' => 'true',
+        'merchant_order_id' => $order->number,
+        'hmac' => str_repeat('0', 128),
+    ];
+
+    $this->get('/en/payments/paymob/return?'.http_build_query($query))
+        ->assertRedirect(route('cart', 'en'));
+
+    expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and(Payment::count())->toBe(0)
+        ->and(WebhookEvent::count())->toBe(0);
+});
+
+it('redirects the browser return to cart without touching the order when the HMAC is missing', function () {
+    $order = pgOrder();
+
+    $query = [
+        'id' => '900100',
+        'success' => 'true',
+        'merchant_order_id' => $order->number,
+    ];
+
+    $this->get('/en/payments/paymob/return?'.http_build_query($query))
+        ->assertRedirect(route('cart', 'en'));
+
+    expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and(Payment::count())->toBe(0)
+        ->and(WebhookEvent::count())->toBe(0);
+});
+
 it('refreshes the reservation deadline on every createCheckout', function () {
     Http::fake([
         'pay.test/v1/intention/*' => Http::response(['id' => 'int_99', 'client_secret' => 'cs_x'], 200),

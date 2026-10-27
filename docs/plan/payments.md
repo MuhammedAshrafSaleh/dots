@@ -179,7 +179,7 @@
 ---
 
 ## PAY.6 — Verify HMAC before any order lookup on return  _(Opus)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** `PaymobReturnController` must verify the callback HMAC **before** it queries for an order, so a tampered/forged callback can't drive a lookup or leak order existence.
 
@@ -249,7 +249,7 @@
 - [x] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
 - [x] PAY.4 Safe bilingual failure reason (Sonnet)
 - [x] PAY.5 InstaPay address + deadline on confirmation (Sonnet)
-- [ ] PAY.6 HMAC verified before order lookup on return (Opus)
+- [x] PAY.6 HMAC verified before order lookup on return (Opus)
 - [ ] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
 - [ ] PAY.8 Go-live checklist doc (Sonnet)
 

@@ -2,20 +2,18 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.5 — **DONE**. Next: **PAY.6**.
-- **Last commit:** `994bfde` — `fix: revert unnecessary Blade changes from PAY.1 snapshot hotfix`
-- **Gate result:** 683 tests (681 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.6 — **DONE**. Next: **PAY.7**.
+- **Last commit:** `<pending>` — `PAY.6: verify callback HMAC before any order lookup on return`
+- **Gate result:** 685 tests (683 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 comes **after** payments-hardening is complete and merged.
-- **PAY.5 produced:**
-  - `OrderConfirmationController` now resolves `commerce.instapay_address` from Settings and passes `$instapayAddress` to the view.
-  - New `data-instapay-details` section in `order-confirmation.blade.php` (InstaPay only, before "What happens next") shows: address (or bilingual fallback when blank), amount, order number, and deadline (`reserved_until` localised). COD and card variants visually unchanged.
-  - 5 new bilingual lang keys: `confirm_instapay_details_title`, `confirm_instapay_address_label`, `confirm_instapay_amount_label`, `confirm_instapay_deadline_label`, `confirm_instapay_address_fallback`. `instapay_step1_t/b` updated to reference the on-page address instead of "we send in chat".
-  - 5 new feature tests in `OrderConfirmationTest`: address set → shown; address blank → fallback, no address string; no reserved_until → no deadline row; unauthorised viewer → 404 + address absent; switch-to-InstaPay from payment-failed then confirm → address shown.
+- **PAY.6 produced:**
+  - `PaymobReturnController` reordered: `verifyCallback()` runs **first**; an unverified/forged callback redirects to cart with **no order query**. The merchant ref is now derived from the **verified `obj`** (`obj['order']['merchant_order_id']`), not the untrusted `merchant_order_id` query param, so a tampered callback can neither drive a lookup nor leak order existence. Happy path unchanged (verified paid → confirmation; verified failed → payment-failed).
+  - 2 new feature tests in `PaymobGatewayTest`: invalid HMAC with a real `merchant_order_id` → redirect to cart, order untouched (still `pending`), no `Payment`/`WebhookEvent` row; missing HMAC → same.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks — PAY.5):** Admin → Payments → set an InstaPay address → place an InstaPay order → confirmation shows address + amount + deadline. Blank the address → fallback copy. COD and card confirmations unchanged.
-- **Next session:** Open a new session and say `start PAY.6`.
+- **How to verify (owner clicks — PAY.6):** none (covered by tests; manual verification folded into PAY.8 real-transaction run).
+- **Next session:** Open a new session and say `start PAY.7`.
 
 **Git:** branch `payments-hardening` (local, unpushed) · last commit `bfce905` · last tag `bulk-import-done` · push state: **not pushed**
 
