@@ -12,6 +12,7 @@ use App\Models\PaymentMethod;
 use App\Services\CartManager;
 use App\Services\Payments\PaymentException;
 use App\Services\Payments\PaymentGateway;
+use App\Services\Payments\PaymobGateway;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\RateLimiter;
@@ -102,7 +103,7 @@ class CheckoutForm extends Component
 
     private function cardConfigured(): bool
     {
-        return filled(config('services.paymob.secret_key'));
+        return app(PaymobGateway::class)->isConfigured();
     }
 
     /** @return Collection<int, PaymentMethod> */

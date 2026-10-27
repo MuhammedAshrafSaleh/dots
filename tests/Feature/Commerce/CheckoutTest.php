@@ -253,8 +253,48 @@ it('hides the card method until Paymob is configured', function () {
     config()->set('services.paymob.secret_key', null);
     Livewire::test(CheckoutForm::class)->assertDontSee('Credit card');
 
-    config()->set('services.paymob.secret_key', 'sk_test_123');
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', '12345');
     Livewire::test(CheckoutForm::class)->assertSee('Credit card');
+});
+
+it('hides card method when public key is missing', function () {
+    app()->setLocale('en');
+    $variant = coVariant('H', 1000);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    PaymentMethod::create([
+        'code' => PaymentMethodCode::Card,
+        'name' => ['ar' => 'بطاقة ائتمان', 'en' => 'Credit card'],
+        'is_active' => true,
+        'sort_order' => 1,
+    ]);
+    app(CartManager::class)->add($variant->id, 1);
+
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', null);
+    config()->set('services.paymob.integration_id_card', '12345');
+    Livewire::test(CheckoutForm::class)->assertDontSee('Credit card');
+});
+
+it('hides card method when integration id is missing', function () {
+    app()->setLocale('en');
+    $variant = coVariant('H', 1000);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    PaymentMethod::create([
+        'code' => PaymentMethodCode::Card,
+        'name' => ['ar' => 'بطاقة ائتمان', 'en' => 'Credit card'],
+        'is_active' => true,
+        'sort_order' => 1,
+    ]);
+    app(CartManager::class)->add($variant->id, 1);
+
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', null);
+    Livewire::test(CheckoutForm::class)->assertDontSee('Credit card');
 });
 
 it('sends a card order to the Paymob hosted checkout', function () {
