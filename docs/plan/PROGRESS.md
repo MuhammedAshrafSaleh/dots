@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.8 — **DONE**. All PAY tasks complete.
-- **Last commit:** (pending — see below)
+- **Last commit:** `06ba86a` — `PAY.8: go-live checklist doc`
 - **Gate result:** 688 tests (686 pass, 2 skip) · Larastan clean · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
 - **PAY.8 produced:** `docs/PAYMOB_GOLIVE.md` — 6-section go-live guide covering exact `.env` keys, Paymob dashboard callback URLs (webhook + browser return), local tunnel testing, webhook verification steps, real test-transaction walkthrough, and queue reminder. All referenced route names, env keys, and table names grep-verified against codebase.
@@ -13,7 +13,7 @@
 - **How to verify (owner clicks — PAY.8):** Review `docs/PAYMOB_GOLIVE.md`.
 - **Next session:** Owner approves → say "approved, push payments-hardening" to push and merge.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `06ba86a` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
