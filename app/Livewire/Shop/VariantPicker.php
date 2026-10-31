@@ -65,7 +65,9 @@ class VariantPicker extends Component
 
     public function incrementQty(): void
     {
-        $this->qty = min(99, $this->qty + 1);
+        $variant = $this->resolveSelectedVariant();
+        $cap = $variant !== null ? min(99, (int) $variant->stock_qty) : 99;
+        $this->qty = min($this->qty + 1, $cap);
     }
 
     public function decrementQty(): void
@@ -129,7 +131,13 @@ class VariantPicker extends Component
 
         $canAddToCart = $selectedVariant !== null
             && $hasPrice
-            && $stockStatus !== StockStatus::Order;
+            && $stockStatus !== StockStatus::Order
+            && $this->qty <= $stockQty;
+
+        // True when the customer has the stepper at the maximum available stock.
+        $atStockCap = $selectedVariant !== null
+            && $stockQty > 0
+            && $this->qty >= $stockQty;
 
         return view('livewire.shop.variant-picker', compact(
             'product',
@@ -143,6 +151,7 @@ class VariantPicker extends Component
             'stockStatus',
             'stockQty',
             'canAddToCart',
+            'atStockCap',
         ));
     }
 

@@ -351,3 +351,57 @@ it('caps qty at 99', function () {
     }
     $lw->assertSet('qty', 99);
 });
+
+// ──────────────────────── PAY.12: Stock-aware qty stepper ────────────────────
+
+it('caps the stepper at stock_qty for the selected variant', function () {
+    [$attr, $val1, , $v1] = pdpMakeVariantAxis($product = pdpMakeProduct());
+    $v1->update(['stock_qty' => 3]);
+
+    $lw = Livewire::test(VariantPicker::class, ['product' => $product])
+        ->set('selected', [$attr->id => $val1->id]);
+
+    // Incrementing past stock=3 stays at 3.
+    foreach (range(1, 5) as $_) {
+        $lw->call('incrementQty');
+    }
+    $lw->assertSet('qty', 3);
+});
+
+it('disables canAddToCart when chosen qty exceeds stock', function () {
+    app()->setLocale('en');
+    [$attr, $val1, , $v1] = pdpMakeVariantAxis($product = pdpMakeProduct());
+    $v1->update(['stock_qty' => 2]);
+
+    $component = Livewire::test(VariantPicker::class, ['product' => $product])
+        ->set('selected', [$attr->id => $val1->id])
+        ->set('qty', 5);
+
+    expect($component->viewData('canAddToCart'))->toBeFalse();
+});
+
+it('sets atStockCap when qty reaches available stock', function () {
+    [$attr, $val1, , $v1] = pdpMakeVariantAxis($product = pdpMakeProduct());
+    $v1->update(['stock_qty' => 2]);
+
+    $lw = Livewire::test(VariantPicker::class, ['product' => $product])
+        ->set('selected', [$attr->id => $val1->id]);
+
+    // At qty=1 not at cap; at qty=2 is at cap.
+    $lw->set('qty', 1);
+    expect($lw->viewData('atStockCap'))->toBeFalse();
+
+    $lw->set('qty', 2);
+    expect($lw->viewData('atStockCap'))->toBeTrue();
+});
+
+it('shows stock-cap message when stepper is at available limit', function () {
+    app()->setLocale('en');
+    [$attr, $val1, , $v1] = pdpMakeVariantAxis($product = pdpMakeProduct());
+    $v1->update(['stock_qty' => 2]);
+
+    Livewire::test(VariantPicker::class, ['product' => $product])
+        ->set('selected', [$attr->id => $val1->id])
+        ->set('qty', 2)
+        ->assertSee('Only 2 available');
+});

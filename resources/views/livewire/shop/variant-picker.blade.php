@@ -146,25 +146,31 @@
     <div class="d-pdp__actions">
 
         {{-- Qty stepper --}}
-        <div class="d-stepper" role="group" aria-label="{{ __('ui.quantity') }}">
-            <button type="button"
-                wire:click="decrementQty"
-                aria-label="{{ __('ui.decrease_quantity') }}"
-                @if ($qty <= 1) disabled @endif
-            >
-                <x-icon name="minus" size="16" />
-            </button>
-            <input type="number" inputmode="numeric"
-                value="{{ $qty }}"
-                min="1" max="99"
-                aria-label="{{ __('ui.quantity') }}"
-                readonly>
-            <button type="button"
-                wire:click="incrementQty"
-                aria-label="{{ __('ui.increase_quantity') }}"
-            >
-                <x-icon name="plus" size="16" />
-            </button>
+        <div style="display:grid;gap:6px;">
+            <div class="d-stepper" role="group" aria-label="{{ __('ui.quantity') }}">
+                <button type="button"
+                    wire:click="decrementQty"
+                    aria-label="{{ __('ui.decrease_quantity') }}"
+                    @if ($qty <= 1) disabled @endif
+                >
+                    <x-icon name="minus" size="16" />
+                </button>
+                <input type="number" inputmode="numeric"
+                    value="{{ $qty }}"
+                    min="1" max="{{ $stockQty ?? 99 }}"
+                    aria-label="{{ __('ui.quantity') }}"
+                    readonly>
+                <button type="button"
+                    wire:click="incrementQty"
+                    aria-label="{{ __('ui.increase_quantity') }}"
+                    @if ($atStockCap) disabled @endif
+                >
+                    <x-icon name="plus" size="16" />
+                </button>
+            </div>
+            @if ($atStockCap && $stockQty !== null)
+                <span class="d-help" style="color:var(--warning-600);">{{ __('ui.pdp_stock_cap', ['n' => $stockQty]) }}</span>
+            @endif
         </div>
 
         @if ($hasPrice)
