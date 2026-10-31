@@ -159,7 +159,7 @@ class PlaceOrder
             // or flooring to a phantom sale — zero-stock variants aren't buyable.
             $locked = ProductVariant::whereKey($variant->id)->lockForUpdate()->first();
             if ($locked === null || $locked->stock_qty < $item->qty) {
-                throw CheckoutException::unavailable();
+                throw CheckoutException::unavailable($product->getTranslation('name', app()->getLocale()));
             }
 
             ProductVariant::whereKey($variant->id)

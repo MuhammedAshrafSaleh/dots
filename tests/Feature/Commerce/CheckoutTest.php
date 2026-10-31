@@ -171,22 +171,70 @@ it('places a pickup order with no delivery address', function () {
 });
 
 it('rejects an order that exceeds available stock instead of overselling', function () {
+    app()->setLocale('en');
     $variant = coVariant('D', 100, stock: 3);
     $delivery = coPickup();
     coPayment(PaymentMethodCode::Cod);
     // Force the cart above stock directly (cart add does not gate on stock).
     app(CartManager::class)->add($variant->id, 10);
 
-    Livewire::test(CheckoutForm::class)
+    $component = Livewire::test(CheckoutForm::class)
         ->set(coForm(['deliveryMethodId' => $delivery->id, 'paymentCode' => 'cod']))
         ->call('place')
-        ->assertHasErrors('name')
         ->assertNoRedirect();
 
-    // The whole transaction rolls back: no order, no sale, stock untouched
-    // (never negative, never oversold).
+    // Error surfaces in the banner property, not on the name field.
+    expect($component->get('cartError'))->toContain('Product D')
+        ->and($component->get('cartErrorShowLink'))->toBeTrue()
+        ->and($component->get('cartError'))->toContain('no longer available');
+
+    // The whole transaction rolls back: no order, no sale, stock untouched.
     expect(Order::count())->toBe(0)
         ->and($variant->fresh()->stock_qty)->toBe(3);
+});
+
+it('detects out-of-stock cart lines on mount before the customer fills the form', function () {
+    app()->setLocale('en');
+    $variant = coVariant('OOS', 100, stock: 0);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    app(CartManager::class)->add($variant->id, 1);
+
+    $component = Livewire::test(CheckoutForm::class);
+    $problems = $component->get('cartProblems');
+
+    expect($problems)->toHaveCount(1)
+        ->and($problems[0]['reason'])->toBe('out_of_stock')
+        ->and($problems[0]['name'])->toBe('Product OOS')
+        ->and($problems[0]['available'])->toBe(0);
+});
+
+it('detects insufficient-qty cart lines on mount', function () {
+    app()->setLocale('en');
+    $variant = coVariant('LOW', 100, stock: 2);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    // Force qty above stock directly.
+    app(CartManager::class)->add($variant->id, 1);
+    app(CartManager::class)->add($variant->id, 4); // total 5, stock 2
+
+    $component = Livewire::test(CheckoutForm::class);
+    $problems = $component->get('cartProblems');
+
+    expect($problems)->toHaveCount(1)
+        ->and($problems[0]['reason'])->toBe('insufficient_qty')
+        ->and($problems[0]['available'])->toBe(2);
+});
+
+it('detects no cart problems for a fully available cart', function () {
+    $variant = coVariant('OK', 100, stock: 10);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    app(CartManager::class)->add($variant->id, 2);
+
+    $component = Livewire::test(CheckoutForm::class);
+
+    expect($component->get('cartProblems'))->toBeEmpty();
 });
 
 it('redeems a coupon and increments its used count', function () {

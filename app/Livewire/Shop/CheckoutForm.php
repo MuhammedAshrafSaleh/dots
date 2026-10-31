@@ -55,6 +55,20 @@ class CheckoutForm extends Component
 
     public string $paymentCode = 'cod';
 
+    /** Submit-time error that belongs near the order summary, not on any field. */
+    public ?string $cartError = null;
+
+    /** When true the cart-error banner also shows a "Return to cart" link. */
+    public bool $cartErrorShowLink = false;
+
+    /**
+     * Lines that are unavailable or have insufficient stock, detected on mount.
+     * Each entry: ['name' => string, 'reason' => 'out_of_stock'|'insufficient_qty', 'available' => int|null]
+     *
+     * @var list<array{name: string, reason: string, available: int|null}>
+     */
+    public array $cartProblems = [];
+
     public function mount(): void
     {
         $customer = auth('customer')->user();
@@ -73,6 +87,8 @@ class CheckoutForm extends Component
 
         $first = $this->availableDeliveryMethods()->first();
         $this->deliveryMethodId = $first?->id;
+
+        $this->cartProblems = $this->detectCartProblems();
     }
 
     /** Resolve the governorate that drives delivery filtering + the shipped-to address. */
@@ -132,9 +148,10 @@ class CheckoutForm extends Component
         // Cap order placement to 10 attempts / 10 min per IP.
         $key = 'checkout.'.request()->ip();
         if (RateLimiter::tooManyAttempts($key, 10)) {
-            throw ValidationException::withMessages([
-                'name' => __('ui.too_many_attempts'),
-            ]);
+            $this->cartError = __('ui.too_many_attempts');
+            $this->cartErrorShowLink = false;
+
+            return;
         }
         RateLimiter::hit($key, 600);
 
@@ -162,7 +179,12 @@ class CheckoutForm extends Component
                 'company_tax_id' => $this->companyTaxId !== '' ? $this->companyTaxId : null,
             ], $address);
         } catch (CheckoutException $e) {
-            throw ValidationException::withMessages(['name' => __($e->getMessage())]);
+            $this->cartError = $e->itemName !== ''
+                ? __('ui.checkout_item_unavailable_named', ['name' => $e->itemName])
+                : __($e->getMessage());
+            $this->cartErrorShowLink = true;
+
+            return;
         }
 
         if ($needsAddress && $this->saveAddress && $this->addressChoice === 'new' && auth('customer')->check()) {
@@ -280,6 +302,34 @@ class CheckoutForm extends Component
         if ($needsAddress && $this->addressChoice !== 'new' && $this->selectedSavedAddress() === null) {
             throw ValidationException::withMessages(['addressChoice' => __('ui.checkout_address_required')]);
         }
+    }
+
+    /**
+     * Scans each cart line against current stock and returns problem descriptors.
+     * Mirrors the gate in PlaceOrder::createItems() so the customer sees issues
+     * before filling the form, not only on submit.
+     *
+     * @return list<array{name: string, reason: string, available: int|null}>
+     */
+    private function detectCartProblems(): array
+    {
+        $problems = [];
+        $locale = app()->getLocale();
+
+        foreach (app(CartManager::class)->items() as $item) {
+            $variant = $item->productVariant;
+            $product = $variant->product;
+            $name = $product->getTranslation('name', $locale);
+            $stock = (int) $variant->stock_qty;
+
+            if ($stock === 0) {
+                $problems[] = ['name' => $name, 'reason' => 'out_of_stock', 'available' => 0];
+            } elseif ($stock < $item->qty) {
+                $problems[] = ['name' => $name, 'reason' => 'insufficient_qty', 'available' => $stock];
+            }
+        }
+
+        return $problems;
     }
 
     public function render(): View
