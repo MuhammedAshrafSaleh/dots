@@ -69,7 +69,7 @@ class PaymentFailed extends Component
                 // be swept underneath the customer.
                 $url = app(PaymentGateway::class)->createCheckout($this->order());
             } catch (PaymentException $e) {
-                $this->dispatch('toast', type: 'error', title: __('ui.pf_gateway_error'));
+                $this->dispatch('toast', tone: 'error', title: __('ui.pf_gateway_error'));
 
                 return;
             }
@@ -83,7 +83,7 @@ class PaymentFailed extends Component
         $method = PaymentMethod::active()->where('code', $code->value)->first();
 
         if ($method === null) {
-            $this->dispatch('toast', type: 'error', title: __('ui.pf_retry_soon'));
+            $this->dispatch('toast', tone: 'error', title: __('ui.pf_retry_soon'));
 
             return;
         }

@@ -243,7 +243,39 @@
 
 ---
 
-## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8)_
+## PAY.13 — Make Livewire toasts visible on the shop frontend  _(Sonnet)_
+- [ ] Not started
+
+**Goal:** Shop Livewire components dispatch `toast` events that currently fire into nothing. The shop JS bundle has no listener and the shop layout's `.d-toasts` container is static (session-flash only). Fix both so every `$this->dispatch('toast', …)` on the shop/account frontend is visible to the customer.
+
+**Root cause:**
+1. `app.js` has no `Alpine.store('toasts', …)` and no `Livewire.on('toast', …)` — unlike `admin.js` which has both.
+2. The shop layout's `.d-toasts` div renders only server-side `<x-toast>` session-flash components; there is no `x-for` loop driven by the store.
+3. Two dispatches in `PaymentFailed.php` use `type:` instead of `tone:` (the key the store reads).
+
+**Non-admin toast dispatches (all must be confirmed working after this task):**
+- `app/Livewire/Shop/PaymentFailed.php:72` — gateway error on card retry (was `type:`)
+- `app/Livewire/Shop/PaymentFailed.php:86` — rate-limit message on retry (was `type:`)
+- `app/Livewire/Account/Auth/ForgotPassword.php:54` — password-reset resent (correct `tone:`)
+
+**Files to touch:**
+- `resources/js/app.js` — add `alpine:init` block registering `Alpine.store('toasts', {…})` (same shape as admin), and `livewire:init` block calling `window.Livewire.on('toast', …)` (same as admin).
+- `resources/views/components/layouts/app.blade.php` — replace the static `.d-toasts` div with an Alpine-store-driven `x-for` loop; session-flash values pushed into the store via `x-init` so no second rendering path is needed.
+- `app/Livewire/Shop/PaymentFailed.php` — change `type:` → `tone:` on both dispatch calls.
+
+**Acceptance criteria:**
+- Navigating to the payment-failed page and triggering "retry" too soon shows an error toast on screen.
+- The forgot-password "resend" button shows a success toast.
+- Session-flashed `toast_success` and `toast_info` still appear (not broken by the layout change).
+- `composer gates` green.
+
+**Required tests:** no new tests (toast rendering is a JS/Alpine concern; the dispatch calls were already exercised by existing Livewire component tests — they just weren't visible in the browser).
+
+**Owner clicks (dots.test):** Go to `/ar/account/forgot-password`, enter any email, click "إعادة الإرسال" (resend) — a success toast must appear at the corner of the screen. (Alternatively: add an item to cart and proceed to checkout with a payment error to see the gateway-error toast from PaymentFailed, but the forgot-password path is the easiest click.)
+
+---
+
+## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8 → PAY.13)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
 - [x] PAY.1 Auto-release stock for failed & abandoned card payments; + Gap A payment-failed re-check; + Gap B coupon rollback (Opus)
@@ -252,6 +284,7 @@
 - [x] PAY.6 HMAC verified before order lookup on return (Opus)
 - [x] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
 - [x] PAY.8 Go-live checklist doc (Sonnet)
+- [ ] PAY.13 Make Livewire toasts visible on the shop frontend (Sonnet)
 
 ---
 
