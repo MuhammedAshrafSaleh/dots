@@ -99,4 +99,10 @@ step 6). Successful and healthy runs are silent.
 
 ## Restoring
 
-Restoring a backup is documented separately in **BK.3**.
+Restoring is documented as a step-by-step runbook in **[`docs/RESTORE.md`](RESTORE.md)**:
+how to fetch the archive from Drive (`php artisan dots:backup-download`), decrypt
+and extract it, import the DB into a scratch database, restore media, and verify.
+
+**Verified on 2026-11-01** — a real archive was downloaded, decrypted, and
+restored into a scratch database; all main-table row counts and media matched
+the live data exactly. See `docs/RESTORE.md` for the reference numbers.

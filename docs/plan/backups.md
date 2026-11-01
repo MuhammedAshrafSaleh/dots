@@ -51,7 +51,7 @@ Configure `spatie/laravel-backup` to back up the database **and** media files to
 ---
 
 ## BK.3 — Real restore drill  _(Opus)_
-- [ ] Done
+- [x] Done
 
 Perform a real restore of a backup into a **scratch local database** (never the `dots` DB) and document the exact, repeatable procedure in `docs/RESTORE.md`.
 
@@ -64,4 +64,4 @@ Perform a real restore of a backup into a **scratch local database** (never the 
 ## Checklist
 - [x] BK.1 done
 - [x] BK.2 done
-- [ ] BK.3 done
+- [x] BK.3 done
