@@ -1,19 +1,18 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `backups` (local only, off up-to-date `main`).
-- **Current task:** BK.3 — **DONE** (awaiting owner review). This is the **last task on the `backups` branch** — after owner approval the branch releases like a phase. Plan: `docs/plan/backups.md`.
-- **Last commit:** `55efd49` — `BK.3: real restore drill + dots:backup-download + docs/RESTORE.md`
-- **Gate result:** `composer gates` all green — 724 tests (720 passed, 4 skipped = DriveCheck + backup-download live tests, no Drive creds in test env) · Larastan 0 errors · Pint clean · build clean.
-- **Context:** `payments-hardening` merged to `main` (commit `ca68172`). `backups` is cut from that up-to-date `main`. BK.1/BK.2/BK.3 all done. Next after this branch merges is **Phase 10**. Release: on "approved, push backups" → `git push -u origin backups`, `git checkout main && git merge --no-ff backups -m "Off-site backups complete"`, tag `backups-done`, `git push origin main --tags`.
-- **BK.3 produced:** new command `app/Console/Commands/BackupDownloadCommand.php` (`php artisan dots:backup-download [--dest=]`) — pulls the most-recent `.zip` from the `google-drive` disk's `DOTS/` folder to a local dir and prints path+size; refuses when Drive creds missing; **read-only on Drive, never deletes**. New `docs/RESTORE.md` (full restore runbook with real reference numbers). `docs/BACKUP.md` "Restoring" section now links RESTORE.md + "Verified on 2026-11-01". New `tests/Feature/BackupDownloadTest.php` (fails without creds; live download skips when creds absent). **I actually performed a real restore drill** (download → ZipArchive AES-256 decrypt → import SQL into scratch DB `dots_restore_check` → extract media to `/tmp`); the `dots`/`dots_testing` DBs and `storage/app/public` were never touched; scratch DB + dir + archive all deleted afterwards.
-- **Restore drill result (all matched live exactly):** products 18/18, product_variants 30/30, categories 65/65, brands 8/8, orders 108/108, customers 9/9, pages 6/6, settings 37/37. Media: live 861 files/82,676 KB vs archive 860 files/82,664 KB — the only diff is one `.DS_Store` (macOS artifact, not app data); all 860 real media files present and identical. Archive restored: `DOTS/2026-11-01-19-31-46.zip`, 76.9 MB.
-- **How to verify (owner — BK.3):** (1) `php artisan dots:backup-download --dest=/tmp/dots-restore` → downloads the latest archive, prints path+size; (2) follow `docs/RESTORE.md` (decrypt with `BACKUP_ARCHIVE_PASSWORD`, import into a **scratch** DB, extract media to `/tmp`); (3) run the row-count + media checks in RESTORE.md Step 5 → should match live. Nothing in this flow touches `dots`/`dots_testing` or `storage/app/public`.
-- **Next task:** none on this branch — BK.3 is the last. Await owner's "approved, push backups" to release, then Phase 10.
+- **Branch:** `phase-10` (local only, off up-to-date `main`).
+- **Current task:** T10.1 — **DONE**. Step 1 of server hardening complete.
+- **Last commit:** `42812a5` — `T10.1: server hardening — SSH key-only, firewall review, fail2ban, UTC`
+- **Server:** `srv2107659.hstgr.cloud` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8.
+- **What was done:** SSH password auth disabled (both `/etc/ssh/sshd_config` and `50-cloud-init.conf` drop-in); `PermitRootLogin prohibit-password`; staying as root with key-only auth. UFW reviewed — existing rules correct, left unchanged (see `docs/DEPLOY.md`). fail2ban sshd jail already running, no changes needed. Timezone UTC confirmed, NTP active.
+- **What to verify:** `ssh root@187.126.20.146` with your key → connects. `ssh -o PubkeyAuthentication=no -o PreferredAuthentications=password root@187.126.20.146` → `Permission denied (publickey)`, no prompt.
+- **Carry-forwards logged in `docs/DEPLOY.md`:** MySQL bind-address (step 2); Cloudflare real-IP ordering constraint + nginx fail2ban jail (step 3).
+- **Next task:** T10.2 — Step 2: MySQL, Redis, PHP configuration (separate session).
 
-**Git:** branch `backups` (local, unpushed) · last commit `55efd49` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `phase-10` (local, unpushed) · last commit `42812a5` · last tag `backups-done` · push state: **not pushed**
 
-Current phase: **Off-site backups on branch `backups`** (`docs/plan/backups.md`): BK.1 → BK.2 → BK.3. Phase 10 follows after this branch is merged.
+Current phase: **Phase 10 — deployment** (`phase-10` branch). T10.1 done.
 
 ---
 
