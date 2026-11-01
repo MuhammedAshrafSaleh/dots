@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.9 — **DONE** (awaiting owner browser review).
-- **Last commit:** `<pending>` — `PAY.9: treat a settled payment as terminal on the payment-failed page`
+- **Last commit:** `1b354e9` — `PAY.9: treat a settled payment as terminal on the payment-failed page`
 - **Gate result:** 705 tests (703 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
 - **PAY.9 produced:** the payment-failed page guarded only on `status === Cancelled`, so a page opened/re-opened before settlement could still mutate a settled order (confirmed on `DT-10130`: a paid card order was flipped to `pending`/`cod`). Fix: a settled payment (`paid` or `refunded`) is now terminal. `isSettled()` + locked `terminalState()` in `PaymentFailed`; guard applied in `mount()` and at the top of `proceed()` (covers retry) and inside the COD/InstaPay locked transaction (all three branches). Settled → bilingual "already settled" message + link to the order, no mutating controls, **never** a new checkout intention. Terminal rationale (in `payments.md`): paid/refunded IN; pending/awaiting_transfer/failed OUT. `DT-10130` data-fixed back to `paid`/`card`, `reserved_until` null, correction history row added (real paid row #30 untouched; erroneous "→cod" history row kept as record).
@@ -13,7 +13,7 @@
 - **How to verify (owner clicks — PAY.9):** Open `/ar/order/DT-10130/payment-failed` (logged in as / in the session that owns it) → it must show the green "already settled" message with a **View your order** link and **no** retry/COD/InstaPay options. Then Admin → Orders → DT-10130 reads `paid` / `card`. (PAY.14 owner-review still pending too — see its line in payments.md.)
 - **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.9>` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `1b354e9` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
