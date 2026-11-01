@@ -34,8 +34,8 @@ it('emails on failure only, not on success', function () {
 });
 
 it('exposes a Google Drive disk that is wired but off by default', function () {
-    expect(config('filesystems.disks.google.driver'))->toBe('google')
-        ->and(config('backup.backup.destination.disks'))->not->toContain('google');
+    expect(config('filesystems.disks.google-drive.driver'))->toBe('google-drive')
+        ->and(config('backup.backup.destination.disks'))->not->toContain('google-drive');
 });
 
 it('schedules backups, sitemap and reservation cleanup', function () {

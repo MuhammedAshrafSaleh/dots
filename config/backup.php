@@ -166,8 +166,8 @@ return [
              * The disk names on which the backups will be stored.
              *
              * Defaults to the "local" disk. When the Google Drive credentials
-             * arrive, set BACKUP_DISK=google in .env to switch over — the disk
-             * is already wired in config/filesystems.php (PRD §13).
+             * arrive, set BACKUP_DISK=google-drive in .env to switch over — the
+             * disk is already wired in config/filesystems.php (PRD §13).
              */
             'disks' => [
                 env('BACKUP_DISK', 'local'),

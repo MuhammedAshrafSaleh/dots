@@ -62,16 +62,20 @@ return [
 
         /*
          * Off-site backup destination (PRD §13). Wired but inactive until the
-         * Google Drive credentials arrive; set BACKUP_DISK=google to switch on.
-         * Requires `composer require masbug/flysystem-google-drive-ext` and a
-         * driver registration before use.
+         * Google Drive credentials arrive; set BACKUP_DISK=google-drive to switch
+         * on. The `google-drive` driver is auto-registered by
+         * jeffersongoncalves/flysystem-google-drive. The OAuth refresh token is
+         * minted with the `drive.file` scope, so the app only ever sees files and
+         * folders it created itself. Leave GOOGLE_DRIVE_FOLDER empty — our own
+         * code creates the backup folder on first write (never create it by hand
+         * in the Drive UI, or the app could not see it).
          */
-        'google' => [
-            'driver' => 'google',
+        'google-drive' => [
+            'driver' => 'google-drive',
             'clientId' => env('GOOGLE_DRIVE_CLIENT_ID'),
             'clientSecret' => env('GOOGLE_DRIVE_CLIENT_SECRET'),
             'refreshToken' => env('GOOGLE_DRIVE_REFRESH_TOKEN'),
-            'folderId' => env('GOOGLE_DRIVE_FOLDER_ID'),
+            'folder' => env('GOOGLE_DRIVE_FOLDER'),
         ],
 
     ],
