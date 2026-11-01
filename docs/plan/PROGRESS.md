@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `backups` (local only, off up-to-date `main`).
 - **Current task:** BK.1 — **DONE** (awaiting owner review). Plan: `docs/plan/backups.md`.
-- **Last commit:** `<fill after commit>` — `BK.1: Google Drive disk + dots:drive-check command`
+- **Last commit:** `602e96b` — `BK.1: Google Drive disk + dots:drive-check command`
 - **Gate result:** `composer gates` all green — full suite passed · Larastan 0 errors · Pint clean · build clean. The new `DriveCheckTest` live round-trip is **skipped** (no Drive creds in `.env`); the empty-creds failure test passes.
 - **Context:** `payments-hardening` merged to `main` (commit `ca68172` "Payments hardening complete"). `backups` is cut from that up-to-date `main`. After BK.3, next is Phase 10. Release works like a phase (on "approved, push backups" → push, `merge --no-ff`, tag `backups-done`).
 - **BK.1 produced:** installed `jeffersongoncalves/flysystem-google-drive` (driver `google-drive`) instead of yaza/masbug (Guzzle-8 conflict — see Decisions log 2026-11-01). Replaced the stale masbug stub disk in `config/filesystems.php` with a `google-drive` disk (keys `clientId`/`clientSecret`/`refreshToken`/`folder`); updated `.env.example` (removed `GOOGLE_DRIVE_FOLDER_ID`, added empty `GOOGLE_DRIVE_FOLDER`); updated the `BACKUP_DISK=google` comment references to `google-drive` in `.env.example` + `config/backup.php`; fixed `BackupScheduleTest`'s disk assertion. New `app/Console/Commands/DriveCheckCommand.php` (`php artisan dots:drive-check`): fails fast if any secret is empty, else write→list→read-back→delete one file under `DOTS-Backups/` with a numbered PASS/FAIL per step, exit 1 on any failure, deletes only its own file. New `tests/Feature/DriveCheckTest.php` (empty-creds failure test + live round-trip that skips without creds). Wrote the 3-task plan `docs/plan/backups.md`.
@@ -11,7 +11,7 @@
 - **How to verify (owner runs — BK.1):** with real creds in `.env`, run `php artisan dots:drive-check`. Expect 4 numbered `PASS` lines (WRITE / LIST / READ / DELETE), then `Google Drive connection OK.`, exit code 0. Afterwards the `connection-check-*.txt` file is gone from the `DOTS-Backups` folder in Drive (only that one file touched; the folder was created automatically on first write — do NOT create it by hand). Without creds, the command prints a clear "credentials are not configured" message and exits 1.
 - **Next task:** BK.2 — configure spatie/laravel-backup (DB + media → `google-drive`, keep last 7, failure notification, write `docs/BACKUP.md`). Do NOT start it until owner says so.
 
-**Git:** branch `backups` (local, unpushed) · last commit `<fill after commit>` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `backups` (local, unpushed) · last commit `602e96b` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Off-site backups on branch `backups`** (`docs/plan/backups.md`): BK.1 → BK.2 → BK.3. Phase 10 follows after this branch is merged.
 
