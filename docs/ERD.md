@@ -641,6 +641,7 @@ Indexes: `(order_id, created_at)`
 | `order_id` | FK → orders |  |
 | `gateway` | string | paymob |
 | `gateway_ref` | string | intention / order id |
+| `gateway_reference` | string | the unique `special_reference` sent on the intention (`{order.number}-{token}`); echoed back as `merchant_order_id`, so the transaction is resolved to its order by exact lookup on this column |
 | `transaction_id` | string | unique |
 | `amount` | decimal(12,2) |  |
 | `currency` | string | EGP |
@@ -654,7 +655,7 @@ Indexes: `(order_id, created_at)`
 | `created_at` | timestamp |  |
 | `updated_at` | timestamp |  |
 
-Indexes: `order_id`, `transaction_id unique`
+Indexes: `order_id`, `transaction_id unique`, `gateway_reference`
 
 ### `webhook_events`
 | column | type | notes |

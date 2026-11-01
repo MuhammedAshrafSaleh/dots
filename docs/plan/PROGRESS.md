@@ -2,18 +2,18 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.8 — **DONE**. All PAY tasks complete.
-- **Last commit:** `06ba86a` — `PAY.8: go-live checklist doc`
-- **Gate result:** 688 tests (686 pass, 2 skip) · Larastan clean · Pint clean · build clean.
+- **Current task:** PAY.14 — **DONE** (awaiting owner browser review).
+- **Last commit:** _(this task — see Git line below)_
+- **Gate result:** 699 tests (697 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
 - **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
-- **PAY.8 produced:** `docs/PAYMOB_GOLIVE.md` — 6-section go-live guide covering exact `.env` keys, Paymob dashboard callback URLs (webhook + browser return), local tunnel testing, webhook verification steps, real test-transaction walkthrough, and queue reminder. All referenced route names, env keys, and table names grep-verified against codebase.
+- **PAY.14 produced:** card-payment retry was failing — every `createCheckout` for an order with an existing intention got HTTP 400 (`special_reference` must be unique per intention), and a payment row was written *before* the API call so each failed retry left an orphan. Fix: unique `special_reference = "{number}-{token}"` stored on a new `payments.gateway_reference` column; `PaymobGateway::orderForReference()` resolves the webhook/return to its order by **exact lookup** on that column (no order-number parsing; transitional bare-number fallback for in-flight legacy intentions only), used by both `recordTransaction()` and `PaymobReturnController`; payment row now created only **after** Paymob accepts. Migration `2026_11_01_132146` added + run on dev `dots`. Deleted the 8 orphan rows on `DT-10119` (kept #16/#17 failed-with-txn and #18 `pi_test_`). ERD updated.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks — PAY.8):** Review `docs/PAYMOB_GOLIVE.md`.
-- **Next session:** Owner approves → say "approved, push payments-hardening" to push and merge.
+- **How to verify (owner clicks — PAY.14):** With Paymob sandbox keys, place a card order and let it decline → on the payment-failed page click **retry** → it must reach Unified Checkout again (no gateway-error toast, no 400 in `storage/logs`), then complete the card payment successfully → redirected to the confirmation page, order `payment_status=paid`. Confirm no new `pending` orphan payment row was created for the retry attempts (only the accepted intention + the final paid row).
+- **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `06ba86a` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit _(PAY.14, hash below)_ · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 

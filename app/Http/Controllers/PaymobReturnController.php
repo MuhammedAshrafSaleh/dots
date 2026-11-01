@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Enums\OrderPaymentStatus;
-use App\Models\Order;
 use App\Services\Payments\PaymobGateway;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -29,7 +28,7 @@ class PaymobReturnController extends Controller
         $gateway->recordTransaction($obj, hmacVerified: true);
 
         $merchantRef = $obj['order']['merchant_order_id'] ?? null;
-        $order = is_string($merchantRef) ? Order::where('number', $merchantRef)->first() : null;
+        $order = is_string($merchantRef) ? $gateway->orderForReference($merchantRef) : null;
         if ($order === null) {
             return redirect()->route('cart', $locale);
         }

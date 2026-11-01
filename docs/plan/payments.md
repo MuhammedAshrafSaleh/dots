@@ -244,7 +244,7 @@
 ---
 
 ## PAY.13 — Make Livewire toasts visible on the shop frontend  _(Sonnet)_
-- [ ] Not started
+- [x] Done
 
 **Goal:** Shop Livewire components dispatch `toast` events that currently fire into nothing. The shop JS bundle has no listener and the shop layout's `.d-toasts` container is static (session-flash only). Fix both so every `$this->dispatch('toast', …)` on the shop/account frontend is visible to the customer.
 
@@ -275,6 +275,57 @@
 
 ---
 
+## PAY.14 — Card-payment retry fails: duplicate `special_reference` + orphaned payment rows  _(Opus)_
+- [x] Done
+
+**Problem reported:** Retrying a card payment from the payment-failed page always fails. Every `createCheckout()` for an order that already has an intention returns **HTTP 400** from Paymob. Order `DT-10119` accumulated eight orphaned `pending` payment rows (one per click), none with a `gateway_ref`. Log showed `Paymob intention failed {order: DT-10119, status: 400}` repeatedly.
+
+### Diagnosis (done 2026-11-01)
+
+**Exact 400 body (captured from the live sandbox with a raw duplicate-reference call — no order/payment mutated, temp script removed afterward, so no change to the production log was needed):**
+```
+Attempt 1 (ref=DIAG-DUP-…) → 201 Created
+Attempt 2 (SAME ref)       → 400 Bad Request
+   {"merchant_order_id":"An Order with ref: DIAG-DUP-… already exists"}
+```
+
+**Confirmed cause:** `special_reference` **must be unique per intention.** We send `special_reference = $order->number` (`PaymobGateway::createCheckout()`), so the *first* intention for an order succeeds and *every retry* reuses the same reference → Paymob rejects it 400 with the message above. The rejected field is exactly `special_reference` (Paymob echoes the error under the `merchant_order_id` key).
+
+**The hard constraint on any fix:** Paymob's docs state `special_reference` is "returned in the transaction callback under `merchant_order_id`." Our webhook/return handler matches the order on exactly that field — `recordTransaction()` does `Order::where('number', $obj['order']['merchant_order_id'])`. So whatever we send as `special_reference` is what we must be able to resolve back to an order. We cannot simply replace the order number with a random reference or we lose the webhook→order link.
+
+**Second defect (orphan rows):** `createCheckout()` writes the `payments` row *before* the HTTP call (`PaymobGateway.php:60`). When the call 400s it throws *after* the row is already committed, so every failed attempt leaves a `pending` row with no `gateway_ref`. Verified on `DT-10119`: 8 such rows (`gateway_ref` NULL, `transaction_id` NULL, `status=pending`) from the retries, plus pre-existing legit rows (two `failed` webhook rows with txn ids, one accepted-but-abandoned `pending` row with a `pi_test_…` ref).
+
+### Fix as implemented (owner-approved 2026-11-01 — stored-reference column, no parsing)
+
+The owner rejected parsing the order number out of `special_reference` (the `order_prefix` setting is admin-editable, so a prefix with a hyphen+digits could misroute money). Research into the two shortcuts:
+- **`extras` / metadata echo (Q1):** Paymob's docs confirm an `extras` field whose values "are returned in callbacks under the payment key claims object." Usable for the *server webhook*, but unverified for the *browser-redirect* flat callback (our primary local settle path) and unsigned — not worth the risk.
+- **Reuse the existing intention (Q2):** docs are silent on intention expiry and explicitly leave reuse "open"; sources conflict ("one intention can carry several transactions" vs "client_secret is one-time"). Can't verify without driving a live sandbox decline+retry. Too risky for the money path.
+
+→ Took the migration. A verified fact backs it: the full string we send round-trips verbatim as `merchant_order_id` on **both** inbound paths (webhook + browser return), which already read that field today.
+
+1. **New column `payments.gateway_reference`** (nullable, indexed; ERD updated). Stores the exact `special_reference` we sent.
+2. **Unique reference, order number embedded.** `special_reference = "{$order->number}-".Str::upper(Str::random(12))` — unique per intention; order number stays human-visible in the Paymob dashboard. Stored on the payment row.
+3. **Resolve by exact lookup, no parsing.** New `PaymobGateway::orderForReference($merchantRef)`: exact `Payment::where('gateway_reference', $merchantRef)` → its order (the ONLY supported path). A commented *transitional* fallback to `Order::where('number', …)` covers intentions already in flight with a bare reference; it is explicitly not a supported path for new intentions and is to be removed once none can be in flight. Both `recordTransaction()` and `PaymobReturnController` use this one method.
+4. **Row only after acceptance.** `payments()->create([...])` moved below the `failed() || blank(client_secret)` guard (sets `gateway_ref` + `gateway_reference`). A rejected intention throws before any row exists → zero orphans.
+5. **Cleaned up `DT-10119`** — deleted the 8 orphan rows (`pending`, `gateway_ref` NULL, `transaction_id` NULL); kept the two `failed`-with-txn rows (#16/#17) and the accepted `pi_test_` row (#18).
+
+**Files touched:** `database/migrations/2026_11_01_132146_add_gateway_reference_to_payments_table.php` (new), `app/Services/Payments/PaymobGateway.php` (unique reference, row-after-acceptance, `orderForReference()`), `app/Http/Controllers/PaymobReturnController.php` (resolve via `orderForReference()`), `docs/ERD.md`, `tests/Feature/Commerce/PaymobGatewayTest.php`.
+
+**Acceptance criteria**
+- A retry from the payment-failed page for an order with an existing intention succeeds (no 400); each attempt sends a distinct `special_reference`.
+- A webhook/return carrying the suffixed `merchant_order_id` still resolves to the correct order (and a bare legacy reference still resolves).
+- A rejected intention leaves **no** payment row behind.
+- `DT-10119`'s 8 orphan rows removed; its real payment rows untouched.
+
+**Required tests (feature)**
+- `createCheckout` sends a `special_reference` that starts with the order number and is unique across two calls for the same order.
+- Rejected intention (`Http::fake` 400) → `PaymentException` thrown **and** `Payment::where('order_id', …)->count()` unchanged (no orphan).
+- `recordTransaction` resolves the order from a suffixed `merchant_order_id` (and still from a bare one).
+
+**Owner clicks (dots.test):** force a card decline, then on the payment-failed page click "retry" → it must reach Unified Checkout again (no gateway-error toast, no 400 in the log), and no new `pending` orphan row appears.
+
+---
+
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8 → PAY.13)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
@@ -284,7 +335,8 @@
 - [x] PAY.6 HMAC verified before order lookup on return (Opus)
 - [x] PAY.7 Close test gaps (Opus/Sonnet split per scenario)
 - [x] PAY.8 Go-live checklist doc (Sonnet)
-- [ ] PAY.13 Make Livewire toasts visible on the shop frontend (Sonnet)
+- [x] PAY.13 Make Livewire toasts visible on the shop frontend (Sonnet)
+- [x] PAY.14 Fix card-retry duplicate `special_reference` 400 + orphaned payment rows; stored-reference column resolved by lookup (Opus)
 
 ---
 

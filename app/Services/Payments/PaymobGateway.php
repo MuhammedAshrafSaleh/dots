@@ -12,6 +12,7 @@ use App\Services\Settings;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 /**
  * Paymob driver using the Intention / Unified Checkout API.
@@ -57,12 +58,14 @@ class PaymobGateway implements PaymentGateway
             'reserved_until' => now()->addMinutes($this->cardWindowMinutes()),
         ]);
 
-        $payment = $order->payments()->create([
-            'gateway' => 'paymob',
-            'amount' => $order->total,
-            'currency' => 'EGP',
-            'status' => PaymentStatus::Pending,
-        ]);
+        // special_reference must be UNIQUE per intention — Paymob rejects a reused
+        // one with HTTP 400 ("An Order with ref: … already exists"), which broke
+        // every retry when we sent the bare order number. Suffix a random token so
+        // each attempt is distinct; the order number stays embedded (human-readable
+        // in the Paymob dashboard). Paymob echoes this back verbatim as
+        // merchant_order_id, and we resolve the order by an exact lookup on the
+        // stored value (see orderForReference()) — never by parsing it.
+        $reference = $order->number.'-'.Str::upper(Str::random(12));
 
         $response = Http::withToken($this->config('secret_key'))
             ->acceptJson()
@@ -70,7 +73,7 @@ class PaymobGateway implements PaymentGateway
                 'amount' => $amountCents,
                 'currency' => 'EGP',
                 'payment_methods' => [(int) $this->config('integration_id_card')],
-                'special_reference' => $order->number,
+                'special_reference' => $reference,
                 'notification_url' => route('paymob.webhook'),
                 'redirection_url' => route('paymob.return', [$order->locale ?: app()->getLocale()]),
                 'items' => [[
@@ -86,7 +89,16 @@ class PaymobGateway implements PaymentGateway
             throw new PaymentException('ui.pf_gateway_error');
         }
 
-        $payment->update(['gateway_ref' => (string) $response->json('id')]);
+        // Only write the payment row once Paymob has ACCEPTED the intention, so a
+        // rejected attempt leaves no orphan pending row behind.
+        $order->payments()->create([
+            'gateway' => 'paymob',
+            'gateway_ref' => (string) $response->json('id'),
+            'gateway_reference' => $reference,
+            'amount' => $order->total,
+            'currency' => 'EGP',
+            'status' => PaymentStatus::Pending,
+        ]);
 
         return $this->baseUrl().'/unifiedcheckout/?publicKey='.$this->config('public_key')
             .'&clientSecret='.$response->json('client_secret');
@@ -169,14 +181,20 @@ class PaymobGateway implements PaymentGateway
     {
         $transactionId = isset($obj['id']) ? (string) $obj['id'] : null;
         $merchantRef = $obj['order']['merchant_order_id'] ?? null;
-        if ($transactionId === null || blank($merchantRef)) {
+        if ($transactionId === null || ! is_string($merchantRef) || blank($merchantRef)) {
             return;
         }
+
+        $resolved = $this->orderForReference($merchantRef);
+        if ($resolved === null) {
+            return;
+        }
+        $orderId = $resolved->id;
 
         $success = $this->asBool($obj['success'] ?? null);
         $pan = isset($obj['source_data']['pan']) ? (string) $obj['source_data']['pan'] : null;
 
-        DB::transaction(function () use ($merchantRef, $obj, $transactionId, $success, $pan, $hmacVerified): void {
+        DB::transaction(function () use ($orderId, $obj, $transactionId, $success, $pan, $hmacVerified): void {
             // The idempotency marker lives INSIDE this transaction: if anything
             // below throws, the webhook_events row rolls back with it, so
             // Paymob's retry of the same event is re-processed rather than
@@ -193,7 +211,7 @@ class PaymobGateway implements PaymentGateway
 
             // Lock the order row for the life of the transaction so an in-flight
             // reservation sweep cannot cancel it between our read and our write.
-            $order = Order::where('number', $merchantRef)->lockForUpdate()->first();
+            $order = Order::whereKey($orderId)->lockForUpdate()->first();
             if ($order === null) {
                 return;
             }
@@ -245,6 +263,27 @@ class PaymobGateway implements PaymentGateway
                 'created_at' => now(),
             ]);
         });
+    }
+
+    /**
+     * Resolve the order a verified transaction belongs to from the echoed
+     * `merchant_order_id`. The ONLY supported path is an exact match on
+     * `payments.gateway_reference` — the unique special_reference we stored when
+     * the intention was accepted, which Paymob returns verbatim. This never parses
+     * the order number, so the admin-editable order prefix cannot misroute money.
+     */
+    public function orderForReference(string $merchantRef): ?Order
+    {
+        $payment = Payment::where('gateway_reference', $merchantRef)->latest('id')->first();
+        if ($payment !== null) {
+            return $payment->order;
+        }
+
+        // Transitional fallback: intentions created before PAY.14 were sent with
+        // the bare order number and have no stored gateway_reference. This is NOT a
+        // supported path for new intentions — remove once no such intention can
+        // still be in flight.
+        return Order::where('number', $merchantRef)->first();
     }
 
     /** @param  list<mixed>  $values */
