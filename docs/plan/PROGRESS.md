@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.16 — **DONE** (awaiting owner browser review).
-- **Last commit:** _pending — see `git log` after commit this session_
+- **Last commit:** `5f24b15` — `PAY.16: cap cart stepper at stock; honest out-of-stock vs insufficient messaging`
 - **Gate result:** 710 tests (708 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
 - **Context:** `bulk-import` merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
 - **PAY.16 produced (three manual-test fixes + backstop confirmation):** (1) Cart/drawer stepper now capped at stock — shared `_cart-line.blade.php` disables the `+` at `qty >= stock` and shows the same `ui.pdp_stock_cap` line ("Only :n available"); `CartManager::updateQty()` clamps to stock server-side. (2) Submit-time error split into two real cases: `CheckoutException` carries `reason`+`requested`+`available`, `PlaceOrder::createItems()` throws `outOfStock` (stock<1 → "sold out, remove it") vs `insufficientStock` (names both numbers → "You asked for :requested … only :available in stock now"); `CheckoutForm::place()` matches on reason. (3) Pre-flight banner's insufficient line now shows both numbers too (`detectCartProblems()` carries `requested`). **Backstop answer:** the stepper is NOT the only guard — cart qty is re-validated on checkout mount (banner) and, authoritatively, by `PlaceOrder`'s `lockForUpdate()` re-read inside the order txn (full rollback on shortage). New lang keys replace `checkout_item_unavailable_named`.
@@ -13,7 +13,7 @@
 - **How to verify (owner clicks — PAY.16):** (a) Find a variant with low stock (e.g. 3). Add it to the cart, open the **cart page** (and the cart **drawer**): press `+` up to 3 — the `+` must go **disabled** at 3 and a small warning line "Only 3 available" appears under the stepper. (b) With that over-ask forced (or qty raised earlier), go to **checkout**: the top pre-flight banner must say the insufficient line with **both** numbers ("you asked for … only 3 in stock"), not a bare "out of stock". (c) For a genuinely 0-stock item in the cart, the banner/submit error must say it's **sold out / remove it** (distinct from the insufficient wording). (d) Place an order where stock is short at submit → order is **rejected**, cart unchanged, and the red error names what you asked for vs what's in stock. Check both AR (RTL) and EN. (Earlier PAY.9/PAY.10/PAY.14 owner-reviews may still be pending — see their lines in payments.md.)
 - **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `6e39018` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `5f24b15` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
