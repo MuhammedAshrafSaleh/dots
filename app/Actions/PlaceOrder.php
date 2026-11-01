@@ -50,6 +50,7 @@ class PlaceOrder
 
         $order = DB::transaction(function () use ($items, $delivery, $payment, $contact, $address, $locale, $coupon, $totals, $customerId): Order {
             $instapay = $payment->code === PaymentMethodCode::InstapayWhatsapp;
+            $card = $payment->code === PaymentMethodCode::Card;
 
             $order = Order::create([
                 'customer_id' => $customerId,
@@ -73,7 +74,15 @@ class PlaceOrder
                 'total' => $totals->total,
                 'vat_rate' => $totals->vatRate,
                 'vat_amount' => $totals->vat,
-                'reserved_until' => $instapay ? now()->addHours($this->holdHours()) : null,
+                // reserved_until is the universal pay-by deadline the sweeper
+                // reads. InstaPay keeps its transfer window; card orders get a
+                // payment window so an unpaid (or checkout-throwing) card order
+                // still returns its stock; COD stays null → never swept.
+                'reserved_until' => match (true) {
+                    $instapay => now()->addHours($this->holdHours()),
+                    $card => now()->addMinutes($this->cardWindowMinutes()),
+                    default => null,
+                },
                 'ip' => request()->ip(),
                 'user_agent' => substr((string) request()->userAgent(), 0, 500),
                 'placed_at' => now(),
@@ -148,9 +157,15 @@ class PlaceOrder
             // same variant serialise. If the locked stock can't cover this line,
             // reject the whole order (rolls back) rather than silently overselling
             // or flooring to a phantom sale — zero-stock variants aren't buyable.
+            // This locked re-read is the real oversell backstop: the stepper caps
+            // are UX only and can be stale by the time the customer checks out.
             $locked = ProductVariant::whereKey($variant->id)->lockForUpdate()->first();
-            if ($locked === null || $locked->stock_qty < $item->qty) {
-                throw CheckoutException::unavailable();
+            $name = $product->getTranslation('name', app()->getLocale());
+            if ($locked === null || $locked->stock_qty < 1) {
+                throw CheckoutException::outOfStock($name);
+            }
+            if ($locked->stock_qty < $item->qty) {
+                throw CheckoutException::insufficientStock($name, (int) $item->qty, (int) $locked->stock_qty);
             }
 
             ProductVariant::whereKey($variant->id)
@@ -193,5 +208,10 @@ class PlaceOrder
     private function holdHours(): int
     {
         return (int) $this->settings->get('commerce.instapay_hold_hours', 24);
+    }
+
+    private function cardWindowMinutes(): int
+    {
+        return (int) $this->settings->get('commerce.card_payment_window_minutes', 60);
     }
 }

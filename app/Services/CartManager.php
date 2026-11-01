@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Coupon;
 use App\Models\DeliveryMethod;
+use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Support\CartTotals;
@@ -84,6 +85,59 @@ class CartManager
         $item->save();
     }
 
+    /**
+     * Repopulates the current cart from a (cancelled) order's line items, each
+     * clamped to the variant's current stock. Variants now inactive, unpriced
+     * or out of stock are skipped (reported as `dropped`); lines whose quantity
+     * had to be lowered to the available stock are reported as `reduced`. Does
+     * not touch the order, its coupon or stock — the customer checks out fresh.
+     *
+     * @return array{
+     *     added: int,
+     *     dropped: array<int, string>,
+     *     reduced: array<int, array{name: string, requested: int, actual: int}>
+     * }
+     */
+    public function reAddFromOrder(Order $order, ?string $locale = null): array
+    {
+        $locale ??= app()->getLocale();
+        $cart = $this->current();
+        $added = 0;
+        $dropped = [];
+        $reduced = [];
+
+        foreach ($order->items as $item) {
+            $variantId = $item->product_variant_id;
+            if ($variantId === null) {
+                continue;
+            }
+
+            $name = $item->getTranslation('product_name', $locale, false)
+                ?: $item->getTranslation('product_name', $locale === 'ar' ? 'en' : 'ar', false);
+            $variant = ProductVariant::active()->whereNotNull('price')->find($variantId);
+
+            if ($variant === null || (int) $variant->stock_qty < 1) {
+                $dropped[] = $name;
+
+                continue;
+            }
+
+            $requested = (int) $item->qty;
+            $actual = min(99, $requested, (int) $variant->stock_qty);
+
+            $line = $cart->items()->firstOrNew(['product_variant_id' => $variantId]);
+            $line->qty = $actual;
+            $line->save();
+            $added++;
+
+            if ($actual < $requested) {
+                $reduced[] = ['name' => $name, 'requested' => $requested, 'actual' => $actual];
+            }
+        }
+
+        return ['added' => $added, 'dropped' => $dropped, 'reduced' => $reduced];
+    }
+
     public function updateQty(int $itemId, int $qty): void
     {
         $cart = $this->currentOrNull();
@@ -98,7 +152,16 @@ class CartManager
             return;
         }
 
-        $item->qty = min(99, $qty);
+        // Cap at available stock so the stepper can't raise qty past what's in
+        // stock (defensive mirror of the disabled button; PlaceOrder's locked
+        // re-read remains the authoritative oversell backstop).
+        $qty = min(99, $qty);
+        $stock = (int) $item->productVariant->stock_qty;
+        if ($stock > 0 && $qty > $stock) {
+            $qty = $stock;
+        }
+
+        $item->qty = $qty;
         $item->save();
     }
 

@@ -276,6 +276,41 @@ it('export escapes cells whose value starts with =', function () {
 });
 
 // ---------------------------------------------------------------------------
+// Column-letter increment crosses Z boundary
+// ---------------------------------------------------------------------------
+
+it('variants sheet column keys are correct beyond column Z when many axis attributes exist', function () {
+    // 25 axis attrs → 2 static + 25 attr + 4 trailing = 31 columns (A–AE).
+    // Column AA (index 27) must hold the key for the 25th attr, not wrap or skip.
+    $attrCodes = [];
+    for ($i = 1; $i <= 25; $i++) {
+        $code = 'axis_zboundary_'.$i;
+        $attrCodes[] = $code;
+        importAxisAttr($code, 'سمة '.$i, ['val_a', 'val_b']);
+    }
+
+    $spreadsheet = (new ProductTemplateBuilder)->build();
+    $variantsSheet = $spreadsheet->getSheetByName('الاختيارات');
+    expect($variantsSheet)->not->toBeNull();
+
+    // Read the full key row up to column AE (index 31)
+    $keys = [];
+    for ($i = 1; $i <= 31; $i++) {
+        $col = Coordinate::stringFromColumnIndex($i);
+        $keys[$col] = (string) $variantsSheet->getCell($col.'2')->getValue();
+    }
+
+    // Positions 1–2 are static; 3–27 are axis attrs in order; 28–31 are trailing.
+    expect($keys['A'])->toBe('product_sku');
+    expect($keys['B'])->toBe('variant_sku');
+    // Column AA = index 27 = 25th axis attr
+    expect($keys['AA'])->toBe('attr:axis_zboundary_25');
+    // First trailing col after the attrs = index 28 = AB
+    expect($keys['AB'])->toBe('price');
+    expect($keys['AE'])->toBe('is_default');
+});
+
+// ---------------------------------------------------------------------------
 // Authorization for downloadTemplate / export actions
 // ---------------------------------------------------------------------------
 

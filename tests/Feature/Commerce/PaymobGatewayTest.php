@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\OrderPaymentStatus;
+use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\Payment;
@@ -156,11 +157,31 @@ it('createCheckout posts an intention and returns the unified checkout URL', fun
     $payment = Payment::where('order_id', $order->id)->first();
     expect($payment)->not->toBeNull()
         ->and($payment->gateway_ref)->toBe('int_42')
+        // The unique special_reference we sent is stored verbatim so the webhook
+        // can be resolved back to this order by exact lookup.
+        ->and($payment->gateway_reference)->toStartWith($order->number.'-')
         ->and($payment->status)->toBe(PaymentStatus::Pending);
 
-    Http::assertSent(fn ($request) => $request['special_reference'] === $order->number
+    // special_reference must embed the order number but be unique per intention.
+    Http::assertSent(fn ($request) => str_starts_with((string) $request['special_reference'], $order->number.'-')
+        && $request['special_reference'] !== $order->number
         && $request['amount'] === 250000
         && $request['payment_methods'] === [55555]);
+});
+
+it('sends a distinct special_reference on each createCheckout so a retry is never rejected', function () {
+    Http::fake([
+        'pay.test/v1/intention/*' => Http::response(['id' => 'int_42', 'client_secret' => 'cs_live_abc'], 200),
+    ]);
+
+    $order = pgOrder(1000);
+    app(PaymentGateway::class)->createCheckout($order);
+    app(PaymentGateway::class)->createCheckout($order);
+
+    $refs = Payment::where('order_id', $order->id)->pluck('gateway_reference');
+    expect($refs)->toHaveCount(2)
+        ->and($refs->unique())->toHaveCount(2)
+        ->and($refs->every(fn ($r) => str_starts_with((string) $r, $order->number.'-')))->toBeTrue();
 });
 
 it('throws when the intention API rejects the request', function () {
@@ -168,6 +189,21 @@ it('throws when the intention API rejects the request', function () {
 
     expect(fn () => app(PaymobGateway::class)->createCheckout(pgOrder()))
         ->toThrow(PaymentException::class);
+});
+
+it('leaves no payment row behind when the intention is rejected', function () {
+    Http::fake([
+        'pay.test/v1/intention/*' => Http::response(['merchant_order_id' => 'An Order with ref: … already exists'], 400),
+    ]);
+
+    $order = pgOrder();
+
+    expect(fn () => app(PaymobGateway::class)->createCheckout($order))
+        ->toThrow(PaymentException::class);
+
+    // The row is written only after Paymob accepts the intention, so a rejected
+    // attempt (as happened on every retry before PAY.14) leaves no orphan.
+    expect(Payment::where('order_id', $order->id)->count())->toBe(0);
 });
 
 it('reports configured only when every credential is present', function () {
@@ -203,6 +239,228 @@ it('redirects the browser return to confirmation after a verified paid callback'
         'source_data.type' => 'card',
         'success' => 'true',
         'merchant_order_id' => $order->number,
+    ];
+    $ordered = [
+        $query['amount_cents'], $query['created_at'], $query['currency'],
+        'false', 'false', $query['id'], $query['integration_id'], 'true',
+        'false', 'false', 'false', 'true', 'false', $query['order'],
+        $query['owner'], 'false', $query['source_data.pan'],
+        $query['source_data.sub_type'], $query['source_data.type'], 'true',
+    ];
+    $query['hmac'] = hash_hmac('sha512', implode('', $ordered), 'hmac_secret');
+
+    $this->get('/en/payments/paymob/return?'.http_build_query($query))
+        ->assertRedirect(route('order.confirmation', ['en', $order->number]));
+
+    expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Paid);
+});
+
+it('redirects the browser return to cart without touching the order when the callback HMAC is invalid', function () {
+    $order = pgOrder();
+
+    // A real merchant_order_id is present, but the HMAC does not match. The
+    // controller must verify first and never run an order lookup or mutation.
+    $query = [
+        'amount_cents' => (int) round(((float) $order->total) * 100),
+        'id' => '900100',
+        'order' => '700',
+        'success' => 'true',
+        'merchant_order_id' => $order->number,
+        'hmac' => str_repeat('0', 128),
+    ];
+
+    $this->get('/en/payments/paymob/return?'.http_build_query($query))
+        ->assertRedirect(route('cart', 'en'));
+
+    expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and(Payment::count())->toBe(0)
+        ->and(WebhookEvent::count())->toBe(0);
+});
+
+it('redirects the browser return to cart without touching the order when the HMAC is missing', function () {
+    $order = pgOrder();
+
+    $query = [
+        'id' => '900100',
+        'success' => 'true',
+        'merchant_order_id' => $order->number,
+    ];
+
+    $this->get('/en/payments/paymob/return?'.http_build_query($query))
+        ->assertRedirect(route('cart', 'en'));
+
+    expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and(Payment::count())->toBe(0)
+        ->and(WebhookEvent::count())->toBe(0);
+});
+
+it('refreshes the reservation deadline on every createCheckout', function () {
+    Http::fake([
+        'pay.test/v1/intention/*' => Http::response(['id' => 'int_99', 'client_secret' => 'cs_x'], 200),
+    ]);
+    config()->set('services.paymob.base_url', 'https://pay.test');
+
+    $order = pgOrder(1000);
+    expect($order->reserved_until)->toBeNull();
+
+    app(PaymentGateway::class)->createCheckout($order);
+
+    $order->refresh();
+    expect($order->reserved_until)->not->toBeNull()
+        ->and($order->reserved_until->isFuture())->toBeTrue()
+        // default window is 60 minutes
+        ->and($order->reserved_until->greaterThan(now()->addMinutes(55)))->toBeTrue();
+});
+
+it('clears the reservation deadline when a card payment settles paid', function () {
+    $order = pgOrder();
+    $order->update(['reserved_until' => now()->addMinutes(60)]);
+    $w = pgWebhook($order, success: true, txnId: '900500');
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->reserved_until)->toBeNull();
+});
+
+it('records a late success after auto-cancellation without un-cancelling or moving stock', function () {
+    $order = pgOrder(status: OrderPaymentStatus::Failed);
+    // The sweeper already cancelled it (stock restored) before the money landed.
+    $order->update(['status' => OrderStatus::Cancelled, 'reserved_until' => null]);
+
+    $w = pgWebhook($order, success: true, txnId: '900600');
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->status)->toBe(OrderStatus::Cancelled);
+
+    $payment = Payment::where('order_id', $order->id)->first();
+    expect($payment->status)->toBe(PaymentStatus::Paid)
+        ->and($payment->hmac_verified)->toBeTrue();
+
+    $last = $order->statusHistories()->get()->last();
+    expect($last->getTranslation('note', 'en'))->toContain('AFTER auto-cancellation');
+});
+
+it('rolls back the webhook_events marker when the work transaction fails, then a retry settles the order', function () {
+    $order = pgOrder();
+    $w = pgWebhook($order, success: true, txnId: '900700');
+
+    // Force the work transaction to fail AFTER the idempotency marker and the
+    // payment have been written, by throwing on the order update. Isolate the
+    // listener on a cloned dispatcher so it can never leak into later tests.
+    $dispatcher = Order::getEventDispatcher();
+    Order::setEventDispatcher(clone $dispatcher);
+    Order::updating(fn () => throw new RuntimeException('simulated mid-transaction failure'));
+
+    try {
+        expect(fn () => app(PaymobGateway::class)->recordTransaction($w['obj'], hmacVerified: true))
+            ->toThrow(RuntimeException::class);
+    } finally {
+        Order::setEventDispatcher($dispatcher);
+    }
+
+    // The whole transaction rolled back: no marker left behind, no payment, and
+    // the order is untouched — so Paymob's retry is NOT swallowed as a duplicate.
+    expect(WebhookEvent::where('event_id', '900700')->count())->toBe(0)
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(0)
+        ->and($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Pending);
+
+    // Retry of the same event, failure gone: it now processes fully and settles.
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])
+        ->assertOk()
+        ->assertJson(['ok' => true]);
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and(WebhookEvent::where('event_id', '900700')->count())->toBe(1)
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(1);
+});
+
+it('flags a payment landing on a concurrently cancelled order for manual review, not the ordinary note', function () {
+    // The reservation sweep committed first (status Cancelled, stock already
+    // restored) just before our webhook acquires the locked row. lateAfterCancel
+    // is judged from the locked state, so the manual-review note must win.
+    $order = pgOrder(status: OrderPaymentStatus::Failed);
+    $order->update(['status' => OrderStatus::Cancelled, 'reserved_until' => null]);
+
+    $w = pgWebhook($order, success: true, txnId: '900800');
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])
+        ->assertOk();
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->status)->toBe(OrderStatus::Cancelled);
+
+    $note = $order->statusHistories()->get()->last()->getTranslation('note', 'en');
+    expect($note)->toContain('AFTER auto-cancellation')
+        ->and($note)->not->toContain('received via Paymob');
+});
+
+it('resolves the order from the stored gateway_reference on the webhook (not the bare number)', function () {
+    $order = pgOrder();
+    // A suffixed special_reference that does NOT equal the order number, stored
+    // when the intention was accepted. If resolution fell back to bare-number
+    // matching this would find nothing and the order would never settle.
+    $reference = $order->number.'-RETRYTOKEN01';
+    $order->payments()->create([
+        'gateway' => 'paymob',
+        'gateway_ref' => 'int_ref_1',
+        'gateway_reference' => $reference,
+        'amount' => $order->total,
+        'currency' => 'EGP',
+        'status' => PaymentStatus::Pending,
+    ]);
+
+    $w = pgWebhook($order, success: true, txnId: '901000');
+    $w['obj']['order']['merchant_order_id'] = $reference; // not in the HMAC
+
+    $this->postJson('/payments/paymob/webhook?hmac='.$w['hmac'], ['type' => 'TRANSACTION', 'obj' => $w['obj']])
+        ->assertOk()
+        ->assertJson(['ok' => true]);
+
+    expect($order->fresh()->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and(Payment::where('order_id', $order->id)->where('transaction_id', '901000')->exists())->toBeTrue();
+});
+
+it('resolves the order from the stored gateway_reference on the browser return (not the bare number)', function () {
+    $order = pgOrder();
+    $reference = $order->number.'-RETRYTOKEN02';
+    $order->payments()->create([
+        'gateway' => 'paymob',
+        'gateway_ref' => 'int_ref_2',
+        'gateway_reference' => $reference,
+        'amount' => $order->total,
+        'currency' => 'EGP',
+        'status' => PaymentStatus::Pending,
+    ]);
+
+    $query = [
+        'amount_cents' => (int) round(((float) $order->total) * 100),
+        'created_at' => '2026-10-15T10:00:00',
+        'currency' => 'EGP',
+        'error_occured' => 'false',
+        'has_parent_transaction' => 'false',
+        'id' => '901100',
+        'integration_id' => '55555',
+        'is_3d_secure' => 'true',
+        'is_auth' => 'false',
+        'is_capture' => 'false',
+        'is_refunded' => 'false',
+        'is_standalone_payment' => 'true',
+        'is_voided' => 'false',
+        'order' => '700',
+        'owner' => '100',
+        'pending' => 'false',
+        'source_data.pan' => '2346',
+        'source_data.sub_type' => 'MasterCard',
+        'source_data.type' => 'card',
+        'success' => 'true',
+        'merchant_order_id' => $reference, // not in the HMAC
     ];
     $ordered = [
         $query['amount_cents'], $query['created_at'], $query['currency'],

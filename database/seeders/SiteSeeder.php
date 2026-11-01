@@ -300,6 +300,7 @@ class SiteSeeder extends Seeder
             'commerce.project_pricing_note' => $this->m('Project pricing for 10+ units', 'أسعار مشروعات لـ 10 قطع فأكثر'),
             'commerce.low_stock_threshold' => 5,
             'commerce.instapay_hold_hours' => 24,
+            'commerce.card_payment_window_minutes' => 60,
             'commerce.order_prefix' => 'DT-',
             'commerce.currency' => 'EGP',
 

@@ -1,32 +1,22 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `bulk-import` (local only).
-- **Current task:** BI.3 — **DONE**. Bulk import complete (BI.1–BI.3). Next: **Phase 10**.
-- **Last commit:** `15b5f63` — `BI.3 pre-approval: queue stall warning + browser test selector fix`.
-- **Gate result:** 639 tests (637 pass, 2 skip) · Larastan clean · Pint clean · build clean.
-- **BI.3 produced:**
-  - `App\Services\ProductImportParser` — now also returns a `plan` (products + their valid variant/spec rows, with resolved attribute value IDs). Added partial-translation + plan builder; captured variant/spec data. Existing return keys unchanged (BI.2 tests still pass).
-  - `App\Services\ProductImportApplier` — upserts products/variants/specs in one transaction (empty cell keeps value; simple ⇒ one default variant sku=product sku; variant sync deactivates missing variants, never deletes; specs replace-all; overview plain-text → escaped `<p>` → purifier). Recomputes cache columns + flushes LISTINGS/FACETS/CATEGORIES/BRANDS. Attaches media **after** commit; NEW product with zero valid images forced to draft.
-  - `App\Services\ProductMediaExtractor` + `App\Exceptions\MediaImportException` — private ZIP extraction with all §6 limits/security (zip-slip, size/entry caps, duplicate basenames = whole-ZIP reject; fake-MIME / oversized / disallowed file = per-file warning). Real-MIME verified by content.
-  - `App\Jobs\ApplyProductImport` (ShouldQueue) — parses stored xlsx, extracts ZIP, applies, writes the report xlsx, records the `ImportLog`, cleans up working files.
-  - `App\Models\ImportLog` + migration `import_logs` (who/when/filename/counts/report_path).
-  - `App\Livewire\Admin\Products\Import` — `zipFile` input, `apply()` (persists files, dispatches job), `refreshStatus()` (wire:poll), `downloadAppliedReport()`. View: ZIP input + Apply wired + applying/applied panels.
-  - `config/import.php` (media limits) · `config/livewire.php` temp-upload rule raised to 64 MB · `ProductExportBuilder` fixed so variant products export **no** product-level price (round-trip safe).
-  - Lang: ~28 new `admin.import_products.*` strings (AR + EN).
-  - Tests: 13 feature tests in `tests/Feature/Admin/Products/ProductImportBI3Test.php` + browser E2E `tests/Browser/Admin/ProductImportE2ETest.php` (**unrun** — browser tests paused; feature tests cover the same flow).
-- **Herd PHP settings (owner, for large uploads):** raise `upload_max_filesize=64M`, `post_max_size=80M` in the active Herd PHP `php.ini`, then restart Herd (IMPORT_SPEC §8).
-- **Open issues (carry-forward from BI.1):** After a fresh install, run `php artisan db:seed --class=RolesAndAdminSeeder` once to grant Admin the import/export permissions. Also run `php artisan migrate` for the new `import_logs` table (already done locally).
-- **How to verify on dots.test:**
-  1. Log in → Products → Import. Upload a filled xlsx **and** a media ZIP (English filenames, e.g. `SKU.jpg`, `SKU-2.jpg`, `SKU-datasheet.pdf`). Include one bad row + one product whose image is missing from the ZIP.
-  2. Click **"معاينة"** → preview counts + error/warning tables.
-  3. Click **"تطبيق الصفوف الصحيحة"** → watch the "جارٍ التطبيق…" panel → "اكتمل الاستيراد" summary (created/updated/variants/specs/images/warnings). Download the report.
-  4. Open the imported products on the public site: prices + images show immediately; deactivated variants are gone from the picker; a NEW product with no valid image is a draft (not public).
-  5. No 403/500/JS errors.
+- **Branch:** `payments-hardening` (local only).
+- **Current task:** PAY.16 — **DONE** (awaiting owner browser review).
+- **Last commit:** `5f24b15` — `PAY.16: cap cart stepper at stock; honest out-of-stock vs insufficient messaging`
+- **Gate result:** 710 tests (708 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
+- **Context:** `bulk-import` merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
+- **PAY.16 produced (three manual-test fixes + backstop confirmation):** (1) Cart/drawer stepper now capped at stock — shared `_cart-line.blade.php` disables the `+` at `qty >= stock` and shows the same `ui.pdp_stock_cap` line ("Only :n available"); `CartManager::updateQty()` clamps to stock server-side. (2) Submit-time error split into two real cases: `CheckoutException` carries `reason`+`requested`+`available`, `PlaceOrder::createItems()` throws `outOfStock` (stock<1 → "sold out, remove it") vs `insufficientStock` (names both numbers → "You asked for :requested … only :available in stock now"); `CheckoutForm::place()` matches on reason. (3) Pre-flight banner's insufficient line now shows both numbers too (`detectCartProblems()` carries `requested`). **Backstop answer:** the stepper is NOT the only guard — cart qty is re-validated on checkout mount (banner) and, authoritatively, by `PlaceOrder`'s `lockForUpdate()` re-read inside the order txn (full rollback on shortage). New lang keys replace `checkout_item_unavailable_named`.
+- **Open questions from payments.md (still open, non-blocking):**
+  1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
+  2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
+- **How to verify (owner clicks — PAY.16):** (a) Find a variant with low stock (e.g. 3). Add it to the cart, open the **cart page** (and the cart **drawer**): press `+` up to 3 — the `+` must go **disabled** at 3 and a small warning line "Only 3 available" appears under the stepper. (b) With that over-ask forced (or qty raised earlier), go to **checkout**: the top pre-flight banner must say the insufficient line with **both** numbers ("you asked for … only 3 in stock"), not a bare "out of stock". (c) For a genuinely 0-stock item in the cart, the banner/submit error must say it's **sold out / remove it** (distinct from the insufficient wording). (d) Place an order where stock is short at submit → order is **rejected**, cart unchanged, and the red error names what you asked for vs what's in stock. Check both AR (RTL) and EN. (Earlier PAY.9/PAY.10/PAY.14 owner-reviews may still be pending — see their lines in payments.md.)
+- **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
+- **Known test flake (do not fix now):** `CategoriesTest::it_adds_a_main_category_and_a_child` fails intermittently under `--parallel` with a duplicate-slug integrity violation (`قسم-13`). The slug suffix is randomised, so a prior parallel worker occasionally leaves a conflicting row in `dots_testing`. The test passes when run alone (`--filter`). Root cause is likely insufficient isolation between workers for the categories table — probably needs `RefreshDatabase` or a unique-enough slug generator in the test. Observed during `composer gates` on 2026-11-01; not related to any PAY task.
 
-**Git:** branch `bulk-import` (local, unpushed) · last local commit `15b5f63` · last tag `phase-9-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `a97ff5b` · last tag `bulk-import-done` · push state: **not pushed**
 
-Current phase: **Bulk import on branch `bulk-import`.** BI.1 done. BI.2 done. BI.3 done. Next: Phase 10.
+Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
 ---
 
@@ -165,6 +155,7 @@ Legend: [ ] todo · [x] done
 ---
 
 ## Decisions log
+- **2026-10-27 — Coupon rollback on cancel = soft-release, not delete (PAY.1, Gap B):** Owner decision. When an order is cancelled (auto-sweep in `ReleaseExpiredReservations` or admin cancel in `UpdateOrderStatus`), its `CouponRedemption` row(s) are **soft-released** — a new nullable `released_at` timestamp is stamped (not hard-deleted, not Laravel `SoftDeletes`/`deleted_at`) — so the history of a coupon used on a later-cancelled order is preserved and the row stays visible/labelled. **Two gates consume a coupon and both must be handled:** (1) the **usage-limit** gate reads the `coupon.used_count` *counter* (`Coupons::resolve` + `Coupon::scopeValid`), so we `decrement('used_count')` by the number of rows actually released (floored at 0); (2) the **once-per-customer** gate reads redemption *rows* via `exists()` (`Coupons.php`), so it gains `->whereNull('released_at')` to free the customer after a cancel. Idempotent: a re-run finds no active rows and no-ops. **Guest observation (behaviour unchanged by PAY.1):** the once-per-customer gate is wrapped in `$customerId !== null`, so a guest order (null `customer_id`) is exempt from the rule today; the `whereNull('released_at')` clause lives inside that block and does not alter guest behaviour either way. ERD updated (`coupon_redemptions.released_at`).
 - **2026-10-20 — Bulk import pulled forward from Phase 11 (T11.1):** Owner decision. Built now on branch `bulk-import` (off main after `phase-9-done`) ahead of the client meeting, as 3 tasks BI.1–BI.3 (`docs/plan/bulk-import.md`), spec in `docs/IMPORT_SPEC.md`. After BI.3 the next step is **Phase 10** (Phase 9 does not resume). Release works like a phase: on "approved, push bulk-import" → push, `merge --no-ff` into main, tag `bulk-import-done`, push. T11.1 in the Phase 11 file is now a pointer. Key spec decisions:
   - **Columns mapped by the hidden row-2 system key, never by position** — reordered/renamed row-1 headers don't break import.
   - **Reference data is never created by import** — unknown brand/category/attribute value = row error ("add in admin, re-download the template"); import never writes to brands/categories/attributes/attribute_values, and never deletes products.

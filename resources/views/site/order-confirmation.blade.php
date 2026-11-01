@@ -69,6 +69,37 @@
                     {{-- Save your details (guests only; hidden once an account exists). --}}
                     <livewire:account.save-order-account :order="$order" :key="'save-order-'.$order->id" />
 
+                    {{-- InstaPay: transfer details box --}}
+                    @if ($isInstapay)
+                        <section data-instapay-details style="border:1px solid var(--wa-600);border-radius:var(--radius-lg);background:var(--white);padding:24px;display:grid;gap:16px;">
+                            <h2 style="margin:0;font:600 20px/1.25 var(--font-display);letter-spacing:var(--tracking-heading);">{{ __('ui.confirm_instapay_details_title') }}</h2>
+                            <dl style="margin:0;display:grid;gap:12px;">
+                                <div style="display:grid;gap:2px;">
+                                    <dt style="font:600 12px var(--font-body);color:var(--fg-3);letter-spacing:var(--tracking-overline);text-transform:var(--text-transform-overline);">{{ __('ui.confirm_instapay_address_label') }}</dt>
+                                    @if ($instapayAddress !== '')
+                                        <dd style="margin:0;font:700 18px/1.3 var(--font-mono);" data-instapay-address>{{ $instapayAddress }}</dd>
+                                    @else
+                                        <dd style="margin:0;font:500 14px/1.5 var(--font-body);color:var(--fg-2);" data-instapay-address-fallback>{{ __('ui.confirm_instapay_address_fallback') }}</dd>
+                                    @endif
+                                </div>
+                                <div style="display:grid;gap:2px;">
+                                    <dt style="font:600 12px var(--font-body);color:var(--fg-3);letter-spacing:var(--tracking-overline);text-transform:var(--text-transform-overline);">{{ __('ui.confirm_instapay_amount_label') }}</dt>
+                                    <dd style="margin:0;font:700 18px/1.3 var(--font-body);">{{ number_format((float) $order->total, 2) }} {{ __('ui.egp') }}</dd>
+                                </div>
+                                <div style="display:grid;gap:2px;">
+                                    <dt style="font:600 12px var(--font-body);color:var(--fg-3);letter-spacing:var(--tracking-overline);text-transform:var(--text-transform-overline);">{{ __('ui.order_number') }}</dt>
+                                    <dd style="margin:0;font:500 15px/1.3 var(--font-mono);">{{ $order->number }}</dd>
+                                </div>
+                                @if ($order->reserved_until !== null)
+                                    <div style="display:grid;gap:2px;">
+                                        <dt style="font:600 12px var(--font-body);color:var(--fg-3);letter-spacing:var(--tracking-overline);text-transform:var(--text-transform-overline);">{{ __('ui.confirm_instapay_deadline_label') }}</dt>
+                                        <dd style="margin:0;font:500 15px/1.4 var(--font-body);" data-instapay-deadline>{{ $order->reserved_until->translatedFormat('j M Y · H:i') }}</dd>
+                                    </div>
+                                @endif
+                            </dl>
+                        </section>
+                    @endif
+
                     {{-- What happens next --}}
                     <section style="border:1px solid {{ $isInstapay ? 'var(--wa-600)' : 'var(--border-1)' }};border-radius:var(--radius-lg);background:var(--white);padding:24px;display:grid;gap:16px;@if ($isInstapay) box-shadow:inset 0 0 0 1px var(--wa-600);@endif">
                         <h2 style="margin:0;font:600 20px/1.25 var(--font-display);letter-spacing:var(--tracking-heading);">{{ __('ui.next_steps_title') }}</h2>

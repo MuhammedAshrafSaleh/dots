@@ -26,6 +26,30 @@
             </nav>
             <h1 class="t-h2" style="margin:0 0 24px;">{{ __('ui.checkout') }}</h1>
 
+            @if ($cartProblems)
+                <div role="alert" style="background:var(--warning-100);border-radius:var(--radius-md);padding:14px 16px;margin-bottom:24px;display:grid;grid-template-columns:auto 1fr;gap:10px 12px;align-items:start;font:500 13px/1.5 var(--font-body);">
+                    <x-icon name="alert-triangle" :size="18" style="color:var(--warning-600);margin-top:1px;" />
+                    <div>
+                        <b style="display:block;font:800 14px/1.35 var(--font-body);color:var(--fg-1);margin-bottom:6px;">{{ __('ui.checkout_cart_problems') }}</b>
+                        <ul style="margin:0 0 8px;padding-inline-start:1.2em;display:grid;gap:3px;">
+                            @foreach ($cartProblems as $problem)
+                                <li>
+                                    <span style="color:var(--fg-1);font-weight:700;">{{ $problem['name'] }}</span>
+                                    <span style="color:var(--fg-2);">
+                                        — @if ($problem['reason'] === 'out_of_stock')
+                                            {{ __('ui.checkout_cart_out_of_stock') }}
+                                        @else
+                                            {{ __('ui.checkout_cart_insufficient_qty', ['requested' => $problem['requested'], 'available' => $problem['available']]) }}
+                                        @endif
+                                    </span>
+                                </li>
+                            @endforeach
+                        </ul>
+                        <a href="{{ route('cart', $locale) }}" class="d-btn d-btn--sm" style="display:inline-flex;">{{ __('ui.checkout_return_to_cart') }}</a>
+                    </div>
+                </div>
+            @endif
+
             <div class="d-cart-grid" style="display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:32px;align-items:start;">
 
                 {{-- Left: the form --}}
@@ -227,6 +251,18 @@
                             <div class="d-totals__grand"><span>{{ __('ui.order_total') }}</span><b>{{ number_format($totals->total, 0) }} {{ __('ui.egp') }}</b></div>
                             <span style="font:500 12px var(--font-body);color:var(--fg-3);">{{ __('ui.cart_vat_note') }}</span>
                         </div>
+
+                        @if ($cartError)
+                            <div role="alert" style="background:var(--error-100);border-radius:var(--radius-md);padding:12px 14px;display:flex;gap:10px;align-items:flex-start;font:600 13px/1.45 var(--font-body);color:var(--error-600);">
+                                <x-icon name="alert-circle" :size="18" style="flex-shrink:0;margin-top:1px;" />
+                                <span>
+                                    {{ $cartError }}
+                                    @if ($cartErrorShowLink)
+                                        <a href="{{ route('cart', $locale) }}" style="color:inherit;text-decoration:underline;white-space:nowrap;margin-inline-start:4px;">{{ __('ui.checkout_return_to_cart') }}</a>
+                                    @endif
+                                </span>
+                            </div>
+                        @endif
 
                         <button type="button" class="d-btn d-btn--primary d-btn--lg d-btn--block" wire:click="place" wire:loading.attr="disabled">
                             {{ __('ui.place_order') }}<x-icon name="arrow-right" :size="18" />

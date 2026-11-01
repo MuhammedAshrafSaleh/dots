@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\Settings;
 use Illuminate\View\View;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
@@ -23,6 +24,8 @@ class OrderConfirmationController extends Controller
             throw new NotFoundHttpException;
         }
 
-        return view('site.order-confirmation', compact('order', 'locale'));
+        $instapayAddress = (string) (app(Settings::class)->get('commerce.instapay_address') ?? '');
+
+        return view('site.order-confirmation', compact('order', 'locale', 'instapayAddress'));
     }
 }

@@ -284,7 +284,7 @@ final class ProductTemplateBuilder
             }
 
             $sheet->getColumnDimension($col)->setAutoSize(true);
-            $col++;
+            $col = str_increment($col);
         }
     }
 
@@ -354,7 +354,7 @@ final class ProductTemplateBuilder
 
             $sheet->getStyle($cell)->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
             $sheet->getColumnDimension($col)->setWidth(20);
-            $col++;
+            $col = str_increment($col);
         }
     }
 

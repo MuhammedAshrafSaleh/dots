@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل العرض التجريبي — دوتس | Dots Client Demo Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  /* ── Design tokens ─────────────────────────────────────── */
+  :root {
+    --ink-900:  #0f1117;
+    --fg-1:     #1c1f26;
+    --fg-2:     #4b5563;
+    --fg-3:     #9ca3af;
+    --border-1: #e5e7eb;
+    --bg-subtle:#f8f9fb;
+    --white:    #ffffff;
+    --accent:   #2563eb;
+    --accent-100:#dbeafe;
+    --success-100:#dcfce7;
+    --success-600:#16a34a;
+    --error-100: #fee2e2;
+    --error-600: #dc2626;
+    --warning-100:#fef9c3;
+    --warning-700:#a16207;
+    --info-100:  #e0f2fe;
+    --info-700:  #0369a1;
+    --wa-600:   #16a34a;
+    --wa-bg:    #dcfce7;
+    --radius:   10px;
+    --radius-lg:14px;
+    --shadow:   0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.05);
+    --font: 'Cairo', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    --mono: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  }
+
+  /* ── Reset ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font: 15px/1.65 var(--font);
+    color: var(--fg-1);
+    background: var(--bg-subtle);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ─────────────────────────────────────────────── */
+  .shell {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 32px 20px 80px;
+  }
+
+  /* ── Header ─────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 20px 24px;
+    background: var(--ink-900);
+    border-radius: var(--radius-lg);
+    margin-bottom: 28px;
+    color: #fff;
+  }
+  .header-brand { display: flex; align-items: center; gap: 14px; }
+  .header-logo {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: #fff;
+    display: grid; place-items: center;
+    flex: none;
+  }
+  .header-logo svg { width: 26px; height: 26px; }
+  .header-title { font-size: 18px; font-weight: 800; letter-spacing: -.4px; }
+  .header-sub { font-size: 12px; opacity: .65; margin-top: 2px; }
+  .lang-toggle {
+    display: flex; gap: 6px;
+    background: rgba(255,255,255,.1);
+    border-radius: 8px;
+    padding: 4px;
+  }
+  .lang-btn {
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font: 700 13px var(--font);
+    background: transparent;
+    color: rgba(255,255,255,.7);
+    transition: background .15s, color .15s;
+  }
+  .lang-btn.active {
+    background: #fff;
+    color: var(--ink-900);
+  }
+
+  /* ── TOC ────────────────────────────────────────────────── */
+  .toc {
+    background: var(--white);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 28px;
+    box-shadow: var(--shadow);
+  }
+  .toc-title {
+    font-size: 11px; font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    margin-bottom: 14px;
+  }
+  .toc-list {
+    list-style: none;
+    display: grid;
+    gap: 6px;
+  }
+  .toc-list li { display: flex; align-items: baseline; gap: 10px; }
+  .toc-list a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .toc-list a:hover { text-decoration: underline; }
+  .toc-num {
+    font: 700 12px var(--mono);
+    color: var(--fg-3);
+    min-width: 20px;
+    text-align: center;
+  }
+
+  /* ── Card ───────────────────────────────────────────────── */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: 24px;
+    overflow: hidden;
+  }
+  .card-head {
+    padding: 18px 24px 16px;
+    border-bottom: 1px solid var(--border-1);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .scenario-badge {
+    flex: none;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    font: 800 14px var(--mono);
+    background: var(--ink-900);
+    color: #fff;
+    margin-top: 2px;
+  }
+  .card-head-text { flex: 1; }
+  .card-title {
+    font-size: 18px; font-weight: 800;
+    letter-spacing: -.3px;
+    line-height: 1.3;
+  }
+  .card-why {
+    font-size: 13px;
+    color: var(--fg-2);
+    margin-top: 5px;
+    line-height: 1.55;
+  }
+  .card-body { padding: 20px 24px; display: grid; gap: 18px; }
+
+  /* ── Steps ──────────────────────────────────────────────── */
+  .step {
+    display: grid;
+    grid-template-columns: 28px minmax(0,1fr);
+    gap: 12px;
+    align-items: start;
+  }
+  .step-num {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent-100);
+    color: var(--accent);
+    font: 800 13px var(--mono);
+    display: grid; place-items: center;
+    flex: none;
+    margin-top: 1px;
+  }
+  .step-content { display: grid; gap: 5px; }
+  .step-action {
+    font-size: 15px; font-weight: 700;
+    color: var(--fg-1);
+    line-height: 1.4;
+  }
+  .step-expect {
+    font-size: 13px;
+    color: var(--fg-2);
+    line-height: 1.6;
+  }
+
+  /* ── Screen result block ────────────────────────────────── */
+  .screen {
+    background: var(--bg-subtle);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: var(--fg-2);
+  }
+  .screen::before {
+    content: '▸  ';
+    font-size: 11px;
+    color: var(--fg-3);
+    font-variant: tabular-nums;
+  }
+
+  /* ── Badges ─────────────────────────────────────────────── */
+  .badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 20px;
+    font-size: 11.5px; font-weight: 700;
+    white-space: nowrap;
+  }
+  .badge-success { background: var(--success-100); color: var(--success-600); }
+  .badge-error   { background: var(--error-100);   color: var(--error-600); }
+  .badge-warning { background: var(--warning-100); color: var(--warning-700); }
+  .badge-info    { background: var(--info-100);    color: var(--info-700); }
+  .badge-neutral { background: var(--bg-subtle);   color: var(--fg-2); border: 1px solid var(--border-1); }
+
+  /* ── URL block ──────────────────────────────────────────── */
+  .url-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--ink-900);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font: 600 13px var(--mono);
+    color: #93c5fd;
+    letter-spacing: .02em;
+    word-break: break-all;
+  }
+  .url-block span { flex: 1; }
+
+  /* ── Copy block (card details) ───────────────────────────── */
+  .copy-section {
+    background: var(--ink-900);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    margin-bottom: 24px;
+    color: #fff;
+  }
+  .copy-section-title {
+    font-size: 13px; font-weight: 800;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.5);
+    margin-bottom: 16px;
+  }
+  .copy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  .copy-field { display: grid; gap: 5px; }
+  .copy-label {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,.45);
+  }
+  .copy-value-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255,255,255,.1);
+    border-radius: 8px;
+    padding: 9px 12px;
+  }
+  .copy-value {
+    flex: 1;
+    font: 700 15px var(--mono);
+    color: #fff;
+    letter-spacing: .04em;
+    word-break: break-all;
+  }
+  .copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255,255,255,.5);
+    padding: 2px;
+    border-radius: 4px;
+    transition: color .15s;
+    flex: none;
+    display: grid; place-items: center;
+  }
+  .copy-btn:hover { color: #fff; }
+  .copy-btn svg { width: 15px; height: 15px; }
+
+  /* ── Limitations section ────────────────────────────────── */
+  .limit-card {
+    background: var(--warning-100);
+    border: 1px solid #fcd34d;
+    border-radius: var(--radius-lg);
+    padding: 22px 24px;
+    margin-bottom: 24px;
+  }
+  .limit-title {
+    font-size: 16px; font-weight: 800;
+    color: var(--warning-700);
+    margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .limit-item {
+    display: grid;
+    gap: 5px;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(161,98,7,.15);
+  }
+  .limit-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .limit-heading { font-size: 14px; font-weight: 700; color: var(--warning-700); }
+  .limit-body { font-size: 13.5px; color: #78350f; line-height: 1.6; }
+  .limit-plan {
+    font-size: 13px; color: #92400e;
+    padding: 8px 12px;
+    background: rgba(255,255,255,.5);
+    border-radius: 6px;
+    margin-top: 6px;
+  }
+
+  /* ── Section divider ────────────────────────────────────── */
+  .section-label {
+    font-size: 11px; font-weight: 800;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--fg-3);
+    margin: 32px 0 12px;
+  }
+
+  /* ── Highlight ──────────────────────────────────────────── */
+  .hl { background: #fef3c7; border-radius: 3px; padding: 0 3px; font-weight: 700; color: #92400e; }
+  .mono { font-family: var(--mono); font-size: .92em; }
+
+  /* ── Separator ──────────────────────────────────────────── */
+  hr { border: none; border-top: 1px solid var(--border-1); margin: 6px 0; }
+
+  /* ── Note pill ──────────────────────────────────────────── */
+  .note {
+    display: flex; gap: 10px; align-items: flex-start;
+    background: var(--info-100);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 13px; color: var(--info-700);
+    line-height: 1.55;
+  }
+  .note-icon { flex: none; font-size: 15px; margin-top: 1px; }
+
+  /* ── Lang visibility ────────────────────────────────────── */
+  [lang-ar], [lang-en] { display: none; }
+  html[lang="ar"] [lang-ar] { display: revert; }
+  html[lang="en"] [lang-en] { display: revert; }
+  /* block-level lang wrappers */
+  .ar-block, .en-block { display: none; }
+  html[lang="ar"] .ar-block { display: block; }
+  html[lang="en"] .en-block { display: block; }
+  /* flex lang wrappers */
+  .ar-flex, .en-flex { display: none; }
+  html[lang="ar"] .ar-flex { display: flex; }
+  html[lang="en"] .en-flex { display: flex; }
+  /* grid lang wrappers */
+  .ar-grid, .en-grid { display: none; }
+  html[lang="ar"] .ar-grid { display: grid; }
+  html[lang="en"] .en-grid { display: grid; }
+
+  /* ── Pre-demo checklist ─────────────────────────────────── */
+  .checklist-card {
+    background: var(--white);
+    border: 2px solid var(--accent);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow);
+  }
+  .checklist-title {
+    font-size: 13px; font-weight: 800;
+    letter-spacing: .08em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .checklist-items { list-style: none; display: grid; gap: 10px; }
+  .checklist-items li {
+    display: grid;
+    grid-template-columns: 22px minmax(0,1fr);
+    gap: 10px; align-items: start;
+    font-size: 14px; line-height: 1.55;
+  }
+  .checklist-items li b { color: var(--fg-1); }
+  .checklist-items li span { color: var(--fg-2); }
+  .check-box {
+    width: 22px; height: 22px;
+    border: 2px solid var(--border-1);
+    border-radius: 5px;
+    margin-top: 1px; cursor: pointer;
+    display: grid; place-items: center;
+    flex: none; transition: background .15s, border-color .15s;
+  }
+  .check-box:hover { border-color: var(--accent); }
+  .check-box.done { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .check-box.done::after { content: '✓'; font-size: 13px; font-weight: 800; }
+
+  /* ── Inline mock screen ──────────────────────────────────── */
+  .mock-wrap {
+    position: relative;
+    border: 1.5px dashed #cbd5e1;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .mock-label {
+    position: absolute; top: 10px;
+    inset-inline-end: 10px;
+    background: #1e293b;
+    color: #94a3b8;
+    font: 700 10px var(--mono);
+    letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 4px;
+    z-index: 2;
+  }
+  .mock-body {
+    background: #f0f4f8;
+    padding: 20px;
+    display: grid; gap: 14px;
+  }
+  .mock-hero {
+    background: var(--white);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    display: flex; gap: 14px; align-items: flex-start;
+  }
+  .mock-icon-wrap {
+    width: 44px; height: 44px; flex: none;
+    border-radius: 50%;
+    background: var(--error-100);
+    color: var(--error-600);
+    display: grid; place-items: center;
+  }
+  .mock-eyebrow {
+    font: 700 10px var(--font);
+    letter-spacing: .1em; text-transform: uppercase;
+    color: var(--fg-3); margin-bottom: 5px;
+  }
+  .mock-heading {
+    font: 800 18px/1.3 var(--font);
+    color: var(--fg-1); margin-bottom: 5px;
+  }
+  .mock-body-text { font: 500 13px/1.6 var(--font); color: var(--fg-2); }
+  .mock-options {
+    background: var(--white);
+    border: 1px solid var(--border-1);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    display: grid; gap: 10px;
+  }
+  .mock-options-title {
+    font: 700 14px var(--font); color: var(--fg-1); margin-bottom: 4px;
+  }
+  .mock-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border: 1.5px solid var(--border-1);
+    border-radius: var(--radius);
+    background: var(--bg-subtle);
+  }
+  .mock-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-100);
+  }
+  .mock-radio {
+    width: 16px; height: 16px; flex: none;
+    border-radius: 50%; border: 2px solid var(--border-1);
+    display: grid; place-items: center;
+  }
+  .mock-option.selected .mock-radio {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+  .mock-option.selected .mock-radio::after {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%; background: #fff;
+  }
+  .mock-opt-icon { font-size: 15px; }
+  .mock-opt-title { font: 700 13px var(--font); color: var(--fg-1); }
+  .mock-opt-desc  { font: 500 11.5px var(--font); color: var(--fg-2); }
+  .mock-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mock-btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 9px 16px; border-radius: 8px;
+    font: 700 13px var(--font); border: none; cursor: default;
+  }
+  .mock-btn-primary { background: var(--accent); color: #fff; }
+  .mock-btn-ghost {
+    background: none; color: var(--fg-2);
+    border: 1.5px solid var(--border-1);
+  }
+
+  /* ── Print ──────────────────────────────────────────────── */
+  @media print {
+    .lang-toggle { display: none; }
+    .card { break-inside: avoid; }
+    .copy-section { background: #111 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════
+     HEADER
+═══════════════════════════════════════════════════════ -->
+<div class="shell">
+  <header class="header">
+    <div class="header-brand">
+      <div class="header-logo">
+        <!-- dots wordmark approximation -->
+        <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="6"  cy="13" r="4" fill="#0f1117"/>
+          <circle cx="13" cy="6"  r="4" fill="#0f1117"/>
+          <circle cx="20" cy="13" r="4" fill="#0f1117"/>
+          <circle cx="13" cy="20" r="4" fill="#0f1117"/>
+        </svg>
+      </div>
+      <div>
+        <div class="header-title">
+          <span lang-ar>دوتس — دليل العرض التجريبي</span>
+          <span lang-en>Dots — Client Demo Guide</span>
+        </div>
+        <div class="header-sub">
+          <span lang-ar>عرض مسارات الدفع أمام العميل · 15–20 دقيقة</span>
+          <span lang-en>Payment flows walkthrough for a client · 15–20 min</span>
+        </div>
+      </div>
+    </div>
+    <div class="lang-toggle">
+      <button class="lang-btn active" onclick="setLang('ar')">العربية</button>
+      <button class="lang-btn"        onclick="setLang('en')">English</button>
+    </div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════
+       PAYMOB TEST CARD — always visible, copy-on-click
+  ═══════════════════════════════════════════════════════ -->
+  <div class="copy-section">
+    <div class="copy-section-title">
+      <span lang-ar>بيانات بطاقة الاختبار — ابيمو / Paymob Sandbox</span>
+      <span lang-en>Paymob test card — copy &amp; paste during the demo</span>
+    </div>
+    <div class="copy-grid">
+      <div class="copy-field">
+        <div class="copy-label"><span lang-ar>رقم البطاقة</span><span lang-en>Card number</span></div>
+        <div class="copy-value-wrap">
+          <span class="copy-value" id="cv-num">5123456789012346</span>
+          <button class="copy-btn" onclick="copyField('cv-num',this)" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="copy-field">
+        <div class="copy-label"><span lang-ar>تاريخ الانتهاء</span><span lang-en>Expiry</span></div>
+        <div class="copy-value-wrap">
+          <span class="copy-value" id="cv-exp">01/39</span>
+          <button class="copy-btn" onclick="copyField('cv-exp',this)" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="copy-field">
+        <div class="copy-label">CVV</div>
+        <div class="copy-value-wrap">
+          <span class="copy-value" id="cv-cvv">123</span>
+          <button class="copy-btn" onclick="copyField('cv-cvv',this)" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="copy-field">
+        <div class="copy-label"><span lang-ar>اسم حامل البطاقة</span><span lang-en>Cardholder name</span></div>
+        <div class="copy-value-wrap">
+          <span class="copy-value" id="cv-name">Test Account</span>
+          <button class="copy-btn" onclick="copyField('cv-name',this)" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:14px; font-size:12px; color:rgba(255,255,255,.4); line-height:1.5;">
+      <span lang-ar>انقر على أي حقل لنسخه. هذه بيانات بيئة الاختبار — لا يتم خصم أي مبلغ حقيقي.</span>
+      <span lang-en>Click any field to copy it. Sandbox credentials only — no real money is charged.</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       PRE-DEMO CHECKLIST
+  ═══════════════════════════════════════════════════════ -->
+  <div class="checklist-card">
+    <div class="checklist-title">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span lang-ar>قبل بدء العرض — تأكد من هذه النقاط</span>
+      <span lang-en>Before you start — check these off</span>
+    </div>
+    <ul class="checklist-items">
+      <li>
+        <div class="check-box" onclick="this.classList.toggle('done')"></div>
+        <div>
+          <b><span lang-ar>منتجات في المتجر</span><span lang-en>Products in the store</span></b><br>
+          <span lang-ar>افتح <span class="mono">dots.test/ar/products</span> وتأكد أن هناك منتجات مرئية. إذا كانت الصفحة فارغة فتحتاج تشغيل السيدر أولاً — وذلك يستلزم الطرفية، افعله قبل موعد العرض.</span>
+          <span lang-en>Open <span class="mono">dots.test/ar/products</span> and confirm products are visible. If the page is empty the seeder needs to run — that requires a terminal; do it before the appointment.</span>
+        </div>
+      </li>
+      <li>
+        <div class="check-box" onclick="this.classList.toggle('done')"></div>
+        <div>
+          <b><span lang-ar>منتج بمخزون منخفض للمشهد ٥</span><span lang-en>A low-stock product for Scenario 5</span></b><br>
+          <span lang-ar>ادخل لوحة الإدارة ← منتج ← علامة تبويب الأصناف وضع مخزون صنف واحد على 3. سجّل اسم المنتج هنا:
+            <span style="display:inline-block;min-width:160px;border-bottom:1px solid var(--border-1);margin-inline-start:6px;">&nbsp;</span>
+          </span>
+          <span lang-en>Go Admin → product → Variants tab and set one variant's stock to 3. Note the product name here:
+            <span style="display:inline-block;min-width:160px;border-bottom:1px solid var(--border-1);margin-inline-start:6px;">&nbsp;</span>
+          </span>
+        </div>
+      </li>
+      <li>
+        <div class="check-box" onclick="this.classList.toggle('done')"></div>
+        <div>
+          <b><span lang-ar>مفاتيح ابيمو مضافة (للمشهد ٣)</span><span lang-en>Paymob keys configured (for Scenario 3)</span></b><br>
+          <span lang-ar>خيار "الدفع بالبطاقة" يختفي من صفحة الدفع تلقائيًا إذا لم تكن المفاتيح موجودة في ملف <span class="mono">.env</span>. إذا لم تكن موجودة تجاوز المشهد ٣ وأخبر العميل أنه يُفعَّل عند الإطلاق.</span>
+          <span lang-en>The "Card payment" option is automatically hidden from checkout when Paymob keys are absent from <span class="mono">.env</span>. If not configured, skip Scenario 3 and tell the client it activates at launch.</span>
+        </div>
+      </li>
+      <li>
+        <div class="check-box" onclick="this.classList.toggle('done')"></div>
+        <div>
+          <b><span lang-ar>بيانات دخول الإدارة جاهزة</span><span lang-en>Admin credentials to hand</span></b><br>
+          <span lang-ar>ستحتاجها في المشهد ٦. <span class="mono">dots.test/admin</span></span>
+          <span lang-en>Needed for Scenario 6. <span class="mono">dots.test/admin</span></span>
+        </div>
+      </li>
+      <li>
+        <div class="check-box" onclick="this.classList.toggle('done')"></div>
+        <div>
+          <b><span lang-ar>تجهيز المشهد ٤ — أمر واحد في الطرفية</span><span lang-en>Scenario 4 prep — one terminal command</span></b><br>
+          <span lang-ar>شغّل هذا الأمر مرة واحدة قبل موعد العرض، ثم اتبع التعليمات المطبوعة (تسجيل دخول + فتح الرابط):</span>
+          <span lang-en>Run this once before the appointment, then follow the printed instructions (log in + open the URL):</span>
+          <div style="margin-top:8px;" class="url-block"><span>php artisan demo:failed-payment</span></div>
+          <div style="margin-top:6px; font-size:12.5px; color:var(--fg-2);">
+            <span lang-ar>أبقِ التبويب مفتوحًا في المتصفح. خلال العرض انتقل إليه فقط.</span>
+            <span lang-en>Keep that tab open in the browser. During the demo, just switch to it.</span>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       TABLE OF CONTENTS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="toc">
+    <div class="toc-title">
+      <span lang-ar>محتويات العرض</span>
+      <span lang-en>Demo contents</span>
+    </div>
+    <ul class="toc-list">
+      <li><span class="toc-num">١</span><a href="#s1"><span lang-ar>طلب بالدفع عند الاستلام (COD)</span><span lang-en>Cash-on-delivery order</span></a></li>
+      <li><span class="toc-num">٢</span><a href="#s2"><span lang-ar>طلب بإنستاباي — التفاصيل والمهلة</span><span lang-en>InstaPay order — transfer details &amp; deadline</span></a></li>
+      <li><span class="toc-num">٣</span><a href="#s3"><span lang-ar>دفع ناجح بالبطاقة عبر ابيمو</span><span lang-en>Successful card payment via Paymob</span></a></li>
+      <li><span class="toc-num">٤</span><a href="#s4"><span lang-ar>فشل الدفع بالبطاقة — إعادة المحاولة أو التحويل</span><span lang-en>Failed card payment — retry or switch method</span></a></li>
+      <li><span class="toc-num">٥</span><a href="#s5"><span lang-ar>حماية المخزون — الحد الأقصى والتزاحم</span><span lang-en>Stock protection — stepper cap &amp; race condition</span></a></li>
+      <li><span class="toc-num">٦</span><a href="#s6"><span lang-ar>لوحة الإدارة — الطلب وسجل ابيمو وتحديث الحالة</span><span lang-en>Admin panel — order, Paymob log &amp; status update</span></a></li>
+    </ul>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENARIO 1 — COD
+  ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="s1">
+    <div class="card-head">
+      <div class="scenario-badge">١</div>
+      <div class="card-head-text">
+        <div class="card-title">
+          <span lang-ar>طلب بالدفع عند الاستلام</span>
+          <span lang-en>Cash-on-delivery order</span>
+        </div>
+        <div class="card-why">
+          <span lang-ar>نُظهر أن العميل يستطيع الشراء بدون أي حساب ودون بيانات دفع — يدفع نقدًا عند وصول الطلب. هذه الطريقة تعمل دومًا بصرف النظر عن حالة ابيمو.</span>
+          <span lang-en>We show that a customer can buy without creating an account and without entering any payment credentials — they pay cash on delivery. This method works regardless of Paymob configuration.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>افتح متجر دوتس</span>
+            <span lang-en>Open the Dots store</span>
+          </div>
+          <div class="url-block"><span>http://dots.test/ar/products</span></div>
+          <div class="step-expect">
+            <span lang-ar>تظهر صفحة المنتجات. اللغة الافتراضية عربية واتجاه الصفحة من اليمين لليسار.</span>
+            <span lang-en>The products listing loads. Default language is Arabic, page direction is RTL.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اختر أي منتج وانقر "أضف للسلة"</span>
+            <span lang-en>Pick any product and click "Add to cart"</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>تظهر درج السلة من الجانب وعداد الكمية. يمكن تعديل الكمية هنا قبل إتمام الشراء.</span>
+            <span lang-en>The cart drawer slides in showing the item and quantity stepper. Quantity can be changed here before checkout.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انقر "إتمام الشراء" داخل الدرج</span>
+            <span lang-en>Click "Checkout" inside the drawer</span>
+          </div>
+          <div class="url-block"><span>http://dots.test/ar/checkout</span></div>
+          <div class="step-expect">
+            <span lang-ar>صفحة الدفع بكل تفاصيلها: الاسم، رقم الموبايل، العنوان، طريقة التوصيل. لا يشترط إنشاء حساب.</span>
+            <span lang-en>The single-page checkout loads with fields for name, mobile, address, and delivery method. No account required.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أدخل بيانات العميل</span>
+            <span lang-en>Enter customer details</span>
+          </div>
+          <div class="copy-value-wrap" style="background:var(--bg-subtle);margin-bottom:6px;">
+            <span class="copy-value" style="color:var(--fg-1);font-size:13px;" id="demo-name">أحمد محمد</span>
+            <button class="copy-btn" style="color:var(--fg-3);" onclick="copyField('demo-name',this)" title="Copy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+          <div class="copy-value-wrap" style="background:var(--bg-subtle);margin-bottom:6px;">
+            <span class="copy-value" style="color:var(--fg-1);font-size:13px;" id="demo-mobile">01012345678</span>
+            <button class="copy-btn" style="color:var(--fg-3);" onclick="copyField('demo-mobile',this)" title="Copy">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>رقم الموبايل يقبل شبكات <span class="hl">01012345678</span> (فودافون/أورنج/اتصالات/WE). التحقق يتم لحظيًا.</span>
+            <span lang-en>Mobile field accepts Egyptian numbers on Vodafone/Orange/Etisalat/WE (<span class="hl">01012345678</span>). Validation is instant.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اختر المحافظة وأدخل العنوان</span>
+            <span lang-en>Select a governorate and enter the address</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>قائمة طرق التوصيل تتحدث تلقائيًا بحسب المحافظة المختارة — القاهرة تعطي خيارات مختلفة عن المحافظات الأخرى.</span>
+            <span lang-en>The delivery methods list updates automatically based on the selected governorate — Cairo may show different options than other governorates.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>تأكد أن طريقة الدفع "الدفع عند الاستلام" مختارة، ثم انقر "تأكيد الطلب"</span>
+            <span lang-en>Make sure "Cash on delivery" is selected, then click "Place order"</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>تظهر صفحة تأكيد الطلب فورًا مع رقم الطلب وشارة <span class="badge badge-neutral">معلق</span> لحالة الدفع وثلاث خطوات: "نؤكد عبر واتساب" ← "نجهز ونشحن" ← "ادفع نقدًا عند الاستلام".</span>
+            <span lang-en>The order confirmation page appears instantly with the order number, a <span class="badge badge-neutral">Pending</span> payment badge, and three next steps: "We confirm by WhatsApp" → "We prepare and ship" → "Pay in cash on delivery".</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note-icon">💡</span>
+        <span>
+          <span lang-ar>النقطة الجوهرية للعميل: نسخة المنتج والسعر والعنوان كلها تُحفظ على الطلب لحظة تأكيده — حتى لو تغيرت لاحقًا في المنظومة.</span>
+          <span lang-en>Key business point: product details, price, and address are snapshotted on the order at placement — changes to the catalog or addresses never affect existing orders.</span>
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENARIO 2 — INSTAPAY
+  ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="s2">
+    <div class="card-head">
+      <div class="scenario-badge">٢</div>
+      <div class="card-head-text">
+        <div class="card-title">
+          <span lang-ar>طلب إنستاباي — العنوان والمهلة</span>
+          <span lang-en>InstaPay order — transfer details &amp; deadline</span>
+        </div>
+        <div class="card-why">
+          <span lang-ar>إنستاباي خيار شعبي في مصر. نُظهر كيف تظهر التفاصيل كاملة على صفحة التأكيد حتى لا يتعرض العميل للبلبلة: عنوان التحويل والمبلغ بالضبط ومهلة الدفع.</span>
+          <span lang-en>InstaPay is popular in Egypt. We show how the confirmation page gives the customer everything they need: the InstaPay address, the exact amount, and the deadline — no confusion, no follow-up calls needed.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أعد نفس خطوات المشهد الأول حتى صفحة الدفع</span>
+            <span lang-en>Repeat Scenario 1 steps until the checkout page</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>أضف منتجًا واذهب لصفحة الدفع.</span>
+            <span lang-en>Add an item and reach the checkout page.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اختر "إنستاباي عبر واتساب" من طرق الدفع</span>
+            <span lang-en>Select "InstaPay via WhatsApp" as the payment method</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>ملخص الطلب لا يتغير. طريقة الدفع تتبدل فقط.</span>
+            <span lang-en>The order summary stays the same. Only the payment method selection changes.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انقر "تأكيد الطلب"</span>
+            <span lang-en>Click "Place order"</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>صفحة التأكيد تظهر مع شارة <span class="badge badge-warning">في انتظار التحويل</span> وصندوق أخضر "تفاصيل التحويل" يحتوي: عنوان إنستاباي، المبلغ بالجنيه بالضبط، رقم الطلب، وسطر "ادفع قبل" مع التاريخ والوقت (24 ساعة من الآن).</span>
+            <span lang-en>The confirmation page shows with an <span class="badge badge-warning">Awaiting transfer</span> badge and a green "Transfer details" box containing: the InstaPay address, the exact EGP amount, the order number, and a "Pay by" line with a date/time deadline (24 hours from now).</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أشر إلى المهلة الزمنية "ادفع قبل"</span>
+            <span lang-en>Point to the "Pay by" deadline</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>المنتجات محجوزة طوال هذه المدة. لو انتهت المهلة بدون تحويل يُلغى الطلب تلقائيًا ويُعاد المخزون.</span>
+            <span lang-en>Items are reserved for this period. If the deadline passes without a transfer, the order is automatically cancelled and stock is returned.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انقر زر "أكمل على واتساب"</span>
+            <span lang-en>Click "Continue on WhatsApp"</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>يفتح واتساب برسالة جاهزة تذكر رقم الطلب والمبلغ — المنتج هنا من جلسة الاختبار لذا لن تصل حقًا، لكن الرسالة تظهر مكتوبة بشكل صحيح.</span>
+            <span lang-en>WhatsApp opens with a pre-filled message containing the order number and amount. This is a test session so no real message is sent, but the composed text is visible and correct.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note-icon">💡</span>
+        <span>
+          <span lang-ar>النقطة الجوهرية: النظام لا يرسل رسائل واتساب تلقائيًا — بل يُعد رابط wa.me جاهزًا للعميل ليضغطه ويُرسل هو. هذا اختيار مقصود يحمي الخصوصية ويلتزم بشروط استخدام واتساب.</span>
+          <span lang-en>Key business point: the system never sends WhatsApp messages automatically — it generates a wa.me link that the customer clicks to send themselves. This is intentional: it respects privacy and complies with WhatsApp's terms of service.</span>
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENARIO 3 — SUCCESSFUL CARD PAYMENT
+  ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="s3">
+    <div class="card-head">
+      <div class="scenario-badge">٣</div>
+      <div class="card-head-text">
+        <div class="card-title">
+          <span lang-ar>دفع ناجح بالبطاقة عبر ابيمو</span>
+          <span lang-en>Successful card payment via Paymob</span>
+        </div>
+        <div class="card-why">
+          <span lang-ar>نُظهر تجربة الدفع الإلكتروني الكاملة: من الدفع بصفحة ابيمو الآمنة وحتى العودة التلقائية لصفحة التأكيد مع حالة "مدفوع".</span>
+          <span lang-en>We show the full card flow: Paymob's hosted payment page and the automatic return to a confirmation page showing "Paid" status.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أعد الخطوات حتى صفحة الدفع واختر "الدفع بالبطاقة"</span>
+            <span lang-en>Repeat checkout steps and select "Card payment"</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>خيار البطاقة يظهر فقط إذا كانت مفاتيح ابيمو مضافة في ملف الإعدادات. إذا لم يظهر الخيار أخبر العميل أنه سيتاح فور ربط الحساب عند الإطلاق.</span>
+            <span lang-en>The card option only appears when Paymob keys are configured in the server environment. If it's hidden, tell the client it becomes available as soon as the account is connected at launch.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انقر "تأكيد الطلب" مع اختيار الدفع بالبطاقة</span>
+            <span lang-en>Click "Place order" with card payment selected</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>يُوجَّه المتصفح لصفحة الدفع الآمنة الخاصة بابيمو (نطاق ابيمو). الطلب محجوز في الخلفية.</span>
+            <span lang-en>The browser redirects to Paymob's secure hosted payment page (Paymob domain). The order is reserved in the background.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أدخل بيانات بطاقة الاختبار من الصندوق الأسود أعلاه</span>
+            <span lang-en>Enter the test card details from the black box above</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>انقر على أي حقل في الصندوق الأسود أعلى الصفحة لنسخه بنقرة واحدة ثم الصق.</span>
+            <span lang-en>Click any field in the black box at the top to copy it in one click, then paste.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انتظر التوجيه التلقائي لصفحة التأكيد</span>
+            <span lang-en>Wait for the automatic redirect to the confirmation page</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>صفحة التأكيد تظهر مع شارة <span class="badge badge-success">مدفوع</span> وثلاث خطوات: "تم استلام الدفع" ← "نجهز طلبك" ← "التوصيل — بدون أي مبلغ". لا يوجد زر واتساب لأن الدفع مكتمل.</span>
+            <span lang-en>The confirmation page shows with a <span class="badge badge-success">Paid</span> badge and three steps: "Payment received" → "We prepare your order" → "Delivery — nothing to pay". No WhatsApp prompt because payment is complete.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENARIO 4 — FAILED CARD PAYMENT
+  ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="s4">
+    <div class="card-head">
+      <div class="scenario-badge">٤</div>
+      <div class="card-head-text">
+        <div class="card-title">
+          <span lang-ar>فشل الدفع بالبطاقة — إعادة المحاولة أو التحويل لطريقة أخرى</span>
+          <span lang-en>Failed card payment — retry or switch method</span>
+        </div>
+        <div class="card-why">
+          <span lang-ar>نُظهر ما يراه العميل عند رفض البطاقة: رسالة واضحة، الطلب محفوظ، وثلاثة خيارات أمامه دون الحاجة لبدء شراء جديد. هذا المشهد معروض كمحاكاة — بيئة الاختبار لا تدعم محاكاة الرفض مباشرةً.</span>
+          <span lang-en>We show what a customer sees after a declined card: a clear message, the order preserved, and three recovery options — no need to start a new order from scratch. This scenario is shown as a simulation — the sandbox does not support triggering a live decline.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="note">
+        <span class="note-icon">ℹ️</span>
+        <span>
+          <span lang-ar>الفشل في هذا الطلب التجريبي محاكاة — بيئة اختبار ابيمو لا توفر أي طريقة لإجبار رفض الدفع، وكل محاولة بصندوق الاختبار تنتهي بنجاح. هذا قيد من جانب مزود الخدمة وليس من النظام.</span>
+          <span lang-en>The failure in this demo order is simulated — the payment provider's test environment offers no way to force a decline, and every sandbox attempt completes successfully. This is a limitation on the provider's side, not the system's.</span>
+        </span>
+      </div>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انتقل إلى التبويب المحضَّر مسبقًا</span>
+            <span lang-en>Switch to the pre-prepared tab</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>الصفحة الحقيقية مفتوحة من قبل: أيقونة تحذير حمراء، "لم تتم عملية الدفع"، "لم يتم خصم أي مبلغ"، ورقم الطلب.</span>
+            <span lang-en>The real page is already open: red alert icon, "Your payment didn't go through", "No money was taken", and the order number.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أشر للرسالة الرئيسية</span>
+            <span lang-en>Point to the main message</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>"لم يتم خصم أي مبلغ" — هذا هو أهم شيء للعميل. الطلب موجود ومحفوظ برقمه.</span>
+            <span lang-en>"No money was taken" — the most important line for the customer. The order exists and is preserved with its number.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اشرح الخيارات الثلاثة</span>
+            <span lang-en>Walk through the three options</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>
+              <b>الخيار الأول — إعادة المحاولة بالبطاقة:</b> يُعيد توجيه العميل لصفحة ابيمو بنفس الطلب، يمكن استخدام بطاقة مختلفة.<br>
+              <b>الخيار الثاني — الدفع عند الاستلام:</b> يتحول الطلب فورًا ويُوجَّه لصفحة التأكيد — بدون طلب جديد وبدون إعادة إدخال البيانات.<br>
+              <b>الخيار الثالث — إنستاباي:</b> يتحول لإنستاباي وتظهر تفاصيل التحويل على صفحة التأكيد.
+            </span>
+            <span lang-en>
+              <b>Option 1 — Retry card:</b> Redirects to Paymob with the same order. A different card can be used.<br>
+              <b>Option 2 — Cash on delivery:</b> The order converts instantly and the customer lands on the confirmation page — no new order, no re-entering details.<br>
+              <b>Option 3 — InstaPay:</b> Converts to InstaPay and the confirmation page shows the transfer details.
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اختر "الدفع عند الاستلام" وانقر الزر</span>
+            <span lang-en>Select "Cash on delivery" and click the button</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>يُوجَّه الصفحة تلقائيًا لصفحة التأكيد بنفس الطلب — الرقم والمنتج والإجمالي كلها محفوظة. لا يوجد طلب مكرر ولا يُعاد إنشاء السلة.</span>
+            <span lang-en>The page redirects to the order confirmation page — the same order number, same items, same total, now with a COD payment method. No duplicate order, no cart rebuild.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>افتح لوحة الإدارة وابحث عن الطلب</span>
+            <span lang-en>Open the admin panel and find the order</span>
+          </div>
+          <div class="url-block"><span>http://dots.test/admin/orders</span></div>
+          <div class="screen">
+            <span lang-ar>الطلب التجريبي يظهر في القائمة. افتحه لتُظهر أن طريقة الدفع تحدّثت لـ "الدفع عند الاستلام" وأن سجل الحالة يُظهر السطرين: الحالة الأصلية ثم تغيير طريقة الدفع.</span>
+            <span lang-en>The demo order appears in the list. Open it to show that the payment method updated to "Cash on delivery" and the status history shows both entries: the original status and the payment method change.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENARIO 5 — STOCK PROTECTION
+  ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="s5">
+    <div class="card-head">
+      <div class="scenario-badge">٥</div>
+      <div class="card-head-text">
+        <div class="card-title">
+          <span lang-ar>حماية المخزون — الحد الأقصى والتزاحم</span>
+          <span lang-en>Stock protection — stepper cap &amp; race condition</span>
+        </div>
+        <div class="card-why">
+          <span lang-ar>نُظهر أن النظام يمنع تجاوز المخزون في ثلاث طبقات: في السلة، في صفحة الدفع، وفي لحظة تأكيد الطلب.</span>
+          <span lang-en>We show that overselling is blocked at three layers: in the cart, on checkout, and at the moment the order is placed.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="section-label">
+        <span lang-ar>الطبقة الأولى — عداد السلة</span>
+        <span lang-en>Layer 1 — Cart stepper</span>
+      </div>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أضف منتجًا بمخزون منخفض (مثلاً 3 قطع) إلى السلة</span>
+            <span lang-en>Add a product with low stock (e.g. 3 units) to the cart</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>افتح صفحة السلة أو درج السلة.</span>
+            <span lang-en>Open the cart page or cart drawer.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اضغط "+" في العداد حتى تصل للحد الأقصى</span>
+            <span lang-en>Press "+" on the stepper until you reach the limit</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>عند الوصول لـ 3 يُصبح زر "+" معطلًا وتظهر عبارة "لا يتوفر أكثر من 3". لا يمكن طلب أكثر من المتوفر.</span>
+            <span lang-en>At quantity 3, the "+" button becomes disabled and a note "Only 3 available" appears beneath the stepper. It is impossible to exceed stock.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:10px;">
+        <span lang-ar>الطبقة الثانية — صفحة الدفع</span>
+        <span lang-en>Layer 2 — Checkout banner</span>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>افتح صفحة الدفع بينما هناك منتج في السلة بكمية تتجاوز المتوفر</span>
+            <span lang-en>Open checkout while a cart item's quantity exceeds available stock</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>يظهر بانر تنبيه أعلى الصفحة يُسمي المنتج ويذكر ما طلبته مقابل ما يتوفر — "طلبت 5، لا يتوفر أكثر من 3". لا يمكن إتمام الطلب قبل تعديل الكمية.</span>
+            <span lang-en>A warning banner appears at the top naming the product and showing both numbers — "You asked for 5, only 3 in stock now". The order cannot be placed without adjusting the quantity.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:10px;">
+        <span lang-ar>الطبقة الثالثة — لحظة تأكيد الطلب (التزاحم)</span>
+        <span lang-en>Layer 3 — Order placement (race condition)</span>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>اشرح السيناريو اللفظي: عميلان يريدان آخر وحدة في نفس الوقت</span>
+            <span lang-en>Explain the scenario verbally: two customers want the last unit at the same time</span>
+          </div>
+          <div class="step-expect">
+            <span lang-ar>
+              عند الضغط على "تأكيد الطلب" يقوم النظام بـ:
+              <br>• قفل سجل المخزون في قاعدة البيانات (row lock)
+              <br>• إعادة قراءة الكمية الفعلية من الخادم — وليس من السلة
+              <br>• رفض الطلب إذا تغير المخزون بين فتح صفحة الدفع وضغط التأكيد
+              <br>لا يمكن أن يتجاوز طلبان معًا نفس المخزون.
+            </span>
+            <span lang-en>
+              When "Place order" is clicked, the system:
+              <br>• Locks the stock record in the database (row-level lock)
+              <br>• Re-reads the actual quantity from the server — not from the cart
+              <br>• Rejects the order if stock changed between checkout open and submission
+              <br>Two simultaneous orders can never oversell the same unit.
+            </span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCENARIO 6 — ADMIN PANEL
+  ═══════════════════════════════════════════════════════ -->
+  <div class="card" id="s6">
+    <div class="card-head">
+      <div class="scenario-badge">٦</div>
+      <div class="card-head-text">
+        <div class="card-title">
+          <span lang-ar>لوحة الإدارة — الطلب وسجل ابيمو وتحديث الحالة</span>
+          <span lang-en>Admin panel — order, Paymob log &amp; status update</span>
+        </div>
+        <div class="card-why">
+          <span lang-ar>نُظهر ما يراه فريق دوتس: قائمة الطلبات، تفاصيل كل طلب مع سجل معاملات ابيمو، وكيفية تحديث الحالة وإرسال إشعار للعميل عبر واتساب.</span>
+          <span lang-en>We show what the Dots team sees: the orders list, each order's full detail with the Paymob transaction log, and how to update the status and notify the customer via WhatsApp.</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>افتح لوحة الإدارة</span>
+            <span lang-en>Open the admin panel</span>
+          </div>
+          <div class="url-block"><span>http://dots.test/admin/orders</span></div>
+          <div class="screen">
+            <span lang-ar>قائمة بجميع الطلبات. كل سطر يُظهر رقم الطلب، اسم العميل، الإجمالي، حالة الطلب (<span class="badge badge-info">جديد</span> / <span class="badge badge-success">مُسلَّم</span> …) وحالة الدفع (<span class="badge badge-success">مدفوع</span> / <span class="badge badge-warning">معلق</span> …).</span>
+            <span lang-en>A list of all orders. Each row shows order number, customer name, total, order status (<span class="badge badge-info">New</span> / <span class="badge badge-success">Delivered</span> …) and payment status (<span class="badge badge-success">Paid</span> / <span class="badge badge-warning">Pending</span> …).</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انقر على الطلب الذي أنشأناه في المشهد الثالث (الدفع بالبطاقة)</span>
+            <span lang-en>Click the order created in Scenario 3 (card payment)</span>
+          </div>
+          <div class="url-block"><span>http://dots.test/admin/orders/{رقم-الطلب}</span></div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>أشر إلى بطاقة "سجل معاملات ابيمو"</span>
+            <span lang-en>Point to the "Paymob transaction log" card</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>جدول يُظهر لكل محاولة دفع: الوقت، مرجع البوابة، رقم المعاملة، المبلغ، والنتيجة (<span class="badge badge-success">مدفوع</span> أو <span class="badge badge-error">فشل</span>). هذه البيانات تأتي من ابيمو مباشرة وتُحفظ لدينا.</span>
+            <span lang-en>A table showing each payment attempt: timestamp, gateway reference, transaction ID, amount, and result (<span class="badge badge-success">Paid</span> or <span class="badge badge-error">Failed</span>). This data comes directly from Paymob and is stored locally for reconciliation.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>غيّر حالة الطلب من "جديد" إلى "مؤكد" ثم انقر "حفظ"</span>
+            <span lang-en>Change order status from "New" to "Confirmed" and click "Save"</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>تظهر رسالة نجاح "تم التحديث". الجدول الزمني لسجل الحالة في أسفل الصفحة يُضاف إليه سطر جديد بالوقت واسم المسؤول.</span>
+            <span lang-en>A success toast "Updated" appears. The status history timeline at the bottom of the page gains a new entry with the timestamp and admin name.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <div class="step-action">
+            <span lang-ar>انقر "تواصل عبر واتساب" في رأس الصفحة</span>
+            <span lang-en>Click "Contact on WhatsApp" in the page header</span>
+          </div>
+          <div class="screen">
+            <span lang-ar>يفتح واتساب برسالة جاهزة باللغة التي استخدمها العميل عند الطلب، تُخبره بالحالة الجديدة ورابط متابعة الطلب. لا يُرسل النظام أي شيء تلقائيًا — يضغطه المسؤول هو.</span>
+            <span lang-en>WhatsApp opens with a pre-filled message in the language the customer used when ordering, telling them the new status and a tracking link. The system sends nothing automatically — the admin presses Send themselves.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="note">
+        <span class="note-icon">💡</span>
+        <span>
+          <span lang-ar>حالات الطلب المتاحة بالترتيب: <span class="badge badge-info">جديد</span> ← <span class="badge badge-neutral">مؤكد</span> ← <span class="badge badge-warning">قيد التجهيز</span> ← <span class="badge badge-neutral">تم الشحن</span> ← <span class="badge badge-success">تم التسليم</span>. يمكن أيضًا التحويل لـ <span class="badge badge-error">ملغى</span> مع ملاحظة للعميل.</span>
+          <span lang-en>Available order statuses in sequence: <span class="badge badge-info">New</span> → <span class="badge badge-neutral">Confirmed</span> → <span class="badge badge-warning">Preparing</span> → <span class="badge badge-neutral">Shipped</span> → <span class="badge badge-success">Delivered</span>. Can also be moved to <span class="badge badge-error">Cancelled</span> with an optional note to the customer.</span>
+        </span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       LIMITATIONS (honest section)
+  ═══════════════════════════════════════════════════════ -->
+  <div class="section-label">
+    <span lang-ar>ما لم نختبره بعد — وماذا سنفعل</span>
+    <span lang-en>What we haven't been able to test — and what we'll do about it</span>
+  </div>
+
+  <div class="limit-card">
+    <div class="limit-title">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <span lang-ar>ملاحظات أمانة</span>
+      <span lang-en>Honest notes</span>
+    </div>
+
+    <div class="limit-item">
+      <div class="limit-heading">
+        <span lang-ar>بطاقات الرفض التجريبية — ابيمو</span>
+        <span lang-en>Decline test cards — Paymob</span>
+      </div>
+      <div class="limit-body">
+        <span lang-ar>ابيمو لا ينشر بطاقات اختبار مخصصة لمحاكاة سيناريوهات الرفض المختلفة (رصيد غير كافٍ، بطاقة منتهية، رفض 3DS…). لهذا اختُبرت صفحة "فشل الدفع" بطريقتين: (1) بمحاكاة استجابة ابيمو بالكود مباشرة، و(2) بملاحظة الصفحة عند الضغط على رجوع في sandbox. صفحة الفشل نفسها تعمل وتعرض رسالة سبب مناسبة متى توفرت البيانات.</span>
+        <span lang-en>Paymob does not publish dedicated test cards for specific decline scenarios (insufficient funds, expired card, 3DS failure, etc.). The "payment failed" page has therefore been verified in two ways: (1) by simulating Paymob's signed callback responses in code, and (2) by observing the page when navigating back from the sandbox. The failure page itself works and displays a contextual reason message whenever Paymob provides one.</span>
+      </div>
+      <div class="limit-plan">
+        <span lang-ar><b>عند الإطلاق:</b> ستُنفَّذ معاملة حقيقية صغيرة باستخدام sandbox مربوط ببيئة الإنتاج للتحقق من مسار الرفض بالكامل على بيئة live قبل فتح المتجر.</span>
+        <span lang-en><b>At launch:</b> A real small-value sandbox transaction will be run against the production environment to verify the full decline path on a live connection before the store opens.</span>
+      </div>
+    </div>
+
+    <div class="limit-item">
+      <div class="limit-heading">
+        <span lang-ar>Server-to-Server Webhook من ابيمو</span>
+        <span lang-en>Server-to-server webhook from Paymob</span>
+      </div>
+      <div class="limit-body">
+        <span lang-ar>ابيمو يُرسل إشعارًا من الخادم للخادم لتأكيد الدفع أو الرفض. هذا الإشعار لا يمكن تشغيله فعليًا من sandbox لأن <span class="mono">dots.test</span> عنوان محلي غير متاح على الإنترنت — ابيمو لا يستطيع الوصول إليه. الكود موجود، والتحقق من التوقيع (HMAC) مكتمل، لكن لم نختبر الوصول الفعلي.</span>
+        <span lang-en>Paymob sends a server-to-server webhook to confirm payment. This cannot be exercised in testing because <span class="mono">dots.test</span> is a local domain not reachable from the internet — Paymob cannot POST to it. The code exists and HMAC signature verification is implemented, but the live round-trip has not been exercised.</span>
+      </div>
+      <div class="limit-plan">
+        <span lang-ar><b>عند الإطلاق:</b> عند رفع النظام على خادم عام سيتم فتح رابط webhook في لوحة ابيمو وإجراء معاملة sandbox كاملة للتأكد من وصول الإشعار وتسجيله صحيحًا.</span>
+        <span lang-en><b>At launch:</b> Once the system is on a public server, the webhook URL will be registered in the Paymob dashboard and a full sandbox transaction will confirm that the notification arrives and is recorded correctly.</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ── Footer ── -->
+  <div style="text-align:center; color:var(--fg-3); font-size:12px; margin-top:40px; line-height:1.8;">
+    <span lang-ar>دوتس — دليل العرض التجريبي · للاستخدام الداخلي فقط</span>
+    <span lang-en>Dots — Client Demo Guide · Internal use only</span>
+  </div>
+
+</div><!-- /shell -->
+
+<!-- ══════════════════════════════════════════════════════
+     SCRIPTS
+═══════════════════════════════════════════════════════ -->
+<script>
+function setLang(lang) {
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.textContent.trim() === (lang === 'ar' ? 'العربية' : 'English'));
+  });
+}
+
+function copyField(id, btn) {
+  const text = document.getElementById(id).textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><polyline points="20 6 9 17 4 12"/></svg>';
+    btn.style.color = '#86efac';
+    setTimeout(() => {
+      btn.innerHTML = orig;
+      btn.style.color = '';
+    }, 1400);
+  }).catch(() => {
+    // Fallback for file:// protocol in older browsers
+    const el = document.getElementById(id);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.execCommand('copy');
+    sel.removeAllRanges();
+  });
+}
+
+// Init language from system preference
+(function() {
+  const lang = 'ar'; // Arabic-first demo
+  setLang(lang);
+})();
+</script>
+</body>
+</html>

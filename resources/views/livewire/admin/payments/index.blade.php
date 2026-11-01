@@ -67,6 +67,9 @@
                     <x-admin.alert tone="warning" :title="__('admin.payments.paymob_unconfigured_title')">{{ __('admin.payments.paymob_unconfigured_body') }}</x-admin.alert>
                 @endif
                 <x-input :label="__('admin.payments.webhook_url')" :value="$webhookUrl" readonly dir="ltr" :help="__('admin.payments.webhook_help')" />
+                <x-input :label="__('admin.payments.card_window')" type="number" dir="ltr" wire:model="card_payment_window_minutes" :error="$errors->first('card_payment_window_minutes')" :help="__('admin.payments.card_window_help')">
+                    <x-slot:trailing><span style="font: 700 13px var(--font-body);">{{ __('admin.payments.minutes') }}</span></x-slot:trailing>
+                </x-input>
             </x-admin.card>
         @endif
 

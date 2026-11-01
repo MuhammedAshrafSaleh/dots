@@ -41,10 +41,8 @@ return [
         'base_url' => env('PAYMOB_BASE_URL', 'https://accept.paymob.com'),
         'secret_key' => env('PAYMOB_SECRET_KEY'),
         'public_key' => env('PAYMOB_PUBLIC_KEY'),
-        'api_key' => env('PAYMOB_API_KEY'),
         'integration_id_card' => env('PAYMOB_INTEGRATION_ID_CARD'),
         'hmac_secret' => env('PAYMOB_HMAC_SECRET'),
-        'iframe_id' => env('PAYMOB_IFRAME_ID'),
     ],
 
 ];

@@ -4,6 +4,7 @@ use App\Enums\CouponType;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethodCode;
+use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
 use App\Livewire\Shop\CheckoutForm;
 use App\Models\Brand;
@@ -17,6 +18,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CartManager;
+use App\Services\Settings;
 use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
@@ -169,22 +171,103 @@ it('places a pickup order with no delivery address', function () {
 });
 
 it('rejects an order that exceeds available stock instead of overselling', function () {
+    app()->setLocale('en');
     $variant = coVariant('D', 100, stock: 3);
     $delivery = coPickup();
     coPayment(PaymentMethodCode::Cod);
     // Force the cart above stock directly (cart add does not gate on stock).
     app(CartManager::class)->add($variant->id, 10);
 
-    Livewire::test(CheckoutForm::class)
+    $component = Livewire::test(CheckoutForm::class)
         ->set(coForm(['deliveryMethodId' => $delivery->id, 'paymentCode' => 'cod']))
         ->call('place')
-        ->assertHasErrors('name')
         ->assertNoRedirect();
 
-    // The whole transaction rolls back: no order, no sale, stock untouched
-    // (never negative, never oversold).
+    // Some stock exists (3) but less than asked for (10): the error names both
+    // numbers rather than claiming the product is unavailable.
+    expect($component->get('cartError'))->toContain('Product D')
+        ->and($component->get('cartErrorShowLink'))->toBeTrue()
+        ->and($component->get('cartError'))->toContain('10')
+        ->and($component->get('cartError'))->toContain('3')
+        ->and($component->get('cartError'))->not->toContain('no longer available');
+
+    // The whole transaction rolls back: no order, no sale, stock untouched.
     expect(Order::count())->toBe(0)
         ->and($variant->fresh()->stock_qty)->toBe(3);
+});
+
+it('rejects a fully out-of-stock item with a distinct message, not the insufficient one', function () {
+    app()->setLocale('en');
+    $variant = coVariant('OOS2', 100, stock: 0);
+    $delivery = coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    // add() does not gate on stock, so a zero-stock line can reach submit.
+    app(CartManager::class)->add($variant->id, 1);
+
+    $component = Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $delivery->id, 'paymentCode' => 'cod']))
+        ->call('place')
+        ->assertNoRedirect();
+
+    expect($component->get('cartError'))->toContain('Product OOS2')
+        ->and($component->get('cartError'))->toContain('sold out')
+        ->and(Order::count())->toBe(0);
+});
+
+it('caps a cart line stepper at available stock server-side', function () {
+    $variant = coVariant('CAP', 100, stock: 3);
+    $cart = app(CartManager::class);
+    $cart->add($variant->id, 1);
+    $item = $cart->items()->first();
+
+    // Trying to raise the line to 10 is clamped to the 3 in stock.
+    $cart->updateQty($item->id, 10);
+
+    expect($cart->items()->first()->qty)->toBe(3);
+});
+
+it('detects out-of-stock cart lines on mount before the customer fills the form', function () {
+    app()->setLocale('en');
+    $variant = coVariant('OOS', 100, stock: 0);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    app(CartManager::class)->add($variant->id, 1);
+
+    $component = Livewire::test(CheckoutForm::class);
+    $problems = $component->get('cartProblems');
+
+    expect($problems)->toHaveCount(1)
+        ->and($problems[0]['reason'])->toBe('out_of_stock')
+        ->and($problems[0]['name'])->toBe('Product OOS')
+        ->and($problems[0]['available'])->toBe(0);
+});
+
+it('detects insufficient-qty cart lines on mount', function () {
+    app()->setLocale('en');
+    $variant = coVariant('LOW', 100, stock: 2);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    // Force qty above stock directly.
+    app(CartManager::class)->add($variant->id, 1);
+    app(CartManager::class)->add($variant->id, 4); // total 5, stock 2
+
+    $component = Livewire::test(CheckoutForm::class);
+    $problems = $component->get('cartProblems');
+
+    expect($problems)->toHaveCount(1)
+        ->and($problems[0]['reason'])->toBe('insufficient_qty')
+        ->and($problems[0]['available'])->toBe(2);
+});
+
+it('detects no cart problems for a fully available cart', function () {
+    $variant = coVariant('OK', 100, stock: 10);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    app(CartManager::class)->add($variant->id, 2);
+
+    $component = Livewire::test(CheckoutForm::class);
+
+    expect($component->get('cartProblems'))->toBeEmpty();
 });
 
 it('redeems a coupon and increments its used count', function () {
@@ -253,8 +336,48 @@ it('hides the card method until Paymob is configured', function () {
     config()->set('services.paymob.secret_key', null);
     Livewire::test(CheckoutForm::class)->assertDontSee('Credit card');
 
-    config()->set('services.paymob.secret_key', 'sk_test_123');
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', '12345');
     Livewire::test(CheckoutForm::class)->assertSee('Credit card');
+});
+
+it('hides card method when public key is missing', function () {
+    app()->setLocale('en');
+    $variant = coVariant('H', 1000);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    PaymentMethod::create([
+        'code' => PaymentMethodCode::Card,
+        'name' => ['ar' => 'بطاقة ائتمان', 'en' => 'Credit card'],
+        'is_active' => true,
+        'sort_order' => 1,
+    ]);
+    app(CartManager::class)->add($variant->id, 1);
+
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', null);
+    config()->set('services.paymob.integration_id_card', '12345');
+    Livewire::test(CheckoutForm::class)->assertDontSee('Credit card');
+});
+
+it('hides card method when integration id is missing', function () {
+    app()->setLocale('en');
+    $variant = coVariant('H', 1000);
+    coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    PaymentMethod::create([
+        'code' => PaymentMethodCode::Card,
+        'name' => ['ar' => 'بطاقة ائتمان', 'en' => 'Credit card'],
+        'is_active' => true,
+        'sort_order' => 1,
+    ]);
+    app(CartManager::class)->add($variant->id, 1);
+
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', null);
+    Livewire::test(CheckoutForm::class)->assertDontSee('Credit card');
 });
 
 it('sends a card order to the Paymob hosted checkout', function () {
@@ -279,6 +402,56 @@ it('sends a card order to the Paymob hosted checkout', function () {
     expect($order->payment_method_code)->toBe('card')
         ->and($order->payment_status)->toBe(OrderPaymentStatus::Pending)
         ->and($order->payments()->count())->toBe(1);
+});
+
+it('sends a card order to payment-failed when the gateway throws, keeping stock decremented and no paid payment', function () {
+    app()->setLocale('en');
+    config()->set('services.paymob.base_url', 'https://pay.test');
+    config()->set('services.paymob.secret_key', 'sk_test');
+    config()->set('services.paymob.public_key', 'pk_test');
+    config()->set('services.paymob.integration_id_card', '55555');
+    config()->set('services.paymob.hmac_secret', 'hmac');
+    // The intention API rejects: createCheckout() throws PaymentException.
+    Http::fake(['pay.test/v1/intention/*' => Http::response(['detail' => 'bad'], 401)]);
+
+    $variant = coVariant('THROW', 1000, stock: 5);
+    $pickup = coPickup();
+    coPayment(PaymentMethodCode::Card);
+    app(CartManager::class)->add($variant->id, 2);
+
+    $component = Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $pickup->id, 'paymentCode' => 'card']))
+        ->call('place');
+
+    // The order was placed (stock already decremented) before the gateway hop;
+    // the throw routes the customer to payment-failed, not an error page.
+    $order = Order::first();
+    expect($order)->not->toBeNull();
+    $component->assertRedirect(route('order.payment-failed', ['en', $order->number]));
+
+    expect($order->payment_method_code)->toBe('card')
+        ->and($order->payment_status)->toBe(OrderPaymentStatus::Pending)
+        ->and($variant->fresh()->stock_qty)->toBe(3)
+        ->and($order->payments()->where('status', PaymentStatus::Paid)->count())->toBe(0);
+});
+
+it('uses the configured instapay_hold_hours for the reservation deadline', function () {
+    app(Settings::class)->set('commerce.instapay_hold_hours', 48);
+
+    $variant = coVariant('HOLD', 1000);
+    $pickup = coPickup();
+    coPayment(PaymentMethodCode::InstapayWhatsapp);
+    app(CartManager::class)->add($variant->id, 1);
+
+    Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $pickup->id, 'paymentCode' => 'instapay_whatsapp']))
+        ->call('place')
+        ->assertRedirect();
+
+    $order = Order::first();
+    expect($order->reserved_until)->not->toBeNull()
+        ->and($order->reserved_until->between(now()->addHours(48)->subMinute(), now()->addHours(48)->addMinute()))
+        ->toBeTrue();
 });
 
 it('only offers delivery methods serving the chosen governorate', function () {
