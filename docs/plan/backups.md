@@ -38,7 +38,7 @@ Add a `google-drive` storage disk reading the four `GOOGLE_DRIVE_*` env keys, an
 ---
 
 ## BK.2 — Configure spatie/laravel-backup  _(Sonnet)_
-- [ ] Done
+- [x] Done
 
 Configure `spatie/laravel-backup` to back up the database **and** media files to the `google-drive` disk, keep only the last 7 backups, and send a failure notification. Document the whole setup and schedule in `docs/BACKUP.md`.
 
@@ -63,5 +63,5 @@ Perform a real restore of a backup into a **scratch local database** (never the 
 
 ## Checklist
 - [x] BK.1 done
-- [ ] BK.2 done
+- [x] BK.2 done
 - [ ] BK.3 done

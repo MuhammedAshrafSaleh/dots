@@ -61,9 +61,9 @@ return [
         ],
 
         /*
-         * Off-site backup destination (PRD §13). Wired but inactive until the
-         * Google Drive credentials arrive; set BACKUP_DISK=google-drive to switch
-         * on. The `google-drive` driver is auto-registered by
+         * Off-site backup destination (PRD §13). This is the sole backup disk
+         * (config/backup.php, BK.2); it needs the GOOGLE_DRIVE_* credentials
+         * below. The `google-drive` driver is auto-registered by
          * jeffersongoncalves/flysystem-google-drive. The OAuth refresh token is
          * minted with the `drive.file` scope, so the app only ever sees files and
          * folders it created itself. Leave GOOGLE_DRIVE_FOLDER empty — our own

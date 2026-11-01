@@ -26,9 +26,13 @@ return [
                  * The list of directories and files that will be included in the backup.
                  */
                 'include' => [
-                    // Customer-uploaded media lives on the "public" disk
-                    // (storage/app/public). Application code is in git, so we
-                    // only back up media + database (PRD §13).
+                    // Spatie MediaLibrary stores every model's media on the
+                    // "public" disk (config/media-library.php `disk_name` =>
+                    // MEDIA_DISK, default "public"; no model overrides it and
+                    // conversions_disk is null, so conversions live here too).
+                    // That disk's root is storage/app/public. Application code
+                    // is in git, so we only back up media + the database
+                    // (PRD §13).
                     storage_path('app/public'),
                 ],
 
@@ -38,9 +42,14 @@ return [
                  * Directories used by the backup process will automatically be excluded.
                  */
                 'exclude' => [
-                    base_path('vendor'),
-                    base_path('node_modules'),
-                    storage_path('framework'),
+                    // Only storage/app/public is included above, but we still
+                    // list these explicitly so a future include can never sweep
+                    // in a secret or something re-creatable from git:
+                    base_path('.env'),        // secrets — never leaves the server
+                    storage_path('logs'),     // app logs, re-created at runtime
+                    base_path('node_modules'), // re-installable via npm
+                    base_path('vendor'),       // re-installable via composer
+                    storage_path('framework'), // compiled views/cache/sessions
                 ],
 
                 /*
@@ -91,8 +100,11 @@ return [
              *
              * For a complete list of available customization options, see https://github.com/spatie/db-dumper
              */
+            // The MySQL "dots" connection (config/database.php `mysql`, whose
+            // database is DB_DATABASE=dots in production). Pinned by name so a
+            // stray DB_CONNECTION never changes what we dump.
             'databases' => [
-                env('DB_CONNECTION', 'mysql'),
+                'mysql',
             ],
         ],
 
@@ -165,12 +177,14 @@ return [
             /*
              * The disk names on which the backups will be stored.
              *
-             * Defaults to the "local" disk. When the Google Drive credentials
-             * arrive, set BACKUP_DISK=google-drive in .env to switch over — the
-             * disk is already wired in config/filesystems.php (PRD §13).
+             * Google Drive only (PRD §13 / BK.2). The disk is wired in
+             * config/filesystems.php; its OAuth scope is drive.file, so the app
+             * only ever sees files and folders it created itself. Backups land
+             * under a folder named after APP_NAME inside the Drive folder our
+             * own code creates on first write.
              */
             'disks' => [
-                env('BACKUP_DISK', 'local'),
+                'google-drive',
             ],
 
             /*
@@ -185,8 +199,13 @@ return [
         'temporary_directory' => storage_path('app/backup-temp'),
 
         /*
-         * The password to be used for archive encryption.
-         * Set to `null` or leave it empty to disable encryption.
+         * The password to be used for archive encryption (BK.2).
+         *
+         * Required: if BACKUP_ARCHIVE_PASSWORD is empty, `backup:run` aborts
+         * loudly (see App\Providers\AppServiceProvider) rather than silently
+         * writing an UNENCRYPTED archive to off-site storage. Losing this
+         * password makes every existing backup permanently unreadable — see
+         * docs/BACKUP.md.
          */
         'password' => env('BACKUP_ARCHIVE_PASSWORD'),
 
@@ -227,10 +246,14 @@ return [
      */
     'notifications' => [
         'notifications' => [
-            // Email on failure only (PRD §13). Successful/healthy runs are silent.
-            BackupHasFailedNotification::class => ['mail'],
-            UnhealthyBackupWasFoundNotification::class => ['mail'],
-            CleanupHasFailedNotification::class => ['mail'],
+            // On failure (and cleanup failure): write to the log first, then
+            // email (PRD §13 / BK.2). "log" is listed first so it always runs,
+            // even though mail is not configured yet (Phase 10 step 6) — the
+            // "log" channel is registered in App\Providers\AppServiceProvider.
+            // Successful/healthy runs stay silent.
+            BackupHasFailedNotification::class => ['log', 'mail'],
+            UnhealthyBackupWasFoundNotification::class => ['log', 'mail'],
+            CleanupHasFailedNotification::class => ['log', 'mail'],
             BackupWasSuccessfulNotification::class => [],
             HealthyBackupWasFoundNotification::class => [],
             CleanupWasSuccessfulNotification::class => [],
@@ -243,7 +266,7 @@ return [
         'notifiable' => Notifiable::class,
 
         'mail' => [
-            'to' => env('BACKUP_NOTIFICATION_EMAIL', 'admin@dots.test'),
+            'to' => env('BACKUP_NOTIFICATION_EMAIL', 'muhammedashrafsaleh@gmail.com'),
 
             'from' => [
                 'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
@@ -304,7 +327,7 @@ return [
     'monitor_backups' => [
         [
             'name' => env('APP_NAME', 'laravel-backup'),
-            'disks' => [env('BACKUP_DISK', 'local')],
+            'disks' => ['google-drive'],
             'health_checks' => [
                 MaximumAgeInDays::class => 1,
                 MaximumStorageInMegabytes::class => 5000,

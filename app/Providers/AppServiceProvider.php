@@ -10,6 +10,7 @@ use App\Models\PageSection;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\Setting;
+use App\Notifications\Channels\LogChannel;
 use App\Observers\BrandObserver;
 use App\Observers\CategoryObserver;
 use App\Observers\PageSectionObserver;
@@ -20,9 +21,13 @@ use App\Services\Payments\PaymentGateway;
 use App\Services\Payments\PaymobGateway;
 use App\Services\Settings;
 use App\Support\Wishlist;
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Notifications\ChannelManager;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -68,5 +73,39 @@ class AppServiceProvider extends ServiceProvider
         Brand::observe(BrandObserver::class);
         PageSection::observe(PageSectionObserver::class);
         Setting::observe(SettingObserver::class);
+
+        $this->bootBackupSafeguards();
+    }
+
+    /**
+     * Off-site backup safeguards (BK.2).
+     */
+    private function bootBackupSafeguards(): void
+    {
+        // Register the custom "log" notification channel so spatie/laravel-
+        // backup can write failure notifications to the application log (mail
+        // is not configured until Phase 10 step 6).
+        $this->app->make(ChannelManager::class)
+            ->extend('log', fn ($app) => $app->make(LogChannel::class));
+
+        // Refuse to run `backup:run` without an archive password: encryption is
+        // mandatory for off-site backups, and an empty password would otherwise
+        // write an UNENCRYPTED archive to Google Drive. Fail loudly instead.
+        Event::listen(function (CommandStarting $event): void {
+            if ($event->command !== 'backup:run') {
+                return;
+            }
+
+            if (filled(config('backup.backup.password'))) {
+                return;
+            }
+
+            throw new RuntimeException(
+                'BACKUP_ARCHIVE_PASSWORD is not set. Refusing to create an '
+                .'unencrypted off-site backup. Set a strong password in .env '
+                .'and keep it safe — losing it makes every existing backup '
+                .'permanently unreadable (see docs/BACKUP.md).'
+            );
+        });
     }
 }
