@@ -142,6 +142,6 @@ Route::prefix('admin')
             Route::get('products', ProductIndex::class)->middleware('can:products.view')->name('products');
             Route::get('products/import', ProductImport::class)->middleware('can:products.import')->name('products.import');
             Route::get('products/create', ProductEdit::class)->middleware('can:products.create')->name('products.create');
-            Route::get('products/{product}/edit', ProductEdit::class)->middleware('can:products.update')->name('products.edit');
+            Route::get('products/{product:id}/edit', ProductEdit::class)->middleware('can:products.update')->name('products.edit');
         });
     });
