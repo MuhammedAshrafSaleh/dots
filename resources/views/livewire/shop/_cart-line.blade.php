@@ -10,6 +10,9 @@
     $name = $product->getTranslation('name', $locale);
     $img = $product->getFirstMedia('gallery');
     $lineTotal = round((float) $variant->price * $item->qty, 2);
+    // Cap the stepper at what is actually in stock (mirrors the PDP cap).
+    $stock = (int) $variant->stock_qty;
+    $atStockCap = $stock > 0 && $item->qty >= $stock;
     $variantLabel = $variant->attributeValues
         ->map(fn ($av) => $av->getTranslation('label', $locale))
         ->implode(' · ');
@@ -32,11 +35,12 @@
                     aria-label="{{ __('ui.decrease_quantity') }}">
                     <x-icon name="minus" size="14" />
                 </button>
-                <input type="number" value="{{ $item->qty }}" min="1" max="99" readonly
+                <input type="number" value="{{ $item->qty }}" min="1" max="{{ $stock > 0 ? $stock : 99 }}" readonly
                     aria-label="{{ __('ui.quantity') }}">
                 <button type="button"
                     wire:click="updateQty({{ $item->id }}, {{ $item->qty + 1 }})"
                     wire:loading.attr="disabled"
+                    @if ($atStockCap) disabled aria-disabled="true" @endif
                     aria-label="{{ __('ui.increase_quantity') }}">
                     <x-icon name="plus" size="14" />
                 </button>
@@ -47,6 +51,11 @@
                 <x-icon name="trash-2" size="16" />{{ __('ui.remove') }}
             </button>
         </div>
+        @if ($atStockCap)
+            <div style="margin-top:6px;font:600 12px/1.4 var(--font-body);color:var(--warning-600);">
+                {{ __('ui.pdp_stock_cap', ['n' => $stock]) }}
+            </div>
+        @endif
     </div>
     <div class="d-line__price">{{ number_format($lineTotal, 0) }} {{ __('ui.egp') }}</div>
 </div>

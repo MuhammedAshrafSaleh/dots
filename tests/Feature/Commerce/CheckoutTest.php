@@ -183,14 +183,47 @@ it('rejects an order that exceeds available stock instead of overselling', funct
         ->call('place')
         ->assertNoRedirect();
 
-    // Error surfaces in the banner property, not on the name field.
+    // Some stock exists (3) but less than asked for (10): the error names both
+    // numbers rather than claiming the product is unavailable.
     expect($component->get('cartError'))->toContain('Product D')
         ->and($component->get('cartErrorShowLink'))->toBeTrue()
-        ->and($component->get('cartError'))->toContain('no longer available');
+        ->and($component->get('cartError'))->toContain('10')
+        ->and($component->get('cartError'))->toContain('3')
+        ->and($component->get('cartError'))->not->toContain('no longer available');
 
     // The whole transaction rolls back: no order, no sale, stock untouched.
     expect(Order::count())->toBe(0)
         ->and($variant->fresh()->stock_qty)->toBe(3);
+});
+
+it('rejects a fully out-of-stock item with a distinct message, not the insufficient one', function () {
+    app()->setLocale('en');
+    $variant = coVariant('OOS2', 100, stock: 0);
+    $delivery = coPickup();
+    coPayment(PaymentMethodCode::Cod);
+    // add() does not gate on stock, so a zero-stock line can reach submit.
+    app(CartManager::class)->add($variant->id, 1);
+
+    $component = Livewire::test(CheckoutForm::class)
+        ->set(coForm(['deliveryMethodId' => $delivery->id, 'paymentCode' => 'cod']))
+        ->call('place')
+        ->assertNoRedirect();
+
+    expect($component->get('cartError'))->toContain('Product OOS2')
+        ->and($component->get('cartError'))->toContain('sold out')
+        ->and(Order::count())->toBe(0);
+});
+
+it('caps a cart line stepper at available stock server-side', function () {
+    $variant = coVariant('CAP', 100, stock: 3);
+    $cart = app(CartManager::class);
+    $cart->add($variant->id, 1);
+    $item = $cart->items()->first();
+
+    // Trying to raise the line to 10 is clamped to the 3 in stock.
+    $cart->updateQty($item->id, 10);
+
+    expect($cart->items()->first()->qty)->toBe(3);
 });
 
 it('detects out-of-stock cart lines on mount before the customer fills the form', function () {

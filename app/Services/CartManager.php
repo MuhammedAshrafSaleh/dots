@@ -152,7 +152,16 @@ class CartManager
             return;
         }
 
-        $item->qty = min(99, $qty);
+        // Cap at available stock so the stepper can't raise qty past what's in
+        // stock (defensive mirror of the disabled button; PlaceOrder's locked
+        // re-read remains the authoritative oversell backstop).
+        $qty = min(99, $qty);
+        $stock = (int) $item->productVariant->stock_qty;
+        if ($stock > 0 && $qty > $stock) {
+            $qty = $stock;
+        }
+
+        $item->qty = $qty;
         $item->save();
     }
 

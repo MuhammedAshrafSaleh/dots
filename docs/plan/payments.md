@@ -409,6 +409,22 @@ PAY.1 releases the coupon on cancel (`ReleaseOrderCoupon`: stamps `released_at`,
 
 ---
 
+## PAY.16 — Cart stepper stock cap + honest oversell messaging  _(Opus)_
+
+Three fixes from manual testing, plus a confirmation of the server-side backstop.
+
+1. **Cart stepper not capped.** PAY.12 capped the stepper on the PDP but the cart/drawer line let the customer raise qty past stock. The shared `_cart-line.blade.php` now computes `$atStockCap = stock > 0 && qty >= stock`: the increment button is `disabled` at the cap and the same short line (`ui.pdp_stock_cap` → "Only :n available" / ":n قطعة فقط متاحة") shows under the stepper. `CartManager::updateQty()` also clamps qty to current stock server-side (defensive mirror of the disabled button). `add()` is intentionally left ungated (used by re-add etc.; the backstop below covers it).
+2. **Submit-time error was wrong.** It said the product "is no longer available" even when it was available in a smaller qty. `PlaceOrder::createItems()` now splits the locked re-read into two cases and `CheckoutException` carries `reason` + `requested` + `available`: completely unavailable (`outOfStock`, stock < 1) → `ui.checkout_item_out_of_stock_named` ("…has sold out… remove it to continue"); some-but-not-enough (`insufficientStock`) → `ui.checkout_item_insufficient_named` naming **both** numbers ("You asked for :requested … only :available in stock now — lower the quantity"). `CheckoutForm::place()` matches on `$e->reason`.
+3. **Pre-flight banner.** `detectCartProblems()` already split the two reasons; now also carries `requested`, and the insufficient line shows both numbers (`ui.checkout_cart_insufficient_qty` → "you asked for :requested, only :available in stock").
+
+**Is the stepper the only guard?** No. Cart qty is re-validated twice after the cart page: (a) `CheckoutForm::detectCartProblems()` on checkout mount (the pre-flight banner), and (b) the authoritative backstop — `PlaceOrder::createItems()` re-reads each variant with `lockForUpdate()` inside the order transaction and rejects (full rollback) if locked stock can't cover the line. The stepper cap and `updateQty` clamp are UX/defensive only; the locked re-read in PlaceOrder is the real oversell backstop and is unchanged in intent.
+
+**Required tests (CheckoutTest.php, green):** insufficient-at-submit names both numbers and not "no longer available"; fully-out-of-stock-at-submit uses the distinct "sold out" message; `updateQty` clamps a line to available stock server-side.
+
+**Owner clicks (dots.test):** below.
+
+---
+
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8 → PAY.13)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
@@ -422,6 +438,7 @@ PAY.1 releases the coupon on cancel (`ReleaseOrderCoupon`: stamps `released_at`,
 - [x] PAY.14 Fix card-retry duplicate `special_reference` 400 + orphaned payment rows; stored-reference column resolved by lookup (Opus)
 - [x] PAY.9 A settled payment (paid/refunded) is terminal on the payment-failed page; guard in mount() + locked re-check in proceed() for all three branches; DT-10130 data fix (Opus)
 - [x] PAY.10 Re-reserve stock (+ re-consume coupon) when an order is reinstated out of Cancelled; one lockForUpdate serves both boundaries; short stock allowed+warned+recorded, clamped at zero (Opus)
+- [x] PAY.16 Cart stepper capped at stock (disabled + "Only :n available") + updateQty server clamp; submit/pre-flight errors split out-of-stock vs insufficient and name both numbers; PlaceOrder locked re-read confirmed as the real backstop (Opus)
 
 ---
 

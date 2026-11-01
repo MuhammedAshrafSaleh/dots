@@ -157,9 +157,15 @@ class PlaceOrder
             // same variant serialise. If the locked stock can't cover this line,
             // reject the whole order (rolls back) rather than silently overselling
             // or flooring to a phantom sale — zero-stock variants aren't buyable.
+            // This locked re-read is the real oversell backstop: the stepper caps
+            // are UX only and can be stale by the time the customer checks out.
             $locked = ProductVariant::whereKey($variant->id)->lockForUpdate()->first();
-            if ($locked === null || $locked->stock_qty < $item->qty) {
-                throw CheckoutException::unavailable($product->getTranslation('name', app()->getLocale()));
+            $name = $product->getTranslation('name', app()->getLocale());
+            if ($locked === null || $locked->stock_qty < 1) {
+                throw CheckoutException::outOfStock($name);
+            }
+            if ($locked->stock_qty < $item->qty) {
+                throw CheckoutException::insufficientStock($name, (int) $item->qty, (int) $locked->stock_qty);
             }
 
             ProductVariant::whereKey($variant->id)

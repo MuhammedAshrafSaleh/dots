@@ -39,7 +39,7 @@
                                         — @if ($problem['reason'] === 'out_of_stock')
                                             {{ __('ui.checkout_cart_out_of_stock') }}
                                         @else
-                                            {{ __('ui.checkout_cart_insufficient_qty', ['n' => $problem['available']]) }}
+                                            {{ __('ui.checkout_cart_insufficient_qty', ['requested' => $problem['requested'], 'available' => $problem['available']]) }}
                                         @endif
                                     </span>
                                 </li>

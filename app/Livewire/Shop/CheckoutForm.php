@@ -63,9 +63,10 @@ class CheckoutForm extends Component
 
     /**
      * Lines that are unavailable or have insufficient stock, detected on mount.
-     * Each entry: ['name' => string, 'reason' => 'out_of_stock'|'insufficient_qty', 'available' => int|null]
+     * Each entry carries the current stock (`available`) and the quantity the
+     * customer has in the cart (`requested`) so the banner can show both.
      *
-     * @var list<array{name: string, reason: string, available: int|null}>
+     * @var list<array{name: string, reason: string, available: int|null, requested: int}>
      */
     public array $cartProblems = [];
 
@@ -179,9 +180,15 @@ class CheckoutForm extends Component
                 'company_tax_id' => $this->companyTaxId !== '' ? $this->companyTaxId : null,
             ], $address);
         } catch (CheckoutException $e) {
-            $this->cartError = $e->itemName !== ''
-                ? __('ui.checkout_item_unavailable_named', ['name' => $e->itemName])
-                : __($e->getMessage());
+            $this->cartError = match ($e->reason) {
+                'out_of_stock' => __('ui.checkout_item_out_of_stock_named', ['name' => $e->itemName]),
+                'insufficient_qty' => __('ui.checkout_item_insufficient_named', [
+                    'name' => $e->itemName,
+                    'requested' => $e->requested,
+                    'available' => $e->available,
+                ]),
+                default => __($e->getMessage()),
+            };
             $this->cartErrorShowLink = true;
 
             return;
@@ -309,7 +316,7 @@ class CheckoutForm extends Component
      * Mirrors the gate in PlaceOrder::createItems() so the customer sees issues
      * before filling the form, not only on submit.
      *
-     * @return list<array{name: string, reason: string, available: int|null}>
+     * @return list<array{name: string, reason: string, available: int|null, requested: int}>
      */
     private function detectCartProblems(): array
     {
@@ -323,9 +330,9 @@ class CheckoutForm extends Component
             $stock = (int) $variant->stock_qty;
 
             if ($stock === 0) {
-                $problems[] = ['name' => $name, 'reason' => 'out_of_stock', 'available' => 0];
+                $problems[] = ['name' => $name, 'reason' => 'out_of_stock', 'available' => 0, 'requested' => (int) $item->qty];
             } elseif ($stock < $item->qty) {
-                $problems[] = ['name' => $name, 'reason' => 'insufficient_qty', 'available' => $stock];
+                $problems[] = ['name' => $name, 'reason' => 'insufficient_qty', 'available' => $stock, 'requested' => (int) $item->qty];
             }
         }
 
