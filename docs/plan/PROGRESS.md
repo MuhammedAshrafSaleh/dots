@@ -3,14 +3,14 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
 - **Current task:** T10.2 — **DONE**. Step 2: CloudPanel site + PHP + MySQL + Redis complete.
-- **Last commit:** `<pending — see Git line>` — `T10.2: CloudPanel site + PHP 8.5 + MySQL + Redis`
+- **Last commit:** `29a04ce` — `T10.2: CloudPanel site + PHP 8.5 + MySQL + Redis`
 - **Server:** `srv2107659.hstgr.cloud` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8.
 - **What was done (step 2):** Created the PHP site via `clpctl` using the **Laravel 13** vhost template — site user `dots`, docroot `/home/dots/htdocs/srv2107659.hstgr.cloud/public`, **PHP 8.5.12** (matches local Herd exactly). Tuned the 8.5 FPM pool: `pm.max_children 250→30` (the real OOM fix on 8 GB/2 vCPU), `pm.max_requests→500`, `memory_limit 512M`, `upload_max_filesize 256M`, `post_max_size 512M`, `max_input_time/max_execution_time 180`. Created DB `dots-production` + user `dots-app` via `clpctl db:add` (db-scoped ALL, deliberate). Restricted MySQL `bind-address` to `127.0.0.1` (drop-in `z-dots-bind-address.cnf`, done under rollback timer). Set Redis `requirepass`. Full stack verified. **All three generated secrets were printed once in the step-2 chat for the owner's password manager — NOT in the repo.**
 - **What to verify:** site serves over temp hostname — `curl -sk -o /dev/null -w '%{http_code}\n' https://srv2107659.hstgr.cloud/` → `200` (http → 301 to https). CloudPanel panel `https://187.126.20.146:8443` still logs in.
 - **Carry-forwards logged in `docs/DEPLOY.md`:** step 9 — measure real Excel parse/preview time before raising `max_execution_time`; step 5 — size queue worker against free RAM (Varnish/Memcached idle, not in path); step 3 — Cloudflare real-IP ordering constraint + nginx fail2ban jail; step 4 — app `.env` needs `DB_HOST=127.0.0.1`, `REDIS_PASSWORD`, db `dots-production`/user `dots-app`.
 - **Next task:** T10.3 — Step 3: DNS/domain re-point + SSL + queue worker/scheduler (separate session). **Do not start step 3.**
 
-**Git:** branch `phase-10` (local, unpushed) · last commit `<run git log after commit>` · last tag `backups-done` · push state: **not pushed**
+**Git:** branch `phase-10` (local, unpushed) · last commit `29a04ce` · last tag `backups-done` · push state: **not pushed**
 
 Current phase: **Phase 10 — deployment** (`phase-10` branch). T10.2 done.
 
