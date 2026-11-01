@@ -366,6 +366,49 @@ So **terminal = {`paid`, `refunded`}**; everything else remains actionable. (`Ca
 
 ---
 
+## PAY.10 — Re-reserve stock (and re-consume coupon) when an order is reinstated out of Cancelled  _(Opus)_
+- [x] Done
+
+**Decisions (owner-approved 2026-11-01):** Decision 1 = **(B) allow + warn + record**, clamped at zero. Decision 2 = **yes, re-consume the coupon** symmetrically with PAY.1's release.
+
+**Problem reported:** `UpdateOrderStatus` restores stock when an order moves **into** `Cancelled` (`restoreStock()` + `ReleaseOrderCoupon`), but moving it **back out** of `Cancelled` (e.g. `Cancelled → Confirmed`) does nothing. The stock was handed back on cancel and may have been sold to someone else in the meantime; an admin reinstating the order then fulfils it against stock that no longer exists. The coupon is also left released (PAY.1 soft-releases it on cancel), so a reinstated live order no longer counts against its coupon.
+
+**Scope:** a new mirror path in `UpdateOrderStatus.handle()`:
+`$reinstating = $order->status === Cancelled && $status !== Cancelled`. Everything below runs inside the existing single transaction, symmetric to the `$cancelling` block.
+
+### Decision 1 (owner picked **B**) — what to do when current stock can't cover the order
+The order needed 3 of a variant; only 1 is in stock now; the admin is reinstating anyway. Options:
+- **(A) Block** the status change with a clear message naming the short line(s); order stays `Cancelled`.
+- **(B) Allow + warn** — reinstate, decrement each line clamped at 0 (never negative), and tell the admin exactly which lines are short and by how much, both as a toast **and** as a permanent bilingual history row + internal flag. _(Claude's recommendation.)_
+- **(C) Allow + go negative** — decrement raw; `stock_qty` can drop below 0 as an honest "we owe N" signal.
+
+### Decision 2 (owner picked **yes**) — re-consume the coupon on reinstatement?
+PAY.1 releases the coupon on cancel (`ReleaseOrderCoupon`: stamps `released_at`, decrements `used_count`, once-per-customer gate ignores released rows). Proposed: **yes, re-consume** — mirror the release so a reinstated live order counts again. A sibling `ConsumeOrderCoupon` action re-activates this order's released redemption row(s) (`released_at = null`), `increment`s `used_count` by the count re-activated, idempotent (re-run finds none). Known edge: if the customer used the same once-per-customer / limited coupon on a *new* order while this one was cancelled, re-consuming pushes them over the limit — surfaced in the history row, not blocked (admin-driven, rare).
+
+### Design (as implemented)
+- **One lock, both directions (reverse race).** `UpdateOrderStatus` had **no** order-row lock before this task — only the sweeper (`ReleaseExpiredReservations`, PAY.1) did. Rather than add a second mechanism, `handle()` now opens its transaction with a single `Order::whereKey(...)->lockForUpdate()` re-read of the **authoritative** current status, and computes **both** `$cancelling` and `$reinstating` from it. Two admins saving at once therefore can't both cross the same boundary (no double restore, no double decrement). This also hardens the pre-existing cancel path.
+- **`reserveStock(Order): list<shortage>`** mirrors `restoreStock()` — for each line it `lockForUpdate()`s the variant row (as `PlaceOrder` does), decrements `stock_qty` by `min(available, needed)` (**clamped at zero, never negative**), re-runs `UpdateProductCacheColumns`, and returns `{label, needed, available}` for any line it couldn't fully cover.
+- **`reserved_until` stays `null`** on reinstatement (admin manages this order's stock from here, like COD) — no new payment window.
+- **Customer not auto-messaged.** The shortage surfaces two admin-only ways: a `warning` toast at save time, and a persisted **internal note** appended to the status-history row (`detail.blade.php:99-100`), so it stays visible after the toast disappears — the cue to phone the customer. The customer-visible `note` is never touched.
+- **`ConsumeOrderCoupon`** (new, exact reverse of `ReleaseOrderCoupon`): re-activates this order's `released_at`-stamped redemption row(s) (`released_at = null`) and bumps `used_count` back by the count re-activated; idempotent. Known edge (documented, not blocked): if the customer reused the same once-per-customer/limited coupon on a new order while this one was cancelled, re-consuming pushes them over the limit — surfaced for the admin, not prevented (rare, admin-driven).
+
+**Files touched:** `app/Actions/UpdateOrderStatus.php` (lock + `reinstating` branch + `reserveStock()` + shortage note; returns `list<shortage>`), `app/Actions/ConsumeOrderCoupon.php` (new), `app/Livewire/Admin/Orders/Detail.php` (warning toast from the returned shortages), `lang/en/admin.php` + `lang/ar/admin.php` (`reinstate_short_*`), `tests/Feature/Admin/Orders/OrdersAdminTest.php`.
+
+**Acceptance criteria (met)**
+- Reinstating `Cancelled → <live>` re-decrements every line's stock exactly once; a no-boundary move (e.g. `Confirmed → Shipped`) is unaffected; moving `→ Cancelled` is unchanged.
+- Insufficient stock → reinstated anyway, decremented clamped at zero, admin told exactly which lines and by how much (toast + persisted internal note).
+- Coupon re-consumed symmetrically and idempotently; `reserved_until` stays null.
+- Re-saving the same already-live status does not double-decrement or double-consume.
+
+**Required tests (all added to `OrdersAdminTest.php`, green)**
+- `Cancelled → Confirmed` with enough stock → every line re-decremented once; `Confirmed → Shipped` after → no further decrement.
+- Reinstating with short stock → clamped at zero, `warning` toast dispatched, shortage persisted in the history internal note.
+- `Cancelled → Confirmed` with a released coupon → row re-activated, `used_count` restored; re-saving the live status → no double-consume.
+
+**Owner clicks (dots.test):** below.
+
+---
+
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8 → PAY.13)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
@@ -378,6 +421,7 @@ So **terminal = {`paid`, `refunded`}**; everything else remains actionable. (`Ca
 - [x] PAY.13 Make Livewire toasts visible on the shop frontend (Sonnet)
 - [x] PAY.14 Fix card-retry duplicate `special_reference` 400 + orphaned payment rows; stored-reference column resolved by lookup (Opus)
 - [x] PAY.9 A settled payment (paid/refunded) is terminal on the payment-failed page; guard in mount() + locked re-check in proceed() for all three branches; DT-10130 data fix (Opus)
+- [x] PAY.10 Re-reserve stock (+ re-consume coupon) when an order is reinstated out of Cancelled; one lockForUpdate serves both boundaries; short stock allowed+warned+recorded, clamped at zero (Opus)
 
 ---
 

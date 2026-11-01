@@ -323,6 +323,9 @@ return [
         'whatsapp_help' => 'Opens a chat with the “Order update” template filled in. Nothing is sent automatically.',
         'nothing_changed' => 'Nothing changed',
         'updated' => 'Order updated',
+        'reinstate_short_toast' => 'Reinstated, but stock is short — call the customer',
+        'reinstate_short_prefix' => 'Reinstated with insufficient stock — call the customer. Short:',
+        'reinstate_short_line' => ':product (needed :needed, had :available)',
         // Customer / delivery / payment cards
         'customer' => 'Customer',
         'guest' => 'Guest',

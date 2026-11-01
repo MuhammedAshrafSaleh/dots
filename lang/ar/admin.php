@@ -323,6 +323,9 @@ return [
         'whatsapp_help' => 'يفتح محادثة بقالب "تحديث الطلب" جاهز. لا يتم إرسال أي شيء تلقائياً.',
         'nothing_changed' => 'لا توجد تغييرات',
         'updated' => 'تم تحديث الطلب',
+        'reinstate_short_toast' => 'تمت إعادة الطلب، لكن المخزون غير كافٍ — اتصل بالعميل',
+        'reinstate_short_prefix' => 'تمت إعادة الطلب بمخزون غير كافٍ — اتصل بالعميل. النقص:',
+        'reinstate_short_line' => ':product (المطلوب :needed، المتوفر :available)',
         // Customer / delivery / payment cards
         'customer' => 'العميل',
         'guest' => 'زائر',

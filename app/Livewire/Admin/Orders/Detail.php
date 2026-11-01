@@ -68,7 +68,7 @@ class Detail extends Component
             return;
         }
 
-        $action->handle(
+        $shortages = $action->handle(
             $this->order,
             $newStatus,
             $newPayment,
@@ -80,6 +80,20 @@ class Detail extends Component
 
         $this->order->refresh();
         $this->reset('customerNoteEn', 'customerNoteAr', 'internalNote');
+
+        if ($shortages !== []) {
+            // Reinstated against stock that can't cover the order: warn the admin
+            // now so they call the customer. The full shortage is also kept in the
+            // order's history (internal note) after this toast disappears.
+            $this->dispatch(
+                'toast',
+                tone: 'warning',
+                title: __('admin.orders.reinstate_short_toast'),
+                message: collect($shortages)->map(fn (array $s): string => $s['label'])->implode(', '),
+            );
+
+            return;
+        }
 
         $this->dispatch('toast', tone: 'success', title: __('admin.orders.updated'), message: $this->order->number);
     }

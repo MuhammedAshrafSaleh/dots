@@ -2,18 +2,18 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
-- **Current task:** PAY.9 — **DONE** (awaiting owner browser review).
-- **Last commit:** `1b354e9` — `PAY.9: treat a settled payment as terminal on the payment-failed page`
-- **Gate result:** 705 tests (703 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
-- **Context:** `bulk-import` branch was merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
-- **PAY.9 produced:** the payment-failed page guarded only on `status === Cancelled`, so a page opened/re-opened before settlement could still mutate a settled order (confirmed on `DT-10130`: a paid card order was flipped to `pending`/`cod`). Fix: a settled payment (`paid` or `refunded`) is now terminal. `isSettled()` + locked `terminalState()` in `PaymentFailed`; guard applied in `mount()` and at the top of `proceed()` (covers retry) and inside the COD/InstaPay locked transaction (all three branches). Settled → bilingual "already settled" message + link to the order, no mutating controls, **never** a new checkout intention. Terminal rationale (in `payments.md`): paid/refunded IN; pending/awaiting_transfer/failed OUT. `DT-10130` data-fixed back to `paid`/`card`, `reserved_until` null, correction history row added (real paid row #30 untouched; erroneous "→cod" history row kept as record).
+- **Current task:** PAY.10 — **DONE** (awaiting owner browser review).
+- **Last commit:** `<pending>` — `PAY.10: re-reserve stock + re-consume coupon when an order is reinstated out of Cancelled`
+- **Gate result:** 708 tests (706 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
+- **Context:** `bulk-import` merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
+- **PAY.10 produced:** `UpdateOrderStatus` restored stock on cancel but did nothing on the reverse boundary, so reinstating a cancelled order fulfilled against stock already handed back. Fix (owner-approved: allow+warn+record, clamped at zero; re-consume coupon): `handle()` now opens its transaction with **one** `Order::lockForUpdate()` re-read of the authoritative status and computes **both** `$cancelling` and `$reinstating` from it (there was no prior lock in this action — only the sweeper had one; this is a single mechanism for both directions, also hardening the cancel path). Reinstating runs `reserveStock()` (locks each variant, decrements `min(available, needed)`, never negative) and `ConsumeOrderCoupon` (new, exact reverse of `ReleaseOrderCoupon`). `reserved_until` stays null. Short lines surface as a `warning` toast **and** a persisted internal note on the history row (no auto customer message). Returns `list<shortage>`; `Detail.php` raises the toast.
 - **Open questions from payments.md (still open, non-blocking):**
   1. Should auto-cancelled orders be visually distinct from admin-cancelled ones in the admin orders list?
   2. PAY.8 real-transaction test: run it yourself following the doc, or also include a sandbox dry-run walkthrough?
-- **How to verify (owner clicks — PAY.9):** Open `/ar/order/DT-10130/payment-failed` (logged in as / in the session that owns it) → it must show the green "already settled" message with a **View your order** link and **no** retry/COD/InstaPay options. Then Admin → Orders → DT-10130 reads `paid` / `card`. (PAY.14 owner-review still pending too — see its line in payments.md.)
+- **How to verify (owner clicks — PAY.10):** Admin → Orders → open a **Cancelled** order with items in stock → set status to **Confirmed** → Save: the order's variant `stock_qty` must drop by the ordered qty, and (if it carried a coupon) the coupon counts again. Then take a Cancelled order whose variant stock is **less than** the ordered qty, reinstate it: Save still succeeds, an orange **warning** toast names the short product(s), stock floors at 0 (never negative), and the order's history shows an **Internal** note "Reinstated with insufficient stock — call the customer…". (Earlier PAY.9/PAY.14 owner-reviews may still be pending — see their lines in payments.md.)
 - **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `1b354e9` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.10>` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 

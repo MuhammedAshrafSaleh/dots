@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\CouponType;
 use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
 use App\Enums\ProductStatus;
@@ -7,6 +8,9 @@ use App\Livewire\Admin\Orders\Detail;
 use App\Livewire\Admin\Orders\Index;
 use App\Models\Brand;
 use App\Models\Category;
+use App\Models\Coupon;
+use App\Models\CouponRedemption;
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -200,6 +204,109 @@ it('cancelling an order restores the reserved stock exactly once', function () {
         ->call('update');
 
     expect($variant->refresh()->stock_qty)->toBe(10);
+});
+
+it('reinstating a cancelled order re-reserves its stock exactly once', function () {
+    loginAdmin(['orders.view', 'orders.update']);
+    // Cancelled order whose stock was already handed back (qty 3, stock now 10).
+    $order = adminOrder(['status' => OrderStatus::Cancelled], qty: 3, stock: 10);
+    $variant = $order->items->first()->productVariant;
+
+    Livewire::test(Detail::class, ['order' => $order])
+        ->set('status', 'confirmed')
+        ->call('update')
+        ->assertHasNoErrors();
+
+    expect($order->refresh()->status)->toBe(OrderStatus::Confirmed)
+        ->and($order->reserved_until)->toBeNull()
+        ->and($variant->refresh()->stock_qty)->toBe(7);
+
+    // A no-boundary move (confirmed → shipped) must not decrement again.
+    Livewire::test(Detail::class, ['order' => $order->refresh()])
+        ->set('status', 'shipped')
+        ->call('update');
+
+    expect($variant->refresh()->stock_qty)->toBe(7);
+});
+
+it('reinstating with insufficient stock reserves what it can, warns and records it', function () {
+    loginAdmin(['orders.view', 'orders.update']);
+    // Order needs 3; only 1 left in stock now.
+    $order = adminOrder(['status' => OrderStatus::Cancelled], qty: 3, stock: 1);
+    $variant = $order->items->first()->productVariant;
+
+    app()->setLocale('en');
+
+    Livewire::test(Detail::class, ['order' => $order])
+        ->set('status', 'confirmed')
+        ->call('update')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast', tone: 'warning');
+
+    // Clamped at zero (never negative), order still reinstated.
+    expect($variant->refresh()->stock_qty)->toBe(0)
+        ->and($order->refresh()->status)->toBe(OrderStatus::Confirmed);
+
+    // Shortage persisted on the order as a staff-only internal note.
+    $latest = $order->statusHistories()->reorder('id', 'desc')->first();
+    expect($latest->internal_note)->toContain('needed 3')
+        ->and($latest->internal_note)->toContain('had 1');
+});
+
+it('reinstating re-consumes the released coupon symmetrically', function () {
+    loginAdmin(['orders.view', 'orders.update']);
+
+    $coupon = Coupon::create([
+        'code' => 'REINSTATE10',
+        'type' => CouponType::Percent,
+        'value' => 10,
+        'is_active' => true,
+        'once_per_customer' => true,
+        'usage_limit' => 5,
+        'used_count' => 1,
+    ]);
+
+    $customer = Customer::create([
+        'name' => 'Repeat Buyer',
+        'mobile' => '01500060829',
+        'email' => 'repeat@example.com',
+        'password' => bcrypt('secret-pass'),
+    ]);
+
+    $order = adminOrder([
+        'status' => OrderStatus::Cancelled,
+        'customer_id' => $customer->id,
+        'coupon_id' => $coupon->id,
+        'coupon_code' => $coupon->code,
+        'discount_total' => 300,
+    ], qty: 3, stock: 10);
+
+    // The coupon was soft-released when the order was cancelled (PAY.1 shape):
+    // row kept with released_at set, counter already decremented to 1.
+    $redemption = CouponRedemption::create([
+        'coupon_id' => $coupon->id,
+        'order_id' => $order->id,
+        'customer_id' => $customer->id,
+        'amount' => 300,
+        'created_at' => now(),
+        'released_at' => now(),
+    ]);
+
+    Livewire::test(Detail::class, ['order' => $order])
+        ->set('status', 'confirmed')
+        ->call('update')
+        ->assertHasNoErrors();
+
+    expect($coupon->refresh()->used_count)->toBe(2)
+        ->and($redemption->refresh()->released_at)->toBeNull();
+
+    // Idempotent: re-saving the same live status must not re-consume again.
+    Livewire::test(Detail::class, ['order' => $order->refresh()])
+        ->set('status', 'confirmed')
+        ->set('internalNote', 'noop')
+        ->call('update');
+
+    expect($coupon->refresh()->used_count)->toBe(2);
 });
 
 it('blocks status updates without orders.update', function () {
