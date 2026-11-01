@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `payments-hardening` (local only).
 - **Current task:** PAY.10 — **DONE** (awaiting owner browser review).
-- **Last commit:** `<pending>` — `PAY.10: re-reserve stock + re-consume coupon when an order is reinstated out of Cancelled`
+- **Last commit:** `6e39018` — `PAY.10: re-reserve stock + re-consume coupon when an order is reinstated out of Cancelled`
 - **Gate result:** 708 tests (706 pass, 2 skip) · Larastan 0 errors · Pint clean · build clean.
 - **Context:** `bulk-import` merged to `main` and tagged `bulk-import-done`. `payments-hardening` is cut from that up-to-date `main`. Phase 10 follows after this branch is merged.
 - **PAY.10 produced:** `UpdateOrderStatus` restored stock on cancel but did nothing on the reverse boundary, so reinstating a cancelled order fulfilled against stock already handed back. Fix (owner-approved: allow+warn+record, clamped at zero; re-consume coupon): `handle()` now opens its transaction with **one** `Order::lockForUpdate()` re-read of the authoritative status and computes **both** `$cancelling` and `$reinstating` from it (there was no prior lock in this action — only the sweeper had one; this is a single mechanism for both directions, also hardening the cancel path). Reinstating runs `reserveStock()` (locks each variant, decrements `min(available, needed)`, never negative) and `ConsumeOrderCoupon` (new, exact reverse of `ReleaseOrderCoupon`). `reserved_until` stays null. Short lines surface as a `warning` toast **and** a persisted internal note on the history row (no auto customer message). Returns `list<shortage>`; `Detail.php` raises the toast.
@@ -13,7 +13,7 @@
 - **How to verify (owner clicks — PAY.10):** Admin → Orders → open a **Cancelled** order with items in stock → set status to **Confirmed** → Save: the order's variant `stock_qty` must drop by the ordered qty, and (if it carried a coupon) the coupon counts again. Then take a Cancelled order whose variant stock is **less than** the ordered qty, reinstate it: Save still succeeds, an orange **warning** toast names the short product(s), stock floors at 0 (never negative), and the order's history shows an **Internal** note "Reinstated with insufficient stock — call the customer…". (Earlier PAY.9/PAY.14 owner-reviews may still be pending — see their lines in payments.md.)
 - **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit `<pending PAY.10>` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `6e39018` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
