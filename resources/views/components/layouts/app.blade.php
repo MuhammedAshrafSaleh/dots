@@ -53,7 +53,7 @@
             session('toast_info')    ? ['tone' => 'info',    'message' => session('toast_info')]    : null,
         ]));
     @endphp
-    <div class="d-toasts" aria-live="polite" aria-atomic="false"
+    <div class="d-toasts" aria-live="polite" aria-atomic="false" x-data="{}"
          @if ($flashToasts) x-init="@foreach ($flashToasts as $ft)$store.toasts.push(@js($ft));@endforeach" @endif
     >
         <template x-for="t in $store.toasts.items" :key="t.id">
