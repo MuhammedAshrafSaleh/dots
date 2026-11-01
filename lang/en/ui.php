@@ -468,6 +468,11 @@ return [
     'pf_expired_readd_dropped' => 'Some items are no longer available and were left out: :items',
     'pf_expired_readd_reduced' => 'We lowered some quantities to match what’s in stock now: :items',
     'pf_expired_readd_none' => 'None of the items could be added back to your cart — they’re no longer available.',
+    // Payment already settled (paid/refunded): terminal, no actions offered.
+    'pf_settled_eyebrow' => 'Payment settled',
+    'pf_settled_heading' => 'This order’s payment is already settled.',
+    'pf_settled_body' => 'Order :number is settled, so no payment changes can be made here. You can view your order anytime.',
+    'pf_settled_cta' => 'View your order',
 
     // Payment-failed page: curated failure reasons (never raw gateway text).
     // Every line ends by pointing at a next action available on the page.

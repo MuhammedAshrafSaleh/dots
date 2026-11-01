@@ -468,6 +468,11 @@ return [
     'pf_expired_readd_dropped' => 'بعض المنتجات لم تعد متاحة وتم استبعادها: :items',
     'pf_expired_readd_reduced' => 'عدّلنا بعض الكميات لتناسب المتوفر حاليًا: :items',
     'pf_expired_readd_none' => 'لا يوجد أي منتج يمكن إرجاعه إلى سلتك، فكلها لم تعد متاحة.',
+    // تمّت تسوية الدفع (مدفوع/مُسترجَع): حالة نهائية، لا إجراءات.
+    'pf_settled_eyebrow' => 'تمّت تسوية الدفع',
+    'pf_settled_heading' => 'تمّت تسوية دفع هذا الطلب بالفعل.',
+    'pf_settled_body' => 'الطلب :number تمّت تسويته، لذا لا يمكن إجراء أي تغييرات على الدفع هنا. يمكنك عرض طلبك في أي وقت.',
+    'pf_settled_cta' => 'عرض الطلب',
 
     // Payment-failed page: curated failure reasons (never raw gateway text).
     'pf_reason_declined' => 'لم تتم الموافقة على هذه العملية. جرّب بطاقة أخرى، أو اختر الدفع عند الاستلام، أو ادفع عبر إنستاباي.',

@@ -16,14 +16,20 @@
         <div style="display:grid;gap:20px;">
 
             <section style="border:1px solid var(--border-1);border-radius:var(--radius-lg);background:var(--white);padding:32px;display:grid;gap:18px;">
-                <span style="width:56px;height:56px;border-radius:50%;background:var(--error-100);color:var(--error-600);display:grid;place-items:center;">
-                    <x-icon name="circle-alert" :size="28" :stroke="2" />
-                </span>
+                @if ($settled)
+                    <span style="width:56px;height:56px;border-radius:50%;background:var(--success-100);color:var(--success-600);display:grid;place-items:center;">
+                        <x-icon name="circle-check" :size="28" :stroke="2" />
+                    </span>
+                @else
+                    <span style="width:56px;height:56px;border-radius:50%;background:var(--error-100);color:var(--error-600);display:grid;place-items:center;">
+                        <x-icon name="circle-alert" :size="28" :stroke="2" />
+                    </span>
+                @endif
                 <div style="display:grid;gap:10px;">
-                    <x-eyebrow>{{ $expired ? __('ui.pf_expired_eyebrow') : __('ui.pf_eyebrow') }}</x-eyebrow>
-                    <h1 class="t-h2" style="margin:0;text-wrap:balance;">{{ $expired ? __('ui.pf_expired_heading') : __('ui.pf_heading') }}</h1>
+                    <x-eyebrow>{{ $settled ? __('ui.pf_settled_eyebrow') : ($expired ? __('ui.pf_expired_eyebrow') : __('ui.pf_eyebrow')) }}</x-eyebrow>
+                    <h1 class="t-h2" style="margin:0;text-wrap:balance;">{{ $settled ? __('ui.pf_settled_heading') : ($expired ? __('ui.pf_expired_heading') : __('ui.pf_heading')) }}</h1>
                     <p style="margin:0;font:500 15px/1.6 var(--font-body);color:var(--fg-2);text-wrap:pretty;">
-                        {{ $expired ? __('ui.pf_expired_body', ['number' => $order->number]) : __('ui.pf_body', ['number' => $order->number]) }}
+                        {{ $settled ? __('ui.pf_settled_body', ['number' => $order->number]) : ($expired ? __('ui.pf_expired_body', ['number' => $order->number]) : __('ui.pf_body', ['number' => $order->number])) }}
                     </p>
                     @if ($reasonKey)
                         <p style="margin:0;font:500 14px/1.6 var(--font-body);color:var(--fg-3);text-wrap:pretty;" data-reason>
@@ -33,7 +39,16 @@
                 </div>
             </section>
 
-            @if ($expired)
+            @if ($settled)
+                <section style="border:1px solid var(--border-1);border-radius:var(--radius-lg);background:var(--white);padding:24px;display:grid;gap:16px;">
+                    <div style="display:flex;flex-wrap:wrap;gap:10px;">
+                        <a href="{{ route('order.confirmation', [$locale, $order->number]) }}" class="d-btn d-btn--lg d-btn--primary">
+                            <x-icon name="receipt" :size="18" />{{ __('ui.pf_settled_cta') }}
+                        </a>
+                        <x-whatsapp-button source="order_help" class="d-btn--lg d-btn--ghost" :label="__('ui.pf_get_help')" />
+                    </div>
+                </section>
+            @elseif ($expired)
                 <section style="border:1px solid var(--border-1);border-radius:var(--radius-lg);background:var(--white);padding:24px;display:grid;gap:16px;">
                     <div style="display:flex;flex-wrap:wrap;gap:10px;">
                         <button type="button" wire:click="reAddToCart" wire:loading.attr="disabled" class="d-btn d-btn--lg d-btn--primary">

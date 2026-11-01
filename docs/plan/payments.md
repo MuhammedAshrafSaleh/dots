@@ -326,6 +326,46 @@ The owner rejected parsing the order number out of `special_reference` (the `ord
 
 ---
 
+## PAY.9 — A settled payment is terminal on the payment-failed page  _(Opus)_
+- [x] Done
+
+**Problem reported (confirmed by hand on `DT-10130`, 2026-11-01):** the order was **paid by card**, the customer reopened its payment-failed URL, chose **cash on delivery**, and the order flipped from `paid`→`pending` with method `cod`. Real money had been taken; the system then believed the order was unpaid. Root cause: `PaymentFailed` guards only on `status === Cancelled`. A page opened (or re-opened) before settlement could still mutate the order after settlement — the paid state was never treated as terminal, and the COD/InstaPay branch re-checked only for `Cancelled` under its lock, not for a settled payment.
+
+**Terminal payment statuses (which `payment_status` values block every action — decided here):**
+- **`paid` — IN (terminal).** Money has been taken and the order is settled; nothing on this page may start a new intention or change the method.
+- **`refunded` — IN (terminal).** The money lifecycle is closed (taken, then returned). Letting a customer "retry"/switch on a refunded order would re-open a settled financial record; treat it as done.
+- **`pending` — OUT.** Not settled — awaiting webhook or an abandoned attempt. Retrying/switching here is exactly the page's job.
+- **`awaiting_transfer` — OUT.** InstaPay not yet reconciled; the customer may still switch method.
+- **`failed` — OUT.** Declined; retry/switch is the whole point of the page.
+
+So **terminal = {`paid`, `refunded`}**; everything else remains actionable. (`Cancelled` order `status` stays a separate terminal signal — the "expired/released" state — and `paid`+`cancelled`, i.e. a late success after auto-cancel, is shown as **settled**, since money was taken.)
+
+**Guard applied in two places, for all three branches:**
+- `mount()` — classify the loaded order as `settled` (terminal payment) in addition to the existing `expired` (cancelled). A page that loads already-settled renders no mutating options.
+- `proceed()` — a locked re-read (`terminalState()`: `lockForUpdate()` inside a transaction) runs **before** any branch acts, covering the **retry** branch (which starts a checkout intention) and short-circuiting it before `createCheckout()`. The existing COD/InstaPay locked transaction **additionally** re-checks the settled state inside its own lock. Either way, if the order became terminal between page load and the click, nothing is mutated, no payment row is written, and **no checkout intention is started**.
+
+**Settled view:** a clear bilingual message (`pf_settled_*`) that the order is already settled, a **link to the order** (`order.confirmation`, behind the same session gate the page already passed), and **no mutating controls at all** — no retry, no COD, no InstaPay. Icon is success (check), not the error alert.
+
+**DT-10130 data fix (owner-authorised, this task):** restored to its correct state — `payment_status=paid`, `payment_method_code=card` (`payment_method_id=3`), `reserved_until` cleared (already null), `status` left `new` (the card payment never changed order status). The erroneous "method changed to cod" history row is **kept** (true record of what happened); a new bilingual history row records the manual correction. The real `paid` payment row (#30, txn `564944576`, hmac-verified) was untouched.
+
+**Files touched:** `app/Livewire/Shop/PaymentFailed.php` (terminal-payment guard in `mount()` + `proceed()` + the COD/InstaPay locked re-check), `resources/views/livewire/shop/payment-failed.blade.php` (settled state), `lang/ar/ui.php` + `lang/en/ui.php` (`pf_settled_*`), `tests/Feature/Commerce/PaymentFailedTest.php`.
+
+**Acceptance criteria**
+- A `paid` order: each of retry / COD / InstaPay mutates nothing, creates no payment row, and starts no checkout intention; the settled message + order link are shown.
+- A `refunded` order is treated identically (terminal).
+- The race — order becomes `paid` after the page loaded but before the click — is caught by the locked re-read: nothing is mutated and no intention starts.
+- Existing failed/pending/cancelled behaviour is unchanged.
+
+**Required tests (feature/Livewire)**
+- Paid order → `settled` true on mount.
+- Paid order, each branch (retry / COD / InstaPay) → no mutation, `Payment` count unchanged, no intention sent (`Http::assertNothingSent`), method still `card`, status still paid.
+- Race: load with a `failed` order, settle it to `paid`, then click retry → `settled` true, nothing mutated, no intention.
+- Refunded order → terminal on mount.
+
+**Owner clicks (dots.test):** open `DT-10130` payment-failed URL (`/ar/order/DT-10130/payment-failed`) — it must show the "already settled" message with a link to the order and **no** retry/COD/InstaPay options. Then confirm `DT-10130` in admin reads `paid` / `card`.
+
+---
+
 ## Checklist  _(execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8 → PAY.13)_
 - [x] PAY.3 Remove dead Paymob env keys (Sonnet)
 - [x] PAY.2 Card option gated on full `isConfigured()` (Sonnet)
@@ -337,6 +377,7 @@ The owner rejected parsing the order number out of `special_reference` (the `ord
 - [x] PAY.8 Go-live checklist doc (Sonnet)
 - [x] PAY.13 Make Livewire toasts visible on the shop frontend (Sonnet)
 - [x] PAY.14 Fix card-retry duplicate `special_reference` 400 + orphaned payment rows; stored-reference column resolved by lookup (Opus)
+- [x] PAY.9 A settled payment (paid/refunded) is terminal on the payment-failed page; guard in mount() + locked re-check in proceed() for all three branches; DT-10130 data fix (Opus)
 
 ---
 

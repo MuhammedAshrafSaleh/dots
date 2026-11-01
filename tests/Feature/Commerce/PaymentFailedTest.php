@@ -14,6 +14,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Services\CartManager;
+use Illuminate\Support\Facades\Http;
 use Livewire\Livewire;
 
 /** A card order (failed) holding `qty` units of a fresh variant with `stock`. */
@@ -364,4 +365,109 @@ it('cart notice for a reduced item shows the translated name without raw JSON', 
     expect($notices)
         ->toContain('كشاف مدمج')
         ->not->toContain('{');
+});
+
+// ---------------------------------------------------------------------------
+// PAY.9 — a settled payment (paid/refunded) is terminal; no branch may act.
+// ---------------------------------------------------------------------------
+
+/** A settled card order with the given payment_status (defaults to paid). */
+function pfPaidOrder(OrderPaymentStatus $status = OrderPaymentStatus::Paid): Order
+{
+    $order = pfOrder(qty: 2, stock: 5);
+    $order->update(['payment_status' => $status, 'reserved_until' => null]);
+
+    return $order;
+}
+
+it('treats a paid order as settled on mount, not expired', function () {
+    $order = pfPaidOrder();
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->assertSet('settled', true)
+        ->assertSet('expired', false);
+});
+
+it('treats a refunded order as settled on mount', function () {
+    $order = pfPaidOrder(OrderPaymentStatus::Refunded);
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->assertSet('settled', true);
+});
+
+it('does not retry card on a paid order: no intention started, no payment row', function () {
+    Http::fake(); // any outbound gateway call would be recorded here
+
+    $order = pfPaidOrder();
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->set('option', 'retry')
+        ->call('proceed')
+        ->assertSet('settled', true)
+        ->assertNoRedirect();
+
+    Http::assertNothingSent();
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->payment_method_code)->toBe(PaymentMethodCode::Card->value)
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(0);
+});
+
+it('does not switch a paid order to COD', function () {
+    PaymentMethod::create(['code' => PaymentMethodCode::Cod, 'name' => ['ar' => 'عند الاستلام', 'en' => 'COD'], 'is_active' => true]);
+
+    $order = pfPaidOrder();
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->set('option', 'cod')
+        ->call('proceed')
+        ->assertSet('settled', true);
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->payment_method_code)->toBe(PaymentMethodCode::Card->value) // unchanged
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(0);
+});
+
+it('does not switch a paid order to InstaPay', function () {
+    PaymentMethod::create(['code' => PaymentMethodCode::InstapayWhatsapp, 'name' => ['ar' => 'إنستاباي', 'en' => 'InstaPay'], 'is_active' => true]);
+
+    $order = pfPaidOrder();
+    session(['orders.placed' => [$order->id]]);
+
+    Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->set('option', 'instapay')
+        ->call('proceed')
+        ->assertSet('settled', true);
+
+    $order->refresh();
+    expect($order->payment_status)->toBe(OrderPaymentStatus::Paid)
+        ->and($order->payment_method_code)->toBe(PaymentMethodCode::Card->value) // unchanged
+        ->and(Payment::where('order_id', $order->id)->count())->toBe(0);
+});
+
+it('refuses to act when the order becomes paid between page load and the click (race)', function () {
+    Http::fake();
+
+    $order = pfOrder(); // failed + actionable at mount
+    session(['orders.placed' => [$order->id]]);
+
+    $component = Livewire::test(PaymentFailed::class, ['number' => $order->number])
+        ->assertSet('settled', false);
+
+    // A webhook settles the order after the page rendered, before the click.
+    $order->update(['payment_status' => OrderPaymentStatus::Paid, 'reserved_until' => null]);
+
+    $component->set('option', 'retry')
+        ->call('proceed')
+        ->assertSet('settled', true)
+        ->assertNoRedirect();
+
+    Http::assertNothingSent();
+    expect(Payment::where('order_id', $order->id)->count())->toBe(0)
+        ->and($order->fresh()->payment_method_code)->toBe(PaymentMethodCode::Card->value);
 });

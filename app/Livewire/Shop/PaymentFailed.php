@@ -23,11 +23,15 @@ use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
  * cash on delivery / InstaPay via WhatsApp. The order is kept intact; switching
  * only changes its payment method + status.
  *
- * The reservation sweeper can cancel the order in the seconds the customer
- * spends choosing here, so every branch re-loads the order under a row lock and
- * re-checks it is not cancelled before mutating anything. If it was released,
- * nothing is touched and the customer is offered a fresh cart from the order's
- * items.
+ * Two things can make this page terminal out from under the customer:
+ *  - the reservation sweeper can CANCEL the order in the seconds they spend
+ *    choosing here ($expired); and
+ *  - the payment can SETTLE (a webhook/return lands, or they opened this URL
+ *    after already paying) — a paid/refunded order is terminal ($settled).
+ * So every branch re-loads the order under a row lock and re-checks both before
+ * mutating anything. A settled order shows a "done" message and a link to the
+ * order, with no mutating controls — and never starts a new checkout intention.
+ * A cancelled order offers a fresh cart from the order's items.
  */
 class PaymentFailed extends Component
 {
@@ -37,6 +41,9 @@ class PaymentFailed extends Component
 
     /** Set once the sweeper has cancelled the order out from under the page. */
     public bool $expired = false;
+
+    /** Set once the payment has settled (paid/refunded) — terminal, no actions. */
+    public bool $settled = false;
 
     public function mount(string $number): void
     {
@@ -48,6 +55,53 @@ class PaymentFailed extends Component
 
         $this->orderId = $order->id;
         $this->expired = $order->status === OrderStatus::Cancelled;
+        $this->settled = $this->isSettled($order->payment_status);
+    }
+
+    /**
+     * Terminal payment states: the money lifecycle is closed, so no action on
+     * this page may mutate the order or start a checkout intention.
+     *   paid     — money taken, order settled.
+     *   refunded — money taken then returned; the record is closed.
+     * pending / awaiting_transfer / failed remain actionable (retry or switch).
+     */
+    private function isSettled(OrderPaymentStatus $status): bool
+    {
+        return in_array($status, [OrderPaymentStatus::Paid, OrderPaymentStatus::Refunded], true);
+    }
+
+    /**
+     * Re-read the order under a row lock and classify any terminal state:
+     *   'settled' — payment closed (paid/refunded) — takes precedence, since a
+     *               late success after an auto-cancel (paid + cancelled) means
+     *               money was taken and the customer must see "done", not "lost".
+     *   'expired' — the sweeper cancelled it (reservation released).
+     *   null      — still actionable.
+     */
+    private function terminalState(): ?string
+    {
+        return DB::transaction(function (): ?string {
+            $order = Order::lockForUpdate()->find($this->orderId);
+
+            if ($order === null) {
+                return 'expired';
+            }
+
+            if ($this->isSettled($order->payment_status)) {
+                return 'settled';
+            }
+
+            return $order->status === OrderStatus::Cancelled ? 'expired' : null;
+        });
+    }
+
+    private function markTerminal(string $state): void
+    {
+        if ($state === 'settled') {
+            $this->settled = true;
+        } else {
+            $this->expired = true;
+        }
     }
 
     private function order(): Order
@@ -57,8 +111,11 @@ class PaymentFailed extends Component
 
     public function proceed(): void
     {
-        if ($this->isCancelled()) {
-            $this->expired = true;
+        // Locked re-read before any branch acts. Covers the retry branch (which
+        // starts a checkout intention) and short-circuits a page that was opened
+        // before the order was cancelled or settled.
+        if (($state = $this->terminalState()) !== null) {
+            $this->markTerminal($state);
 
             return;
         }
@@ -89,15 +146,28 @@ class PaymentFailed extends Component
         }
 
         $instapay = $code === PaymentMethodCode::InstapayWhatsapp;
-        $expired = false;
+        $terminal = null;
 
-        DB::transaction(function () use ($method, $code, $instapay, &$expired): void {
+        DB::transaction(function () use ($method, $code, $instapay, &$terminal): void {
             $order = Order::lockForUpdate()->find($this->orderId);
 
-            // Re-check under the lock: the sweeper may have cancelled it while
-            // the customer was choosing. If so, mutate nothing.
-            if ($order === null || $order->status === OrderStatus::Cancelled) {
-                $expired = true;
+            // Re-check under the lock: between the guard above and here the order
+            // may have been settled (a webhook landed) or cancelled (the
+            // sweeper). Either way, mutate nothing.
+            if ($order === null) {
+                $terminal = 'expired';
+
+                return;
+            }
+
+            if ($this->isSettled($order->payment_status)) {
+                $terminal = 'settled';
+
+                return;
+            }
+
+            if ($order->status === OrderStatus::Cancelled) {
+                $terminal = 'expired';
 
                 return;
             }
@@ -118,8 +188,8 @@ class PaymentFailed extends Component
             ]);
         });
 
-        if ($expired) {
-            $this->expired = true;
+        if ($terminal !== null) {
+            $this->markTerminal($terminal);
 
             return;
         }
@@ -206,21 +276,12 @@ class PaymentFailed extends Component
         return $map[$payment->failure_code] ?? 'pf_reason_generic';
     }
 
-    private function isCancelled(): bool
-    {
-        return (bool) DB::transaction(function (): bool {
-            $order = Order::lockForUpdate()->find($this->orderId);
-
-            return $order === null || $order->status === OrderStatus::Cancelled;
-        });
-    }
-
     public function render(): View
     {
         return view('livewire.shop.payment-failed', [
             'order' => $this->order(),
             'locale' => app()->getLocale(),
-            'reasonKey' => $this->expired ? null : $this->failureReasonKey(),
+            'reasonKey' => ($this->expired || $this->settled) ? null : $this->failureReasonKey(),
         ]);
     }
 }
