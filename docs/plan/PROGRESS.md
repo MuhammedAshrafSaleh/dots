@@ -14,7 +14,7 @@
 - **Next session:** Owner approves all PAY tasks → say "approved, push payments-hardening" to push and merge.
 - **Known test flake (do not fix now):** `CategoriesTest::it_adds_a_main_category_and_a_child` fails intermittently under `--parallel` with a duplicate-slug integrity violation (`قسم-13`). The slug suffix is randomised, so a prior parallel worker occasionally leaves a conflicting row in `dots_testing`. The test passes when run alone (`--filter`). Root cause is likely insufficient isolation between workers for the categories table — probably needs `RefreshDatabase` or a unique-enough slug generator in the test. Observed during `composer gates` on 2026-11-01; not related to any PAY task.
 
-**Git:** branch `payments-hardening` (local, unpushed) · last commit see below · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `payments-hardening` (local, unpushed) · last commit `a97ff5b` · last tag `bulk-import-done` · push state: **not pushed**
 
 Current phase: **Payments hardening on branch `payments-hardening`.** Execution order: PAY.3 → PAY.2 → PAY.1 → PAY.4 → PAY.5 → PAY.6 → PAY.7 → PAY.8. Phase 10 follows after this branch is merged.
 
