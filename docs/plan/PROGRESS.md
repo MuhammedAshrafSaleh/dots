@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
 - **Current task:** T10.4 — **DONE**. Step 4: application deploy — code + prod `.env` + backup restore + caches + pre-launch noindex. Full write-up in `docs/DEPLOY.md` "Step 4" (incl. the **go-live checklist**). **Do not start step 5.**
-- **Last commit:** `__T10.4_HASH__` — `T10.4: application deploy — code, prod .env, backup restore, caches, noindex`.
+- **Last commit:** `fe4e8f3` — `T10.4: application deploy — code, prod .env, backup restore, caches, noindex`.
 - **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Site live with real content over LE HTTPS** (origin-direct, Cloudflare DNS-only).
 - **What was done (step 4):** Deploy key (read-only) as `dots`; `main` init-cloned in place at `/home/dots/htdocs/dots-electric.com` (docroot unchanged). Prod `.env` built from `.env.example` (0640 `dots:dots`), fresh `APP_KEY` (safe — nothing encrypted at rest), `DB_PASSWORD` **reset** (clpctl has no change-pw → empty DB delete+recreate, new pw to owner's PM), all 6 secret values verified byte-exact through the app (SHA-256 match), DB+Redis live-checked. `composer install --no-dev` (PHP 8.5.12, Laravel 13.35.0). Frontend built **on-server** via nvm Node 22.23.0 under `dots` → `public/build`; `node_modules` removed after. **Restore (RESTORE.md + first prod drill):** latest Drive archive decrypted, DB imported into `dots-production` as `dots-app` (stripped all SQL_LOG_BIN/GTID preamble), media 860/860 rsynced, `storage:link`; **all 8 row counts matched the drill exactly**. `migrate --force` = nothing pending; config/route/view/event cached. Ownership verified (0 root-owned, all `dots`, runtime writable). **Noindex** `X-Robots-Tag: noindex, nofollow` in `/etc/nginx/global_settings` (only level that both applies — not cancelled by the existing `add_header`s — and survives vhost regen); **curl-verified on prod** GET+HEAD. Browser-sense check: home/products/category/product/admin-login all 200.
 - **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php` (default is 8.4.27); Node is **nvm-only under `dots`** (activate before building); **`mkdir -p storage/framework/{cache/data,sessions,views}`** after any fresh clone.
@@ -11,7 +11,7 @@
 - **What to verify (owner, on dots.test N/A — this is production):** browse `https://dots-electric.com/ar/`, a category, a product, and `https://dots-electric.com/admin/login` (all render, logo will be broken pending the admin re-upload). `curl -sI https://dots-electric.com/ar/` shows `x-robots-tag: noindex, nofollow`.
 - **Next task:** step 5 — queue worker (separate session). **Do not start step 5.**
 
-**Git:** branch `phase-10` (local, unpushed) · last commit `__T10.4_HASH__` · last tag `backups-done` · push state: **not pushed**
+**Git:** branch `phase-10` (local, unpushed) · last commit `fe4e8f3` · last tag `backups-done` · push state: **not pushed**
 
 Current phase: **Phase 10 — deployment** (`phase-10` branch). T10.4 done.
 
