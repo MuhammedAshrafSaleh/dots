@@ -552,27 +552,28 @@ after any CloudPanel upgrade.
 ## Step 5 — Queue worker and scheduler *(done)*
 
 Executed over SSH (UTC, 2026-11-02). All artisan commands ran as `dots`; systemd units installed as root.
+Step 5 was revised after initial implementation to fix a `retry_after` / concurrent-execution bug and
+to separate queues so `NewOrderMail` cannot be starved by a long-running import.
 
-### a. Service choice — systemd template unit (not supervisor)
+### a. Service choice — systemd named units (not supervisor)
 
 **Why systemd:**
 
 - Zero additional dependencies. Supervisor is a Python daemon not installed on this box; `apt install supervisor`
   adds a new process manager on top of the one the OS already provides.
-- Template units (`dots-queue-worker@.service`) run N named instances from one file —
-  `systemctl enable dots-queue-worker@{1,2}` — with no per-process config duplication.
-- Logs land in journald automatically: `journalctl -u "dots-queue-worker@*.service" -f`; persistent
-  across reboots without separate logrotate config.
-- `Restart=always` + `RestartSec=5` is native; no `autostart`/`autorestart` stanza in a separate
-  supervisor.conf.
-- `systemctl enable` writes the symlink into `multi-user.target.wants` — worker survives reboot
-  without a separate `[program:x]` `autostart=true` line.
+- Logs land in journald automatically: `journalctl -u dots-queue-*.service -f`; persistent across reboots
+  without separate logrotate config.
+- `Restart=always` + `RestartSec=5` is native.
+- `systemctl enable` writes the symlink into `multi-user.target.wants` — workers survive reboots
+  without a separate `autostart=true` line.
 
-**Unit file:** `/etc/systemd/system/dots-queue-worker@.service`
+Two **named** units (not a template) because the two queues have fundamentally different parameters.
+
+**`/etc/systemd/system/dots-queue-default.service`**
 
 ```ini
 [Unit]
-Description=DOTS Laravel Queue Worker %i
+Description=DOTS Laravel Queue Worker — default (mail, fast jobs)
 After=network.target mysql.service redis-server.service
 Wants=mysql.service redis-server.service
 
@@ -582,19 +583,53 @@ User=dots
 Group=dots
 WorkingDirectory=/home/dots/htdocs/dots-electric.com
 ExecStart=/usr/bin/php8.5 /home/dots/htdocs/dots-electric.com/artisan queue:work \
-    --sleep=3 \
-    --tries=3 \
-    --timeout=1800 \
-    --memory=512 \
-    --max-jobs=500
-
+    --queue=default --sleep=3 --tries=3 --timeout=120 --memory=256 --max-jobs=1000
 Restart=always
 RestartSec=5
 KillSignal=SIGTERM
-TimeoutStopSec=1900
+TimeoutStopSec=180
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=dots-queue-%i
+SyslogIdentifier=dots-queue-default
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**`/etc/systemd/system/dots-queue-imports.service`**
+
+```ini
+[Unit]
+Description=DOTS Laravel Queue Worker - imports (ApplyProductImport)
+After=network.target mysql.service redis-server.service
+Wants=mysql.service redis-server.service
+
+# EXACTLY ONE INSTANCE — do not add a second unit for this queue.
+#
+# ApplyProductImport::replaceSpecs() does DELETE + INSERT inside a transaction,
+# and attachMedia() calls clearMediaCollection() then addMedia() (moves files).
+# Two workers on the same import job concurrently — which happens when
+# retry_after fires before the job finishes — corrupt specs via an overlapping
+# delete/insert race and wipe each other's gallery attachments.
+#
+# A single consumer makes concurrent execution of the same import job
+# structurally impossible, independent of retry_after. If you add a second
+# process here, imports MUST first be made idempotent under concurrent execution.
+
+[Service]
+Type=simple
+User=dots
+Group=dots
+WorkingDirectory=/home/dots/htdocs/dots-electric.com
+ExecStart=/usr/bin/php8.5 /home/dots/htdocs/dots-electric.com/artisan queue:work \
+    --queue=imports --sleep=3 --tries=3 --timeout=600 --memory=512 --max-jobs=50
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=660
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dots-queue-imports
 
 [Install]
 WantedBy=multi-user.target
@@ -603,16 +638,88 @@ WantedBy=multi-user.target
 Enabled and started:
 
 ```
-systemctl enable dots-queue-worker@1.service dots-queue-worker@2.service
-systemctl start  dots-queue-worker@1.service dots-queue-worker@2.service
+systemctl daemon-reload
+systemctl enable dots-queue-default.service dots-queue-imports.service
+systemctl start  dots-queue-default.service dots-queue-imports.service
 ```
 
-Verify: `systemctl status "dots-queue-worker@*.service"` (both should show `active (running)`).
-Logs: `journalctl -u "dots-queue-worker@*.service" -f --no-pager`
+Verify: `systemctl status dots-queue-default.service dots-queue-imports.service`
+Logs: `journalctl -u dots-queue-default.service -u dots-queue-imports.service -f`
 
-### b. Worker sizing — reasoning
+### b. Queue separation — which jobs go where
 
-**Memory budget:**
+**Rule: every `ShouldQueue` implementation must declare `public string $queue`.**
+
+| Job | Queue | Timeout | Why |
+|---|---|---|---|
+| `App\Jobs\ApplyProductImport` | `imports` | 600s (declared on job class) | PhpSpreadsheet + Imagick; can run for minutes |
+| `App\Mail\NewOrderMail` (via `Mail::queue()`) | `default` | 120s (worker flag) | Customer-facing; must not be starved by an import |
+
+**What is NOT a queued job:**
+
+- `orders:release-reservations` — registered with `Schedule::command(...)->everyFifteenMinutes()` in
+  `routes/console.php`. The scheduler fires it as a subprocess (`proc_open`) every 15 minutes,
+  completely independent of queue workers. A busy import worker cannot block it.
+- All `$this->dispatch('toast', ...)` calls in Livewire components — these are browser events sent
+  over the Livewire websocket bus, not queue dispatches.
+
+**Queue routing for `ApplyProductImport`:** `public string $queue = 'imports';` is declared on the
+job class itself (`app/Jobs/ApplyProductImport.php`). The dispatch call site in
+`Livewire/Admin/Products/Import.php` needs no `->onQueue()` override.
+
+### c. `retry_after` — the critical invariant
+
+> **Rule: `retry_after` must always exceed the longest job timeout in the application.**
+
+`retry_after` is **not** a retry delay. It is a visibility timeout: when a worker picks up a job,
+Redis hides it for `retry_after` seconds as a zombie-recovery mechanism — if the worker dies
+mid-job, the job becomes visible again after this window and another worker can pick it up.
+
+**The failure mode when this invariant is violated (was true before this fix):**
+
+The original config had `retry_after = 90` (Laravel's default, never overridden). `ApplyProductImport`
+has `$timeout = 600`. At T=90s, a running import's Redis reservation expires and the job re-enters
+the ready queue. A second worker picks it up. Both workers now run the same import job simultaneously:
+
+- `replaceSpecs()` runs `$product->specs()->delete()` + re-insert inside a transaction on both
+  workers. Under MySQL REPEATABLE READ, overlapping write operations produce non-deterministic
+  results: duplicate specs, missing specs, or a deadlock.
+- `attachMedia()` calls `clearMediaCollection('gallery')` (removes all gallery images) then attaches
+  new ones by moving source files. Whichever worker runs `clearMediaCollection` second wipes the
+  gallery the first worker just built. The second worker's `addMedia()` then fails silently
+  (`is_file()` returns false — files already moved) and the product ends up with no images.
+
+This would corrupt data on every import that takes longer than 90 seconds.
+
+**The fix:** `config/queue.php` redis connection:
+
+```php
+// MUST exceed the longest job timeout in the application.
+// ApplyProductImport::$timeout = 600. If retry_after <= that timeout,
+// the job becomes visible again while still running and a second worker
+// picks it up — two concurrent imports corrupt specs (delete+reinsert race)
+// and wipe media galleries (clearMediaCollection race). 1800 = 3× headroom.
+'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 1800),
+```
+
+1800s = 3× the import's 600s timeout. Fast jobs (email, ~1s) are unaffected: they complete and are
+acknowledged in seconds; `retry_after` only triggers for jobs that disappear without acknowledgement
+(worker crash). A crashed-worker email job will be retried after up to 1800s — acceptable.
+
+**If a new long-running job is ever added:** check its `$timeout` against `retry_after = 1800`. If
+it exceeds 1800s, raise `retry_after` accordingly. The comment in `config/queue.php` states this rule
+explicitly so it is not silently "fixed" back to 90.
+
+**Why `--tries=3` is still correct for imports:** when a worker is killed by the 600s timeout
+(SIGTERM → PHP-CLI does not run `finally` blocks), the XLSX and ZIP files are still on disk. A
+genuine retry can restart the import from the original files. The DB transaction rolls back on
+worker death (InnoDB detects the dead connection). So a post-kill retry is both useful and safe.
+With `retry_after=1800`, retries only happen after the previous attempt has timed out — never
+concurrently.
+
+### d. Worker sizing — reasoning
+
+**Memory budget (measured at session start):**
 
 | Component | RSS |
 |---|---|
@@ -624,36 +731,35 @@ Logs: `journalctl -u "dots-queue-worker@*.service" -f --no-pager`
 | Peak FPM budget (30 workers × ~150 MB) | ~4,500 MB |
 | Remaining after peak FPM | **~1,600 MB** |
 
-Two workers × 512 MB = **1,024 MB**, leaving ~576 MB margin above the peak-FPM scenario.
-`free -m` at session start showed 5,919 MB available, confirming the headroom is real.
+Two workers: 256 MB (default) + 512 MB (imports) = **768 MB**, leaving ~830 MB margin.
+`free -m` showed 5,919 MB available, confirming the headroom is real.
 
 **Why each parameter:**
 
-- **`--timeout=1800` (30 min):** The heavy job (PhpSpreadsheet parse + Imagick derivatives for a
-  large catalogue) can run for many minutes. A 10-min timeout would kill a real import mid-run. 1800s
-  gives 3× headroom against a worst-case 500-product import. Re-measure in Step 9 and tighten if
-  justified.
-  *Note: `TimeoutStopSec=1900` in the unit file so systemd waits for an in-progress job to finish before
-  sending SIGKILL on `systemctl stop`.*
+- **default `--timeout=120`:** Ample for SMTP send. A stuck email worker is killed after 2 minutes
+  and retried.
 
-- **`--memory=512` (MB):** This is a *post-job restart trigger* (not a hard cap): after a job
-  completes, if the worker's RSS exceeds 512 MB the process restarts gracefully. Matches FPM's
-  `memory_limit` for a consistent memory envelope. PhpSpreadsheet + framework during parsing fits
-  in this envelope; any growth from leaks is bounded by `--max-jobs`.
+- **imports `--timeout=600`:** Matches `ApplyProductImport::$timeout = 600`. The job-class property
+  takes precedence over the worker `--timeout` flag — both are set to the same value to make the
+  contract explicit. Re-measure real import duration in Step 9 and adjust if needed.
 
-- **`--max-jobs=500`:** Worker recycles after 500 jobs to release any accumulated PHP-internal
-  allocations. 500 lightweight jobs (emails, cache invalidations) complete in minutes; a single heavy
-  import counts as 1.
+- **default `--memory=256`:** `--memory` is a post-job restart trigger, not a hard cap. 128 MB is
+  too close to Laravel's boot + Blade mail template rendering; the worker would restart constantly.
+  256 MB is safely above the working set for email rendering.
 
-- **`--tries=3`:** Transient Redis/MySQL glitches get 3 attempts (immediate retry, no backoff by
-  default). After the 3rd failure the job moves to `failed_jobs` for manual inspection. Increase
-  `--backoff` if transient network errors become a problem.
+- **imports `--memory=512`:** PhpSpreadsheet + Imagick during parsing fits within this envelope;
+  growth from internal PHP caches is bounded by `--max-jobs=50`. Matches FPM's `memory_limit`.
 
-- **2 processes, not 1 or 3+:** On 2 vCPUs, 1 process would block email delivery during a long
-  import; 3+ processes add CPU context-switching and OOM risk if two imports run concurrently.
-  2 processes: one handles lightweight jobs while the other runs the heavy import.
+- **default `--max-jobs=1000`:** Fast jobs; 1000 complete in minutes. High value avoids unnecessary
+  restart gaps.
 
-### c. Scheduler
+- **imports `--max-jobs=50`:** Heavy jobs; recycle every 50 imports to release PhpSpreadsheet and
+  Imagick allocations that may not be fully returned to the OS.
+
+- **`--tries=3` (both):** Three attempts before moving to `failed_jobs`. For imports, see the
+  reasoning above (c). For email: transient SMTP failures get two retries.
+
+### e. Scheduler
 
 Crontab installed for the `dots` user (`sudo -u dots crontab -e`):
 
@@ -665,31 +771,36 @@ Log directory: `/home/dots/logs/` (owned `dots:dots`, mode `750`).
 
 **Proof it fires:** after installing, `/home/dots/logs/scheduler.log` accumulated three distinct
 `INFO  No scheduled commands are ready to run.` lines at :39, :40, and :41 UTC — one per cron tick,
-confirmed by the file's mtime and sequential output. The backup schedule (02:30 + 03:00 Cairo) was
-not due at test time; the scheduler correctly reported nothing to run.
+confirmed by the file's mtime and sequential output.
 
 To check live: `tail -f /home/dots/logs/scheduler.log`
 
-### d. Queue end-to-end proof
+### f. Queue end-to-end proof (both queues)
 
-**Success path** — dispatched `App\Jobs\QueueTest(false)` via `artisan tinker`. Worker log:
-
-```
-2026-11-02 17:40:00 App\Jobs\QueueTest  RUNNING
-2026-11-02 17:40:00 App\Jobs\QueueTest  1.41ms DONE
-```
-
-**Failure path** — dispatched `App\Jobs\QueueTest(true)` (throws `RuntimeException`). Worker
-attempted it 3 times (--tries=3), then the job moved to `failed_jobs`:
+**default queue — success:**
 
 ```
-2026-11-02 17:40:39 App\Jobs\QueueTest  RUNNING → FAIL  (×3)
+2026-11-02 17:57:30 dots-queue-default  App\Jobs\QueueTest  RUNNING
+2026-11-02 17:57:30 dots-queue-default  App\Jobs\QueueTest  3.57ms DONE
 ```
 
-`artisan queue:failed` output:
+**imports queue — success:**
+
 ```
-2026-11-02 17:40:39  db0c764a-…  redis@default  App\Jobs\QueueTest
+2026-11-02 17:57:30 dots-queue-imports  App\Jobs\QueueTest  RUNNING
+2026-11-02 17:57:30 dots-queue-imports  App\Jobs\QueueTest  2.92ms DONE
 ```
+
+Queue isolation confirmed: each worker consumed only its own queue's job.
+
+**imports queue — failure path (3× FAIL → failed_jobs):**
+
+```
+2026-11-02 17:57:48 dots-queue-imports  App\Jobs\QueueTest  RUNNING → FAIL  (×3)
+```
+
+`artisan queue:failed` output showed `redis@imports` — the queue name is recorded correctly, which
+matters when retrying: `queue:retry all` re-dispatches to the original queue.
 
 **Inspecting and retrying failed jobs:**
 
@@ -698,24 +809,28 @@ attempted it 3 times (--tries=3), then the job moved to `failed_jobs`:
 sudo -u dots php8.5 artisan queue:failed
 
 # Retry a single job by its UUID
-sudo -u dots php8.5 artisan queue:retry db0c764a-84e6-471b-af46-c98c14205328
+sudo -u dots php8.5 artisan queue:retry <uuid>
 
-# Retry all failed jobs
+# Retry all failed jobs (re-dispatches to original queue)
 sudo -u dots php8.5 artisan queue:retry all
 
-# Delete a single failed job (if you decide not to retry)
-sudo -u dots php8.5 artisan queue:forget db0c764a-84e6-471b-af46-c98c14205328
+# Delete a single failed job
+sudo -u dots php8.5 artisan queue:forget <uuid>
 
 # Delete all failed jobs
 sudo -u dots php8.5 artisan queue:flush
 ```
 
-*(The test job class `app/Jobs/QueueTest.php` was removed from the server after the drill — it is
-not in the repo.)*
+*(The test job class `app/Jobs/QueueTest.php` was used only for this drill — it is not in the repo.)*
 
-### e. `queue:restart` in the deploy sequence
+### g. `queue:restart` — proof and deploy placement
 
-**Where it belongs:**
+**Proof it works:** before the restart signal both workers had PIDs 88433/88434. After
+`artisan queue:restart`, both workers exited cleanly (each finished its current sleep cycle, saw the
+Redis restart flag, and exited). systemd relaunched them within `RestartSec=5`. New PIDs: 88468/88469.
+Both units showed `restart counter is at 1` in `journalctl`.
+
+**Where it belongs in the deploy sequence:**
 
 ```
 git pull origin main
@@ -729,21 +844,16 @@ php8.5 artisan queue:restart          ← HERE
 # (php-fpm reload if needed)
 ```
 
-**Why after the caches, not before:** `queue:restart` works by writing a timestamp to Redis that
-workers poll after each job. Workers that pick up the signal load fresh code. If you restart *before*
-`config:cache`, the newly-booted worker reads the uncached config — which is fine but unnecessary.
-If you restart *after* `config:cache`, the worker boots with the complete new cache set. More
-importantly: `queue:restart` **before** `git pull` would restart workers onto the old code they
-already have — the new signal would be consumed by old workers, and the freshly-deployed workers
-after the pull would never see it. The caches must be built first for the restart to be meaningful.
+**Why after the caches:** `queue:restart` sets a Redis timestamp; workers check it after completing
+each job, then exit gracefully. Workers boot fresh with the new code and the complete new cache set.
+Running `queue:restart` before `git pull` restarts workers onto the old code — the signal is consumed
+by old workers and the freshly-deployed code never triggers a restart.
 
-**What happens to the currently running job:** `queue:restart` does not kill workers mid-job. It sets
-a Redis flag; each worker sees it after completing its current job, drains its state cleanly, and
-exits. systemd's `Restart=always` immediately relaunches it with the new code.
+**What happens to an in-progress job:** workers are not killed mid-job. Each finishes its current
+job, sees the restart flag, and exits. systemd immediately relaunches with new code.
 
-**What happens if `queue:restart` is skipped:** workers continue running old code indefinitely. New
-jobs are processed by old class definitions. If a deploy changes a job's constructor or adds a
-required property, old workers throw on the new payload format.
+**What happens if skipped:** workers keep running old class definitions indefinitely; a changed job
+constructor throws on the new payload format.
 
 ---
 

@@ -36,7 +36,9 @@ class ApplyProductImport implements ShouldQueue
         public string $xlsxPath,
         public ?string $zipPath,
         public string $locale,
-    ) {}
+    ) {
+        $this->onQueue('imports');
+    }
 
     public function handle(
         ProductImportParser $parser,

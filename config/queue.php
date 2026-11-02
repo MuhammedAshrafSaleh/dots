@@ -68,7 +68,12 @@ return [
             'driver' => 'redis',
             'connection' => env('REDIS_QUEUE_CONNECTION', 'default'),
             'queue' => env('REDIS_QUEUE', 'default'),
-            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 90),
+            // MUST exceed the longest job timeout in the application.
+            // ApplyProductImport::$timeout = 600. If retry_after <= that timeout,
+            // the job becomes visible again while still running and a second worker
+            // picks it up — two concurrent imports corrupt specs (delete+reinsert race)
+            // and wipe media galleries (clearMediaCollection race). 1800 = 3× headroom.
+            'retry_after' => (int) env('REDIS_QUEUE_RETRY_AFTER', 1800),
             'block_for' => null,
             'after_commit' => false,
         ],

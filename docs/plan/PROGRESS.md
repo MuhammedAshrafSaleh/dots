@@ -2,13 +2,13 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
-- **Current task:** T10.5 — **DONE**. Step 5: queue worker (systemd) + scheduler cron. Full write-up in `docs/DEPLOY.md` "Step 5".
-- **Last commit:** `e58b414` — `T10.5: queue worker (systemd), scheduler cron, end-to-end proof`.
+- **Current task:** T10.5 — **DONE**. Step 5 (revised): queue workers (systemd, two named units, split queues) + scheduler + retry_after fix. Full write-up in `docs/DEPLOY.md` "Step 5".
+- **Last commit:** (see below — commit pending this session).
 - **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Site live with real content over LE HTTPS.**
-- **What was done (step 5):** Two systemd worker instances (`dots-queue-worker@1` + `@2`) running as `dots`, php8.5, enabled for reboot survival. Scheduler cron installed for `dots` user (every minute, logs to `/home/dots/logs/scheduler.log`). Queue end-to-end proven: success job `DONE` in worker log; failing job landed in `failed_jobs` after 3 tries. Scheduler log shows 3 sequential ticks from cron. `queue:restart` documented in DEPLOY.md with placement + reasoning.
+- **What was done (step 5 revised):** Two named systemd units (`dots-queue-default` + `dots-queue-imports`), each consuming a separate queue. `ApplyProductImport` declares `$queue = 'imports'`. `retry_after` raised from 90→1800 in `config/queue.php` (prevents concurrent execution of the same import job). End-to-end proof on both queues: success + failure path, queue isolation confirmed. `queue:restart` proven: PIDs changed, systemd relaunched both workers.
 - **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php`; Node is nvm-only under `dots`; `mkdir -p storage/framework/{cache/data,sessions,views}` after fresh clone.
 - **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data`; **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp); step 6 (mail).
-- **What to verify (owner):** `systemctl status "dots-queue-worker@*.service"` — both active; `tail /home/dots/logs/scheduler.log` — growing every minute.
+- **What to verify (owner):** `systemctl status dots-queue-default.service dots-queue-imports.service` — both active; `tail /home/dots/logs/scheduler.log` — growing every minute.
 - **Next task:** step 6 — mail (separate session).
 
 **Git:** branch `phase-10` (local, unpushed) · last tag `backups-done` · push state: **not pushed**
