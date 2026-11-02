@@ -283,23 +283,199 @@ behind it. With the proxy off (current state) the jail would see real client IPs
 
 ---
 
-## Step 4 — Application deploy
+## Step 4 — Application deploy *(done)*
 
-*(to be filled in)*
+Executed over SSH (UTC, 2026-11-02). All code / git / build / artisan ran **as the `dots` site user**
+(`sudo -u dots -H …`), never as root. Site now serves the real application at
+`https://dots-electric.com` with content restored from the Google-Drive backup.
 
-### Carry-forward tasks into step 4 (explicit, not reminders)
+### Standing rules for this server (traps — read before touching it)
 
-- **T4-TASK: block search-engine indexing until launch.** Because Cloudflare is DNS-only (step 3),
-  the site is **publicly reachable at the real domain `https://dots-electric.com` before launch** —
-  nothing gatekeeps it. The app **must** be prevented from being indexed until go-live. Implement as a
-  deliberate deploy task: serve `X-Robots-Tag: noindex, nofollow` (and/or a `robots.txt` disallow-all)
-  for the whole site while in pre-launch, and **remove it as part of the go-live checklist**. Do not
-  rely on "search engines probably won't find it".
-- **App `.env` (from step 2):** `DB_HOST=127.0.0.1`, DB `dots-production` / user `dots-app` (new
-  password from step 3, in the owner's password manager), `REDIS_PASSWORD` (step-2 value), queue/cache/
-  session on Redis. `QUEUE_CONNECTION=database`/`redis` in prod needs a running `php artisan queue:work`
-  (NewOrderMail is queued).
-- **FPM `max_execution_time` (step 2 carry-forward):** measure real Excel parse/preview before raising
-  past 180s.
-- **Queue worker sizing (step 2 carry-forward):** heavy import (PhpSpreadsheet + image derivatives)
-  runs in the worker — size memory/timeout against free RAM.
+- **`php8.5`, never `php`.** The box's default `php` is **8.4.27**; the site's FPM pool + gates run on
+  **8.5.12**. Every `artisan`/`composer` command must be `php8.5 …` (composer: `php8.5 "$(which composer)" …`).
+  A bare `php artisan` silently runs on 8.4 — do not use it.
+- **Node is nvm-only, under `dots`.** A fresh root shell has no `node` on PATH. Builds run as `dots`
+  after activating nvm: `export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22.23.0`.
+- **After every `git clone`/fresh checkout, create the writable runtime dirs** — the repo does **not**
+  track them, and `artisan` throws *"Please provide a valid cache path"* without them:
+  `mkdir -p storage/framework/{cache/data,sessions,views}`.
+
+### a. GitHub access — read-only deploy key
+
+A **deploy key** (least privilege: scoped to this one repo, read-only, no token rotation) generated as
+`dots` at `~/.ssh/dots_deploy` (ed25519), with `~/.ssh/config` routing `github.com` → that key
+(`IdentitiesOnly yes`). Added on GitHub → repo → Settings → Deploy keys (write access **off**). Auth
+verified: `ssh -T git@github.com` → "Hi MuhammedAshrafSaleh/dots!". The server only ever **pulls**.
+
+### b. Clone `main` in place (docroot path never moves)
+
+CloudPanel's docroot is fixed at `…/dots-electric.com/public`. To avoid any window where that path is
+missing, the repo was **init-cloned in place** (not a rename/swap): `git init -b main` →
+`git remote add origin git@github.com:MuhammedAshrafSaleh/dots.git` → fetch `main` only
+(`remote.origin.fetch = +refs/heads/main:refs/remotes/origin/main`) → removed the 31-byte CloudPanel
+placeholder `public/index.php` (backed up to `/home/dots/placeholder-index.php.bak`) → `git checkout -b
+main --track origin/main`. `public/.well-known/` (ACME) is untracked and left intact. Deploy branch is
+**`main`**.
+
+### c. Production `.env`
+
+Built **from `.env.example`** (never the local `.env`), perms `0640 dots:dots`, written via a quoted
+heredoc piped to `tee` (so special chars — `/ = @ ! //` in the DB/backup/Google secrets — land
+byte-exact; never echoed through a shell). Keys set (**names only**): `APP_ENV=production`,
+`APP_DEBUG=false`, `APP_URL=https://dots-electric.com`, `APP_KEY`, `APP_NAME/LOCALE/FALLBACK/FAKER`,
+`BCRYPT_ROUNDS`, `LOG_CHANNEL/STACK/DAILY_DAYS/DEPRECATIONS_CHANNEL`, `LOG_LEVEL=warning`,
+`DB_CONNECTION/HOST/PORT`, `DB_DATABASE=dots-production`, `DB_USERNAME=dots-app`, `DB_PASSWORD`,
+`SESSION_DRIVER=redis`, `SESSION_SECURE_COOKIE=true`, `SESSION_ENCRYPT/LIFETIME/PATH/DOMAIN`,
+`CACHE_STORE=redis`, `QUEUE_CONNECTION=redis`, `REDIS_CLIENT=phpredis`, `REDIS_HOST/PORT/PASSWORD`,
+`IMAGE_DRIVER=imagick`, `FILESYSTEM_DISK=local`, `BROADCAST_CONNECTION=log`, `MAIL_MAILER=log`
+(placeholder — real mail is step 6), `MAIL_FROM_ADDRESS=no-reply@dots-electric.com`,
+`BACKUP_NOTIFICATION_EMAIL`, `BACKUP_ARCHIVE_PASSWORD`, `GOOGLE_DRIVE_CLIENT_ID/SECRET/REFRESH_TOKEN`,
+`GOOGLE_DRIVE_FOLDER` (empty). Left **empty by design**: `AWS_*`, `PAYMOB_*`, `ADMIN_EMAIL/PASSWORD`.
+Values never stored in the repo.
+
+- **`APP_KEY` — generated fresh** (`openssl rand -base64 32`, prefixed `base64:`, byte-identical to
+  `key:generate` for the `AES-256-CBC` cipher; done on-server so it never left the box). This is **safe**:
+  a codebase audit found **no** `encrypted` casts, no `Crypt::encrypt`, `SESSION_ENCRYPT=false` — nothing
+  is encrypted at rest, so a new key makes no restored data unreadable. (Passwords/tokens are *hashed*,
+  not key-encrypted.)
+- **Trusted proxies — none needed.** The app does **not** configure `trustProxies()`, and the outer 443
+  block does **not** send `X-Forwarded-Proto`. HTTPS is detected because the inner 8080 block sets
+  `fastcgi_param HTTPS "on"` → `request()->isSecure()` is true via the native server-param path. Verified
+  on the live site: `isSecure()` true, generated URLs `https://`. (Client IP relies on the step-3 nginx
+  `real_ip` rewrite, not proxy trust.) If the inner `HTTPS "on"` ever goes away, add explicit proxy trust.
+- **`ADMIN_PASSWORD` empty is safe:** the only enforcement is a throw inside `RolesAndAdminSeeder`, which
+  step 4 never runs (admin comes from the restore). `config/dots.php` returns `null` with no boot guard.
+- **`DB_PASSWORD` was reset in this step.** The step-3 password was lost, and CloudPanel 6.0.8 `clpctl`
+  has **no** DB-user password-change command (only `db:add/delete/export/import/show:master-credentials`;
+  `user:reset:password` is for *panel* users). So the empty DB was **deleted + recreated** via
+  `clpctl db:delete` + `clpctl db:add` (owner-approved; same pattern as the step-3 site recreate) — keeps
+  the panel's stored credential in sync with MySQL. New password handed to the owner once (password
+  manager), verified connecting over `127.0.0.1`.
+
+### d. Build for production
+
+- `php8.5 "$(which composer)" install --no-dev --optimize-autoloader` → `vendor/` (109 pkgs, no dev),
+  **Composer 2.10.3**, **Laravel 13.35.0**, **PHP 8.5.12** (matches local exactly).
+- **Frontend built on-server** (deploy must be a documented on-box sequence, not laptop-dependent):
+  Node **v22.23.0** / npm **10.9.8** via **nvm under `dots`** — the exact version local builds use (no
+  `engines`/`.nvmrc`; Vite 8 needs ≥ Node 20.19/22.12; v22 is LTS). `npm ci && npm run build` → `public/build`
+  (manifest + `site.css`/`admin.css`/`app.js`/`admin.js`). **`node_modules` removed after the build**
+  (137 MB freed); the app runs and the Vite manifest resolves without it (Laravel needs `node_modules`
+  only at build time).
+- **Verified through the app** (not by eyeballing `.env`): `artisan about` → env `production`, debug OFF;
+  SHA-256 of each secret read back via `env()` **matched** the local-expected hashes (special chars intact);
+  `DB_CONNECT=OK`, `REDIS_PING=true`.
+
+### e. Content restore (RESTORE.md — also the first prod restore drill)
+
+`php8.5 artisan dots:backup-download` → latest archive `2026-11-01-19-31-46.zip` (80,607,508 B) →
+decrypt via PHP `ZipArchive` with `BACKUP_ARCHIVE_PASSWORD` (1204 entries). **DB imported into the empty
+`dots-production` directly** (deviation from RESTORE.md's scratch-DB step — that step protects *live* data,
+and this DB was empty/pre-launch). Import ran as **`dots-app`**, which lacks `SUPER`, so **all**
+`SQL_LOG_BIN`/`GTID_PURGED` preamble lines were stripped (RESTORE.md strips 2; a `dots-app` import needs
+the session-`SQL_LOG_BIN` restore line gone too — it only affects binary logging during restore). Media
+`rsync -a --delete`'d from the archive (authoritative over the repo's tracked demo images) →
+`storage/app/public`, owned `dots`; `storage:link` created. Decrypted artifacts (`/home/dots/restore`,
+customer data) removed afterward.
+
+**Objective verification — all row counts matched the 2026-11-01 drill exactly:**
+
+| products | variants | categories | brands | orders | customers | pages | settings |
+| -------: | -------: | ---------: | -----: | -----: | --------: | ----: | -------: |
+|       18 |       30 |         65 |      8 |    108 |         9 |     6 |       37 |
+
+Media **860 / 860 files** (exact). Size: `du` disk 84,040 KB · apparent 80,902 KB · drill-ref 82,664 KB —
+the spread is ext4 block accounting vs the mac the drill ran on; identical file count + `rsync -a` (exact
+bytes) = intact.
+
+**Content URL audit (restored data):** content tables (`pages`, `page_sections`, `faqs`) are **clean** —
+zero `dots.test`/`http://`. The bulk of `dots.test` hits are **transactional snapshots** — `order_items`
+(132), `quote_requests` (40), `orders` (2), and a test `pf-test@dots.test` account — which are **demo data
+that `php artisan dots:clean-demo-data` deletes before launch** (TEST-/demo products, demo customers, all
+orders, carts, leads, import logs). **They resolve on their own via clean-demo-data — not a bug; do not
+hand-edit historical records.** The one genuine content bug is `settings.brand.logo_url` (see go-live).
+
+### f. Migrate + caches
+
+`php8.5 artisan migrate --force` → **Nothing to migrate** (restored migration table already at `main`).
+`storage:link` confirmed. Production caches built: `config:cache`, `route:cache`, `view:cache`,
+`event:cache` — all CACHED. **If `.env` or config changes later, `config:clear` first** (cached config
+ignores `.env`).
+
+### g. Ownership & permissions (verified, not assumed)
+
+Under the whole site tree: **0** files owned by root/group-root, **0** not owned by `dots` (uid 1001).
+All runtime paths (`storage/**`, `bootstrap/cache`) writable by `dots`; `touch`+`rm` as `dots` succeeded.
+nginx runs **as root** (CloudPanel model: root nginx, per-site FPM as the site user), so it reads the
+`770 dots:dots` tree fine — assets and media serve without a perms change.
+
+### h. Pre-launch noindex (single switch — REMOVE at go-live)
+
+Serves `X-Robots-Tag: noindex, nofollow` on all HTML responses. **It is in `/etc/nginx/global_settings`,
+not an http-scope `add_header` and not the vhost** — both were ruled out empirically:
+
+- **http-scope is cancelled by inheritance.** `global_settings` already defines `add_header`s
+  (X-Frame-Options, etc.) at the outer server level; nginx ignores parent `add_header`s in any block that
+  defines its own, so an http-scope header never reaches HTML responses. The fix must sit at the **same
+  level** as the existing headers → inside `global_settings`.
+- **The vhost alone is fragile** — CloudPanel regenerates per-site vhosts. `global_settings` is a global
+  CloudPanel file that per-site regeneration doesn't touch (same durability class as the step-3
+  `nginx.conf` real-IP edit).
+
+Applied under a `systemd-run` rollback timer (`nginx -t` → reload → verify → cancel). **Proven with curl
+on production** (not just "config present"): `x-robots-tag: noindex, nofollow` on GET **and** HEAD, on `/`
+(302) and `/ar/` (200). **To remove at go-live:** delete the 3 banner lines (`PRE-LAUNCH NOINDEX …`) from
+`/etc/nginx/global_settings` and `nginx -s reload`. Backup at `/root/global_settings.pre-noindex.bak`.
+*(Caveat: a CloudPanel update could rewrite `global_settings` — re-check the line is present if the panel
+is updated before launch.)*
+
+### i. Browser-sense verification (live, on production)
+
+All GET from the real domain: `/ar/` **200** (real `<title>`, 90 storage images, 2 build assets),
+`/ar/products` **200**, `/ar/c/9` **200**, a product detail **200**, `/admin/login` **200** (login form +
+`wire:submit`), `/admin` **302**→login. Assets/images **200** with correct content-types (`site.css`,
+`app.js`, a `/storage/**/conversions/*.webp`, `/storage/brand/logo.png`).
+
+**Known defect, pending go-live admin action:** the header/footer logo renders broken because
+`settings.brand.logo_url = http://dots.test/storage/brand/logo.png`. The logo **file** serves fine over
+https on prod; the field is an admin **upload** widget (no text box), so the fix is to **re-upload the
+logo in admin → Settings → Brand** (regenerates the URL as `https://dots-electric.com/…` and proves admin
+settings editing). Do **not** SQL-edit it.
+
+### Carry-forwards still open (into later steps)
+
+- **Step 5 (queue worker):** `QUEUE_CONNECTION=redis` is set but **no worker runs yet** — queued jobs
+  (e.g. `NewOrderMail`) accumulate until `php artisan queue:work` is running. Size memory/timeout against
+  free RAM (heavy import = PhpSpreadsheet + image derivatives runs in the worker).
+- **Step 6 (mail):** `MAIL_MAILER=log` is a placeholder — configure real SMTP.
+- **Step 9 (FPM `max_execution_time`):** measure real Excel parse/preview before raising past 180s.
+- **fail2ban nginx jail** (from step 3) — still deferred to after app deploy.
+
+---
+
+## Go-live checklist (blocking — do before launch)
+
+**Infra / deploy:**
+- [ ] **Remove the pre-launch noindex** — delete the `PRE-LAUNCH NOINDEX` banner lines from
+  `/etc/nginx/global_settings` + `nginx -s reload`; confirm `curl -sI https://dots-electric.com/ar/` no
+  longer shows `x-robots-tag`.
+- [ ] **Fix `brand.logo_url`** — re-upload the logo in admin → Settings → Brand; confirm the storefront
+  header/footer logo loads over `https://dots-electric.com`.
+- [ ] **Run `php artisan dots:clean-demo-data`** — removes TEST-/demo products, demo customers, all orders,
+  carts, leads, import logs. This also clears every `dots.test` URL left in `order_items`/`quote_requests`/
+  `orders` and the `pf-test@dots.test` account.
+- [ ] Step 5 (queue worker) and Step 6 (real mail) completed.
+
+**`contact.email` — ⚠️ currently the developer's personal Gmail (`muhammedashrafsaleh@gmail.com`) on the
+client's public-facing contact. MUST be changed to the client's own address before launch.**
+
+**Pending-from-client content (placeholders in `settings` — all must be real values):**
+- [ ] `contact.hotline` (currently `19XXX`)
+- [ ] `commerce.instapay_address` (currently `01012345678`)
+- [ ] `contact.social_facebook` / `social_instagram` / `social_linkedin` / `social_youtube` (generic
+  `facebook.com`/… placeholders)
+- [ ] `contact.maps_url` (currently generic `maps.google.com`)
+- [ ] `seo.og_image` (empty)
+- [ ] **Confirm** `contact.whatsapp_number` (`201500060828`) is the real business number.
+
+**Paymob (see `docs/PAYMOB_GOLIVE.md`):** card payment stays hidden until `PAYMOB_*` are set in `.env`.
