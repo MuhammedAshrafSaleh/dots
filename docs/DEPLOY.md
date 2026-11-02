@@ -1011,6 +1011,222 @@ the password reset page will show a 500 error.
 
 ---
 
+## Step 7 — Backups on production *(done)*
+
+Executed over SSH (UTC, 2026-11-02→03). All artisan commands ran as `dots`.
+
+### a. Production backup — run and verified
+
+A manual `backup:run` was executed from within the app directory and confirmed
+to land in Drive:
+
+```
+Starting backup...
+Dumping database dots-production...
+Determining files to backup...
+Zipping 1204 files and directories...
+Created zip containing 1204 files and directories. Size is 76.88 MB
+Copying zip to disk named google-drive...
+Successfully copied zip to disk named google-drive.
+Backup completed!
+```
+
+**Archive contents:** 1,204 files — the `dots-production` database dump plus all
+860 media files under `storage/app/public`. Code is in git and not backed up
+(PRD §13). The archive is AES-encrypted with `BACKUP_ARCHIVE_PASSWORD`.
+
+**Drive state after the runs:**
+
+| File | Size | Created (UTC) |
+|------|------|---------------|
+| `DOTS/2026-11-01-19-31-46.zip` | 76.87 MB | 2026-11-01 19:34 |
+| `DOTS/2026-11-02-23-31-20.zip` | 76.88 MB | 2026-11-02 23:31 |
+| `DOTS/2026-11-02-23-36-19.zip` | 76.88 MB | 2026-11-02 23:36 |
+
+`backup:list` reports: disk reachable ✅, health ✅, used storage 230.64 MB.
+
+**Operator note — working directory matters.** Running `backup:run` via
+`sudo -u dots` while the shell's working directory is `/root` causes a
+`posix_spawn() Permission denied` because `mysqldump` is spawned as `dots`
+but inherits `/root`. Always run from a directory `dots` can access:
+
+```bash
+cd /home/dots/htdocs/dots-electric.com && sudo -u dots php8.5 artisan backup:run
+# or equivalently:
+cd /home/dots && sudo -u dots php8.5 /home/dots/htdocs/dots-electric.com/artisan backup:run
+```
+
+The scheduler cron runs as the `dots` user with home-directory working path, so
+**this issue cannot occur for scheduled runs** — only for manual operator runs.
+
+### b. Scheduled runs — evidence and next fire times
+
+The scheduler has been running since step 5. Evidence: `/home/dots/logs/scheduler.log`
+accumulates one `schedule:run` tick per minute continuously, with dated lines for
+commands that actually fire (e.g. `orders:release-reservations` at `:30` past). The
+scheduler itself is healthy.
+
+**The three backup commands and when they next fire:**
+
+| Command | Cairo schedule | UTC equivalent | Next run |
+|---------|---------------|----------------|----------|
+| `backup:clean` | daily 02:30 | 00:30 UTC | 2026-11-03 00:30 UTC |
+| `backup:run` | daily 03:00 | 01:00 UTC | 2026-11-03 01:00 UTC |
+| `backup:monitor` | daily 03:30 | 01:30 UTC | 2026-11-03 01:30 UTC |
+
+Egypt is UTC+2 (EET, no DST since 2011). Cairo 03:00 = UTC 01:00 year-round.
+
+All three use `->withoutOverlapping()` (backup:clean, backup:run) or run briefly
+enough that overlap is not a concern (backup:monitor). `withoutOverlapping` drops
+the command if a previous run is still in progress — correct for nightly operations.
+
+**To confirm an unattended run happened:**
+```bash
+tail -50 /home/dots/logs/scheduler.log
+```
+Look for lines like:
+```
+2026-11-03 01:00:xx Running ['artisan' backup:run]  NNNNms DONE
+```
+
+If `backup:run` fails the scheduler log will still show `DONE` (exit code of the
+artisan process), but `storage/logs/laravel.log` will contain a `[backup]` ERROR
+entry and a `BackupHasFailedNotification` email will arrive at `BACKUP_NOTIFICATION_EMAIL`.
+
+### c. Retention — keep-7 in force
+
+**Configuration (`config/backup.php` DefaultStrategy):**
+
+| Setting | Value |
+|---------|-------|
+| `keep_all_backups_for_days` | **7** |
+| `keep_daily_backups_for_days` | 0 |
+| `keep_weekly_backups_for_weeks` | 0 |
+| `keep_monthly_backups_for_months` | 0 |
+| `keep_yearly_backups_for_years` | 0 |
+
+**Effect:** every archive created within the last 7 calendar days is kept in full.
+Archives older than 7 days are deleted by `backup:clean` (no daily/weekly/monthly
+fallback window — everything older than day 7 goes). With one run per day the maximum
+on Drive is 7 archives.
+
+**What would be deleted and when (given the current archives):**
+
+| Archive | Created | Deleted by `backup:clean` on |
+|---------|---------|------------------------------|
+| `2026-11-01-19-31-46.zip` | 2026-11-01 | 2026-11-08 at 02:30 Cairo |
+| `2026-11-02-23-31-20.zip` | 2026-11-02 | 2026-11-09 at 02:30 Cairo |
+| `2026-11-02-23-36-19.zip` | 2026-11-02 | 2026-11-09 at 02:30 Cairo |
+
+Nothing is deleted tonight. The oldest archive (`2026-11-01`) will be the first to go
+in five days' time.
+
+### d. Restore position
+
+**Step 4 satisfies the "a backup is not a backup until restored" requirement on production.**
+
+Step 4 downloaded `DOTS/2026-11-01-19-31-46.zip` from Drive to the production server,
+decrypted it with `BACKUP_ARCHIVE_PASSWORD`, imported the SQL dump into `dots-production`,
+and `rsync`'d the media files into `storage/app/public`. The result was verified against
+the reference row counts from the local drill:
+
+| products | variants | categories | brands | orders | customers | pages | settings |
+| -------: | -------: | ---------: | -----: | -----: | --------: | ----: | -------: |
+|       18 |       30 |         65 |      8 |    108 |         9 |     6 |       37 |
+
+Media: **860 / 860 files**, byte-exact. This was a **full restore on production hardware**
+using the documented RESTORE.md procedure.
+
+**One deviation from RESTORE.md's scratch-DB step:** RESTORE.md recommends restoring
+into a scratch database first, then promoting to production, to protect a live database.
+Step 4 skipped this because the `dots-production` DB was empty at the time (pre-launch,
+nothing to lose). On a **future drill with live data**, the scratch-DB step is mandatory —
+do not import directly into the live database.
+
+**Future restore procedure reminder (RESTORE.md):**
+```bash
+# Download + decrypt
+cd /home/dots/htdocs/dots-electric.com
+sudo -u dots php8.5 artisan dots:backup-download   # fetches latest from Drive
+
+# Import into scratch (protecting live data)
+mysql -u dots-app -p dots-scratch < /home/dots/restore/db-dumps/mysql-dots-production.sql
+
+# Verify row counts, then promote:
+# mysqldump dots-scratch | mysql -u dots-app -p dots-production
+# rsync -a --delete /home/dots/restore/storage/app/public/ storage/app/public/
+```
+
+### e. Drive storage headroom
+
+**Current state:**
+- Drive used: 230.64 MB (3 archives)
+- Per archive: ~76.88 MB (860 media files + DB dump, compressed + encrypted)
+- Free tier cap: 15 GB (15,360 MB)
+- At steady state (7 archives × 76.88 MB): **~538 MB = 3.5% of free tier**
+
+**Growth projection (current: 18 products, 860 media files):**
+
+| Catalog size | Est. archive | 7 archives | % of 15 GB |
+|-------------|-------------|-----------|-----------|
+| Current (18 products) | 77 MB | 538 MB | 3.5% |
+| 10× (180 products) | ~770 MB | ~5.4 GB | 36% |
+| 20× (360 products) | ~1.5 GB | ~10.5 GB | 70% |
+
+**The free 15 GB is not a near-term problem.** At the current archive size the
+account would need to hold ~195 days × 7 = 1,368 daily archives before approaching
+15 GB — that's impossible because retention deletes after 7. The real constraint
+is growth in media files. Even at 10× catalog scale (highly optimistic for this
+client over several years) the quota remains comfortable. Upgrade to Google One
+(100 GB, ~$25/year) if the archive size ever approaches 1.5 GB.
+
+**To monitor:** `backup:monitor` at 03:30 daily runs health checks including a
+`MaximumStorageInMegabytes` check against the configured threshold
+(`config/backup.php`, `monitor_backups` section). Sends `UnhealthyBackupWasFoundNotification`
+if the limit is exceeded.
+
+### f. Client warnings — do not lose backup access
+
+⚠️ **These two actions silently break backups. Hand them over at client handoff.**
+
+1. **Do not change the password of the Google account that holds the backups.**
+   The backup system authenticates via OAuth. The access and refresh tokens in
+   `.env` (`GOOGLE_DRIVE_CLIENT_ID`, `GOOGLE_DRIVE_CLIENT_SECRET`,
+   `GOOGLE_DRIVE_REFRESH_TOKEN`) are tied to the Google account that authorised
+   the app. If the account password is changed, Google invalidates all OAuth
+   tokens for high-risk clients. The next `backup:run` will fail with a
+   `401 Unauthorized` from the Drive API, and **no backup will be written to
+   Drive until the tokens are re-issued** (requires re-running the OAuth flow
+   locally and updating `.env` on the server). A failure notification email will
+   arrive at `BACKUP_NOTIFICATION_EMAIL` — but only if `MAIL_MAILER` is still
+   working at that point.
+
+2. **Do not revoke the app's access in Google account settings.**
+   In the Google Account → Security → "Third-party apps with account access"
+   panel, the backup app appears. Revoking it invalidates the OAuth refresh
+   token immediately. The effect is identical to point 1: next `backup:run`
+   fails, no archive is written, failure notification arrives. Re-authorising
+   requires regenerating the refresh token (local OAuth flow, update `.env`,
+   `php8.5 artisan config:cache`).
+
+**Recovery procedure if either happens:**
+
+```bash
+# 1. Re-run the OAuth flow locally (same as BK.2 original setup):
+#    php artisan google:auth   (generates a new refresh token)
+#
+# 2. SSH to production and update .env:
+ssh root@dots-electric.com
+nano /home/dots/htdocs/dots-electric.com/.env   # update GOOGLE_DRIVE_REFRESH_TOKEN
+cd /home/dots/htdocs/dots-electric.com
+sudo -u dots php8.5 artisan config:cache
+#
+# 3. Verify:
+cd /home/dots && sudo -u dots php8.5 /home/dots/htdocs/dots-electric.com/artisan backup:run
+```
+
+---
+
 ## Go-live checklist (blocking — do before launch)
 
 **Infra / deploy:**
@@ -1028,6 +1244,7 @@ the password reset page will show a 500 error.
   `DB::statement('ALTER TABLE orders AUTO_INCREMENT = 10001')` after truncating all orders.
 - [x] Step 5 (queue worker) — done.
 - [x] Step 6 (real mail) — done. Resend transport; delivery to Primary inbox confirmed; SPF pass, DKIM pass (d=dots-electric.com), DMARC pass. See Step 6 section.
+- [x] Step 7 (backups) — done. Drive backup verified (76.88 MB, 1204 files, encrypted); scheduled 03:00 Cairo daily; keep-7 retention; step-4 restore qualifies as production drill. See Step 7 section.
 
 **`contact.email` — ⚠️ currently the developer's personal Gmail (`muhammedashrafsaleh@gmail.com`) on the
 client's public-facing contact. MUST be changed to the client's own address before launch.**
