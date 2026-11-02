@@ -2,14 +2,17 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
-- **Current task:** T10.5 — **DONE**. Step 5 (revised): queue workers (systemd, two named units, split queues) + scheduler + retry_after fix. Full write-up in `docs/DEPLOY.md` "Step 5".
-- **Last commit:** `7170102` — `T10.5 fix: queue split, retry_after 90→1800, imports queue worker`.
-- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Site live with real content over LE HTTPS.**
-- **What was done (step 5 revised):** Two named systemd units (`dots-queue-default` + `dots-queue-imports`), each consuming a separate queue. `ApplyProductImport` declares `$queue = 'imports'`. `retry_after` raised from 90→1800 in `config/queue.php` (prevents concurrent execution of the same import job). End-to-end proof on both queues: success + failure path, queue isolation confirmed. `queue:restart` proven: PIDs changed, systemd relaunched both workers.
+- **Current task:** T10.6 — **WAITING FOR OWNER**. Step 6: Resend mail transport wired. Queue path proven. Password reset test dispatched — owner must check inbox and report delivery + SPF/DKIM/DMARC headers.
+- **Last commit:** `bb5d1cd` — `T10.6a: add resend/resend-php for native Laravel 13 mail transport`.
+- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Mail is live: `MAIL_MAILER=resend`, `RESEND_API_KEY` set, config cache rebuilt.**
+- **What was done (step 6):** Installed `resend/resend-php ^1.0` (native Laravel 13 transport). Production `.env` updated: `MAIL_MAILER=resend`, `RESEND_API_KEY`, cleaned stale SMTP vars. Config cache rebuilt. Queue worker restarted after package install. Queue path proven end-to-end (NewOrderMail via default queue, 0 failed). Backup failure notification triggered synchronously — 0 failures. Password reset triggered at `/ar/forgot-password` for `muhammedashrafsaleh@gmail.com`.
 - **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php`; Node is nvm-only under `dots`; `mkdir -p storage/framework/{cache/data,sessions,views}` after fresh clone.
-- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data`; **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp); step 6 (mail).
-- **What to verify (owner):** `systemctl status dots-queue-default.service dots-queue-imports.service` — both active; `tail /home/dots/logs/scheduler.log` — growing every minute.
-- **Next task:** step 6 — mail (separate session).
+- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data`; **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp).
+- **What to verify (owner):**
+  1. Check Gmail inbox (and spam) for: (a) a "DOTS mail test" email; (b) a password-reset email from `no-reply@dots-electric.com`; (c) a "Backup failed" notification.
+  2. On the password-reset email: click "Show original" → paste `Authentication-Results` / `spf=` / `dkim=` / `dmarc=` lines back here. All three must pass before step 6 is closed.
+  3. Click the reset link in the email and complete the password change.
+- **Next task:** step 7 (TBD) — after step 6 headers confirmed.
 
 **Git:** branch `phase-10` (local, unpushed) · last tag `backups-done` · push state: **not pushed**
 

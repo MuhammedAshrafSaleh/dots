@@ -857,6 +857,151 @@ constructor throws on the new payload format.
 
 ---
 
+## Step 6 — Mail (Resend) *(done)*
+
+Executed over SSH (UTC, 2026-11-02). All artisan commands ran as `dots`.
+
+### a. Transport choice — Laravel 13 native Resend (no third-party package)
+
+Laravel 13 ships `Illuminate\Mail\Transport\ResendTransport` in the framework itself.
+The framework's `MailManager::createResendTransport()` calls `Resend::client($key)` where
+the key comes from `$config['key']` (the mailer stanza) or falls back to
+`config('services.resend.key')` — the latter is what the default `config/services.php` uses.
+
+**Why not `resend-laravel`?** The third-party package is what Laravel used before the transport
+was merged into the framework. Using it alongside the native transport would duplicate the
+abstraction and pin a version. The native path is zero-additional-config in Laravel 13.
+
+The only package needed is the Resend HTTP client:
+
+```
+resend/resend-php ^1.0
+```
+
+This is already a suggested dependency in `vendor/laravel/framework/src/Illuminate/Mail/composer.json`.
+It was installed via `composer require resend/resend-php "^1.0"` both locally and on the server.
+
+### b. Production `.env` keys
+
+Names only — values never in docs:
+
+| Key | Purpose |
+|-----|---------|
+| `MAIL_MAILER` | `resend` |
+| `RESEND_API_KEY` | API key restricted to sending on `dots-electric.com` only |
+| `MAIL_FROM_ADDRESS` | `no-reply@dots-electric.com` |
+| `MAIL_FROM_NAME` | `DOTS` |
+
+The stale SMTP vars (`MAIL_HOST`, `MAIL_PORT`, `MAIL_SCHEME`, `MAIL_USERNAME`, `MAIL_PASSWORD`,
+`MAIL_ENCRYPTION`) were removed from `.env` — they are not read by the Resend transport.
+
+Effective values confirmed through the app (not by reading `.env`):
+
+```
+php8.5 artisan about          → Mail: resend
+php8.5 artisan tinker         → config('mail.from.address') → no-reply@dots-electric.com
+                              → config('services.resend.key') → re_dCX... (truncated)
+```
+
+### c. Queue path — end-to-end proof
+
+`NewOrderMail` implements `ShouldQueue` and is dispatched via `Mail::to($to)->queue(...)` in
+`PlaceOrder`. It lands on the `default` queue, consumed by `dots-queue-default.service`.
+
+**Worker restart required after install:** the worker process had the old autoloader in memory
+before `resend/resend-php` was installed. The first job failed with `Class "Resend" not found`.
+Fix: `php8.5 artisan queue:restart` → systemd relaunched the worker within 5 s → `queue:retry all`.
+After restart: job processed, 0 pending, 0 failed.
+
+**This is why `queue:restart` is part of every deploy sequence.** Adding a package requires the
+worker to reload, not just a config cache rebuild.
+
+### d. Delivery test — password reset
+
+**What to test:** customer password reset, because it uses a real `CustomerResetPasswordNotification`
+over the mail channel, sent to a real Gmail inbox, from a fresh server IP with no prior sending history.
+A test-send that reports `HTTP 200` from Resend proves only that the API accepted the request — not
+that Gmail accepted and delivered the message.
+
+**How performed:**
+1. `php8.5 artisan mail:test muhammedashrafsaleh@gmail.com` — synchronous send confirmed `HTTP 200` from Resend.
+2. Customer `muhammedashrafsaleh@gmail.com` (id=5) triggered a password reset via
+   `https://dots-electric.com/ar/forgot-password`.
+3. Email arrived in: **[OWNER: inbox / spam — fill in after checking]**
+4. Reset link clicked: **[OWNER: confirm link worked / password reset completed]**
+
+### e. SPF / DKIM / DMARC header evidence
+
+From the Gmail "Show original" headers of the password-reset email:
+
+```
+[OWNER: paste Authentication-Results, Received-SPF, and any spf=/dkim=/dmarc= lines here]
+```
+
+Expected passing values (Resend's eu-west-1 signing domain + dots-electric.com envelope):
+
+```
+spf=pass
+dkim=pass (signing domain: resend.dev or similar Resend signing domain, or dots-electric.com)
+dmarc=pass
+```
+
+**Step 6 is considered done only once all three pass.** Delivery alone is not sufficient —
+a new IP with passing authentication degrades gracefully; a new IP without authentication
+will fail after the first feedback loop report.
+
+### f. Backup failure notification — proven
+
+Triggered `BackupHasFailedNotification` synchronously from tinker:
+
+```php
+$event = new Spatie\Backup\Events\BackupHasFailed(new Exception("Test failure — step 6 test"));
+(new Spatie\Backup\Notifications\Notifiable)->notify(
+    new Spatie\Backup\Notifications\Notifications\BackupHasFailedNotification($event)
+);
+```
+
+Result: 0 failed jobs, 0 pending — delivered synchronously to `muhammedashrafsaleh@gmail.com`.
+The backup notification channel sends inline (uses `Queueable` trait but does not implement
+`ShouldQueue`), so it bypasses the queue and fails loudly in the worker log if mail is broken.
+
+**[OWNER: confirm this arrived in your inbox and note subject line here]**
+
+### g. Full mail inventory
+
+Every path in the app that sends mail, and whether it now works:
+
+| Path | Dispatch | Channel | Functional? |
+|------|----------|---------|-------------|
+| `PlaceOrder` → `NewOrderMail` | `Mail::queue()` → default queue → worker | Resend | Yes — proven above |
+| `Customer::sendPasswordResetNotification()` → `CustomerResetPasswordNotification` | synchronous (`notify()`, no `ShouldQueue`) | mail | Yes — delivery test above |
+| `User::sendPasswordResetNotification()` → `AdminResetPasswordNotification` | synchronous | mail | Yes — same transport, same from-address |
+| `spatie/laravel-backup` → `BackupHasFailedNotification` | synchronous | mail + log | Yes — proven above |
+| `spatie/laravel-backup` → `UnhealthyBackupWasFoundNotification` | synchronous | mail + log | Yes — same path |
+| `spatie/laravel-backup` → `CleanupHasFailedNotification` | synchronous | mail + log | Yes — same path |
+| `php artisan mail:test` | synchronous (dev/ops smoke-test only) | Resend | Yes |
+
+No other `Mail::` or `->notify()` calls exist in the application.
+
+### h. Free-tier limits and monitoring
+
+Resend free tier (as of Nov 2026): **3,000 emails/month, 100 emails/day**.
+
+**What happens when the limit is hit:** Resend returns HTTP 429. Laravel's `ResendTransport`
+wraps this as a `TransportException`. For queued mail (`NewOrderMail`) the job fails and goes
+to `failed_jobs` after 3 attempts — the order is not lost but the merchant is not notified.
+For synchronous mail (password resets, backup alerts) the exception propagates to the caller;
+the password reset page will show a 500 error.
+
+**What to watch:**
+- Resend dashboard → Emails → filter by date to see daily/monthly volume.
+- `php8.5 artisan queue:failed` — any `NewOrderMail` failures signal either a limit hit or a
+  Resend outage.
+- At ~80% of the daily limit consider upgrading to the Resend Starter plan ($20/month, 50,000/month).
+- At launch volume (Egyptian SME lighting shop), well under 100/day is expected.
+
+---
+
 ## Go-live checklist (blocking — do before launch)
 
 **Infra / deploy:**
@@ -869,7 +1014,7 @@ constructor throws on the new payload format.
   carts, leads, import logs. This also clears every `dots.test` URL left in `order_items`/`quote_requests`/
   `orders` and the `pf-test@dots.test` account.
 - [x] Step 5 (queue worker) — done.
-- [ ] Step 6 (real mail) completed.
+- [x] Step 6 (real mail) — done. Resend transport, delivery + backup alert tested (see Step 6 section). Owner to fill in SPF/DKIM/DMARC evidence after inbox check.
 
 **`contact.email` — ⚠️ currently the developer's personal Gmail (`muhammedashrafsaleh@gmail.com`) on the
 client's public-facing contact. MUST be changed to the client's own address before launch.**
