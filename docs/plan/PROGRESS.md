@@ -3,7 +3,7 @@
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
 - **Current task:** T10.5 — **DONE**. Step 5 (revised): queue workers (systemd, two named units, split queues) + scheduler + retry_after fix. Full write-up in `docs/DEPLOY.md` "Step 5".
-- **Last commit:** (see below — commit pending this session).
+- **Last commit:** `7170102` — `T10.5 fix: queue split, retry_after 90→1800, imports queue worker`.
 - **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Site live with real content over LE HTTPS.**
 - **What was done (step 5 revised):** Two named systemd units (`dots-queue-default` + `dots-queue-imports`), each consuming a separate queue. `ApplyProductImport` declares `$queue = 'imports'`. `retry_after` raised from 90→1800 in `config/queue.php` (prevents concurrent execution of the same import job). End-to-end proof on both queues: success + failure path, queue isolation confirmed. `queue:restart` proven: PIDs changed, systemd relaunched both workers.
 - **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php`; Node is nvm-only under `dots`; `mkdir -p storage/framework/{cache/data,sessions,views}` after fresh clone.
