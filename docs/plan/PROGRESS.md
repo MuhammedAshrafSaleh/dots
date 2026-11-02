@@ -2,15 +2,16 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
-- **Current task:** T10.6 — **DONE**. Step 6: Resend mail transport, SPF/DKIM/DMARC all pass, DEPLOY.md closed.
-- **Last commit:** (see below after gates).
-- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Mail live: `MAIL_MAILER=resend`. SPF pass, DKIM pass (d=dots-electric.com), DMARC pass (p=none, monitor only).**
-- **What was done (step 6):** Native Laravel 13 Resend transport (`resend/resend-php ^1.0`). Production `.env` updated, config cache rebuilt, queue workers restarted. Queue path proven (NewOrderMail via default queue). Backup failure notification delivered. Password reset delivered to Primary inbox; link functional. SPF/DKIM/DMARC all pass — earlier dmarc=fail was negative DNS caching (SOA MINIMUM 1800 s, record added 7 min before first test).
+- **Current task:** T10.7 — **DONE**. Step 7: production backup verified — Drive archive confirmed, schedule proven, retention documented, restore position assessed, storage headroom calculated, client warnings written to DEPLOY.md.
+- **Last commit:** `ab60f91` — T10.7 DEPLOY.md step 7 section.
+- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Mail live: `MAIL_MAILER=resend`. Backups live: Drive, encrypted, daily 03:00 Cairo.**
+- **What was done (step 7):** Ran `backup:run` manually from production (both as correctness test and as evidence). Drive has 3 archives: 2026-11-01 (from step-4 restore drill), 2026-11-02 ×2 (manual runs today). Each ~76.88 MB, 1,204 files (860 media + DB dump). `backup:list` healthy ✅. Scheduler confirmed firing; next `backup:clean` 02:30 / `backup:run` 03:00 / `backup:monitor` 03:30 Africa/Cairo. Retention: keep-7 (delete >7 days), ~538 MB steady state, no near-term Drive problem. Step-4 restore qualifies as production restore drill (full restore on production hardware, verified row counts + media). Client warnings in DEPLOY.md §7f.
+- **Operator trap (backup):** `sudo -u dots php8.5 artisan backup:run` must be run from a directory `dots` can access (e.g. `/home/dots` or the app dir) — NOT from `/root`. Scheduled cron runs from `/home/dots`, so this only affects manual runs.
 - **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php`; Node is nvm-only under `dots`; `mkdir -p storage/framework/{cache/data,sessions,views}` after fresh clone.
-- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data` (**must reset orders AUTO_INCREMENT to 10001** — currently 10139 from demo data); **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp).
-- **Next task:** step 7 (TBD).
+- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data` (**must reset orders AUTO_INCREMENT to 10001**); **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp).
+- **Next task:** step 9 (pre-launch smoke test and go-live). Step 8 (Paymob) deferred until client paperwork clears.
 
-**Git:** branch `phase-10` (local, unpushed) · last tag `backups-done` · push state: **not pushed**
+**Git:** branch `phase-10` (local, unpushed) · last commit `ab60f91` · last tag `backups-done` · push state: **not pushed**
 
 Current phase: **Phase 10 — deployment** (`phase-10` branch). T10.4 done.
 
