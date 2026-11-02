@@ -128,31 +128,178 @@ owner's password manager, not the repo. (The app's `REDIS_PASSWORD` is set in st
 
 ---
 
-## Step 3 — Site, queue worker, scheduler
+## Step 3 — Domain re-point, TLS, Cloudflare decision, real-IP *(done)*
 
-### ⚠️ Cloudflare real-IP restoration must come before any fail2ban nginx jail
+Executed over SSH (UTC, 2026-11-01→02). Same discipline as steps 1–2: each sub-step announced;
+`systemd-run --on-active` rollback timer armed before anything that could take the site/access
+down, cancelled on verified success.
 
-Cloudflare will sit in front of the site. Once it does, Nginx sees Cloudflare's edge IPs
-for every request, not the real visitor IP. This affects two things:
+### Current serving state (summary)
 
-1. **Real-IP restoration** — configure `set_real_ip_from` with Cloudflare's published IP
-   ranges and `real_ip_header CF-Connecting-IP` in Nginx so that access logs, Laravel's
-   `request()->ip()`, and rate-limiting all see the actual client address.
+- The site serves **directly from the origin** (187.126.20.146) at **https://dots-electric.com**
+  and **https://www.dots-electric.com** over a **Let's Encrypt** certificate. `www` 301→apex;
+  `http` 301→`https`. Verified end-to-end (trusted chain, `ssl_verify_result=0`) from both an
+  external client and the origin.
+- **Cloudflare is used for DNS only** — both records grey-cloud ("DNS only"). The Cloudflare
+  HTTP/HTTPS **proxy is deliberately OFF** (see the d/e/f decision below).
+- No app code deployed yet (placeholder `index.php`). App deploy is step 4.
 
-2. **Ordering constraint — do not create the fail2ban nginx jail until real-IP is verified.**
-   If the jail is active before real-IP restoration is in place, the first batch of blocked
-   requests will ban a Cloudflare edge IP, taking the site down for all visitors routed
-   through that edge node. Real-IP restoration first, jail second — no exceptions.
+### a. Domain re-point — CloudPanel has no rename; delete + recreate
 
-### fail2ban nginx jail (deferred from step 1)
+CloudPanel 6.0.8 (`clpctl`) has **no** command to change a site's primary domain, and the schema
+models one primary domain per site (`site.domain_name` UNIQUE, no addon-domain table). The step-2
+note that assumed "a clpctl domain change renames the vhost + docroot" was **wrong**.
 
-The nginx jail was deliberately skipped in step 1 because the app and its Nginx log paths
-do not exist yet. Add it in step 3 after the site is deployed and real-IP restoration is
-confirmed working. The jail should target the Laravel login route and any other
-authentication endpoints for rate-limiting credential-stuffing attacks.
+Owner-approved path: **delete the temp site and recreate on the real domain** (cheapest while
+nothing is deployed — DB empty, no code):
+
+- `clpctl site:delete --domainName=srv2107659.hstgr.cloud` — CloudPanel's `database.site_id` FK is
+  `ON DELETE CASCADE`, so this **also dropped** the (empty) MySQL DB `dots-production`, the
+  `dots-app` user, the `dots` system user, `/home/dots`, the vhost and the FPM pool. Verified at the
+  MySQL level that db + user were gone. **No data loss** (nothing had been migrated).
+- `clpctl site:add:php --domainName=dots-electric.com --phpVersion=8.5 --vhostTemplate='Laravel 13'
+  --siteUser=dots` — recreated with the **same `dots` user** (uid 1001 / gid 1003).
+- **Docroot path changed:** `/home/dots/htdocs/srv2107659.hstgr.cloud/public` →
+  **`/home/dots/htdocs/dots-electric.com/public`**.
+- FPM pool tuning re-applied from the step-2 **tuned** snapshot (`/root/pool-TUNED-preT103*.conf.bak`);
+  values identical to step 2 (`pm.max_children 30`, `pm.max_requests 500`, `memory_limit 512M`,
+  `upload_max_filesize 256M`, `post_max_size 512M`, `max_execution_time`/`max_input_time` 180).
+- DB recreated via `clpctl db:add` (`dots-production` / `dots-app`, connects over `127.0.0.1`).
+  **New MySQL + new site-user passwords** handed to the owner in-chat (password manager), **not** in
+  the repo. **Redis password unchanged.**
+
+### b. Let's Encrypt certificate + renewal
+
+- Issued: `clpctl lets-encrypt:install:certificate --domainName=dots-electric.com
+  --subjectAlternativeName=www.dots-electric.com`. Worked first try because the proxy was off and the
+  HTTP-01 challenge reached the origin directly (the vhost `.well-known` location is open:
+  `allow all`, `auth_basic off`).
+- SANs cover **apex + www**; issuer Let's Encrypt; **expires 2027-01-30 22:35 GMT** (~90 days).
+- **Auto-renewal (verified, not assumed):** CloudPanel cron `/etc/cron.d/clp` →
+  `15 5 * * * clp … clpctl lets-encrypt:renew:certificates` (daily 05:15 UTC, as user `clp`). The
+  command renews any LE cert with **≤7 days to expiry** (`RENEW_DAYS_BEFORE_EXPIRATION = 7`),
+  reinstalls + reloads nginx, and raises a **CRITICAL CloudPanel notification** on failure. Running it
+  as `clp` returns exit 0 (nothing due) → cert auto-renews ~2027-01-23. *(Caveat: run as `root` the
+  command throws a namespace error; it only resolves as the `clp` user — which is exactly how the cron
+  runs, so renewal is fine. Do not "fix" the cron to run as root.)*
+
+### c. Nginx real-IP restoration for Cloudflare — KEPT even though the proxy is off
+
+It is kept for two reasons: (1) it closed a **genuine spoofing hole that existed regardless of
+Cloudflare** (proven by measurement below); (2) it is correct for the day the proxy is ever enabled.
+
+**CloudPanel native is lockdown-only, not real-IP.** `clpctl cloudflare:update:ips` fetches the
+official `https://www.cloudflare.com/ips-v4` + `ips-v6` daily (cron `20 6 * * *`) into
+`/etc/nginx/cloudflare/ips`, but that file is an **`allow …; deny all;`** list — the
+`allow_traffic_from_cloudflare_only` traffic lockdown (step f), **not** real-IP. An app-wide search of
+CloudPanel's source found **zero** `real_ip_header` / `CF-Connecting-IP` / `set_real_ip_from`. So
+real-IP is hand-built, **reusing CloudPanel's official-source IP fetch** (not a remembered list).
+
+**Two-tier topology:** the outer 443 server block (writes the access log) `proxy_pass`es to an inner
+8080 block that `fastcgi_pass`es to FPM — **Laravel's `request()->ip()` comes from the inner block's
+`$remote_addr`.**
+
+**Spoofing hole found + measured.** A naive http-scope `real_ip_header CF-Connecting-IP;` trusting
+`127.0.0.1` is **spoofable**: a direct (non-Cloudflare) client sending a forged `CF-Connecting-IP`
+has the outer block correctly ignore it (access log stays honest), but the outer forwards the forged
+header to the inner block over the trusted 127.0.0.1 hop, so the inner block — and Laravel — take the
+forged value. **Measured:** forged `CF-Connecting-IP: 1.2.3.4` from a non-CF source → access log
+`187.126.20.146` (honest) but `REMOTE_ADDR=1.2.3.4` (spoofed). That would let an attacker forge the
+client IP used for rate-limiting, customer login lockout and audit — **independent of Cloudflare**.
+
+**Fix (applied, measured non-spoofable).** The inner block must restore from a header the outer
+**overwrites**, trusting only the 127.0.0.1 hop. `X-Forwarded-For` + `real_ip_recursive on` does this
+with **no vhost edit**, because the outer block always emits (template-generated)
+`proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;` — recursion stops at the outer's
+appended real source, so a client-supplied header can never reach past it:
+
+```nginx
+# /etc/nginx/cloudflare/real-ip.conf  (http scope; generated — do not hand-edit)
+real_ip_header X-Forwarded-For;
+real_ip_recursive on;
+set_real_ip_from 127.0.0.1;        # trusted inner <- outer nginx hop
+set_real_ip_from <each Cloudflare v4/v6 range>;
+```
+
+Re-tested under the fix: forged `CF-Connecting-IP` → `REMOTE_ADDR=187.126.20.146` (real source);
+forged `X-Forwarded-For` (even with a trailing CF-looking IP) → real source; a real client delivered
+through a **trusted** hop (XFF) → correctly extracted. Access log honest in all cases.
+
+**Where it lives and why it survives vhost regeneration:**
+
+- `/etc/nginx/cloudflare/real-ip.conf` — a file CloudPanel never generates.
+- Included at **http scope in `/etc/nginx/nginx.conf`** — a **dpkg conffile** (`nginx-common`),
+  untouched by CloudPanel's per-site vhost regeneration (CloudPanel only rewrites
+  `/etc/nginx/sites-enabled/<domain>.conf`). The old unsafe CloudPanel scaffold
+  (`set_real_ip_from 0.0.0.0/0;` with the header commented) is commented out.
+- **Not** placed in the vhost — that is regenerated on every site-setting change.
+- **Auto-refresh:** `/usr/local/sbin/dots-cf-realip.sh` regenerates `real-ip.conf` from
+  `/etc/nginx/cloudflare/ips` (official source, kept fresh daily by CloudPanel's own
+  `cloudflare:update:ips`), runs `nginx -t`, reloads only if valid + changed. Cron
+  `/etc/cron.d/dots-cf-realip` at `35 6` (after CloudPanel's 06:20 refresh). So Cloudflare range
+  changes propagate automatically.
+- **Carry-forward:** re-verify this http-scope edit after an nginx **package** upgrade (dpkg saves a
+  `.dpkg-dist` rather than overwrite — confirm the `include` line is still present).
+
+### d / e / f. Cloudflare proxy — DECISION: DNS only, proxy NOT used
+
+**Decision (2026-11-02):** Cloudflare is used for **DNS only**. The HTTP/HTTPS proxy (orange cloud) is
+**not** enabled, and the origin firewall lockdown (f) is **not** applied.
+
+**Evidence.** From **two separate Egyptian ISP networks**, the Cloudflare edge IPs assigned to this
+zone (`188.114.96.6` / `188.114.97.6`) **reset the connection during the TLS handshake**, on both HTTP
+and HTTPS. The same request through a different Cloudflare anycast IP (`104.21.80.1`) returns
+`HTTP/2 200` with `server: cloudflare`, and the origin itself serves fine. So Cloudflare, the
+certificate and the origin are all healthy — but the **specific IP range Cloudflare assigned to this
+zone is being interfered with by Egyptian ISPs**. On the **free plan the assigned edge IPs cannot be
+chosen**, so this is not fixable by configuration. For an Egyptian e-commerce site, that is
+**disqualifying**.
+
+**Consequences:**
+
+- **(e) real-IP verification with live Cloudflare traffic — skipped.** There is no Cloudflare proxy
+  traffic to observe. The real-IP config (c) is verified against the spoofing attack and the
+  trusted-hop positive case; the live-CF path is untested by definition.
+- **(f) origin firewall lockdown — must NOT be applied.** Restricting inbound 80/443 to Cloudflare
+  ranges would make the origin **unreachable entirely**, since visitors reach it directly, not via
+  Cloudflare.
+- The real-IP config (c) is **kept as-is** — correct, closes a real hole, and ready if the proxy is
+  ever enabled.
+
+**Re-enabling the proxy in future requires, in order:** (1) **re-test reachability of the zone's
+assigned Cloudflare edge IPs from Egyptian networks — this is the blocker, do it first;** (2) set
+SSL/TLS mode to **Full (strict)** *before* switching DNS to Proxied (origin has a valid LE cert, so
+strict validates; Flexible would cause a redirect loop); (3) flip both records to Proxied; (4) run (e)
+to confirm real visitor IPs in the access log; (5) only then consider the (f) lockdown (stale-range
+risk already mitigated by the daily `cloudflare:update:ips` refresh).
+
+### fail2ban nginx jail — still deferred
+
+Deliberately skipped in step 1 (app + log paths didn't exist). Still deferred: add after app deploy,
+targeting the Laravel login / auth endpoints for credential-stuffing rate-limiting. **Ordering rule
+that still holds if the Cloudflare proxy is ever enabled:** real-IP restoration must be confirmed
+first, or the first blocked request bans a Cloudflare edge IP and takes the site down for everyone
+behind it. With the proxy off (current state) the jail would see real client IPs directly.
 
 ---
 
-## Step 4 — DNS, SSL, go-live
+## Step 4 — Application deploy
 
 *(to be filled in)*
+
+### Carry-forward tasks into step 4 (explicit, not reminders)
+
+- **T4-TASK: block search-engine indexing until launch.** Because Cloudflare is DNS-only (step 3),
+  the site is **publicly reachable at the real domain `https://dots-electric.com` before launch** —
+  nothing gatekeeps it. The app **must** be prevented from being indexed until go-live. Implement as a
+  deliberate deploy task: serve `X-Robots-Tag: noindex, nofollow` (and/or a `robots.txt` disallow-all)
+  for the whole site while in pre-launch, and **remove it as part of the go-live checklist**. Do not
+  rely on "search engines probably won't find it".
+- **App `.env` (from step 2):** `DB_HOST=127.0.0.1`, DB `dots-production` / user `dots-app` (new
+  password from step 3, in the owner's password manager), `REDIS_PASSWORD` (step-2 value), queue/cache/
+  session on Redis. `QUEUE_CONNECTION=database`/`redis` in prod needs a running `php artisan queue:work`
+  (NewOrderMail is queued).
+- **FPM `max_execution_time` (step 2 carry-forward):** measure real Excel parse/preview before raising
+  past 180s.
+- **Queue worker sizing (step 2 carry-forward):** heavy import (PhpSpreadsheet + image derivatives)
+  runs in the worker — size memory/timeout against free RAM.
