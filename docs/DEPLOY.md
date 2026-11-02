@@ -549,6 +549,204 @@ after any CloudPanel upgrade.
 
 ---
 
+## Step 5 — Queue worker and scheduler *(done)*
+
+Executed over SSH (UTC, 2026-11-02). All artisan commands ran as `dots`; systemd units installed as root.
+
+### a. Service choice — systemd template unit (not supervisor)
+
+**Why systemd:**
+
+- Zero additional dependencies. Supervisor is a Python daemon not installed on this box; `apt install supervisor`
+  adds a new process manager on top of the one the OS already provides.
+- Template units (`dots-queue-worker@.service`) run N named instances from one file —
+  `systemctl enable dots-queue-worker@{1,2}` — with no per-process config duplication.
+- Logs land in journald automatically: `journalctl -u "dots-queue-worker@*.service" -f`; persistent
+  across reboots without separate logrotate config.
+- `Restart=always` + `RestartSec=5` is native; no `autostart`/`autorestart` stanza in a separate
+  supervisor.conf.
+- `systemctl enable` writes the symlink into `multi-user.target.wants` — worker survives reboot
+  without a separate `[program:x]` `autostart=true` line.
+
+**Unit file:** `/etc/systemd/system/dots-queue-worker@.service`
+
+```ini
+[Unit]
+Description=DOTS Laravel Queue Worker %i
+After=network.target mysql.service redis-server.service
+Wants=mysql.service redis-server.service
+
+[Service]
+Type=simple
+User=dots
+Group=dots
+WorkingDirectory=/home/dots/htdocs/dots-electric.com
+ExecStart=/usr/bin/php8.5 /home/dots/htdocs/dots-electric.com/artisan queue:work \
+    --sleep=3 \
+    --tries=3 \
+    --timeout=1800 \
+    --memory=512 \
+    --max-jobs=500
+
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=1900
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=dots-queue-%i
+
+[Install]
+WantedBy=multi-user.target
+```
+
+Enabled and started:
+
+```
+systemctl enable dots-queue-worker@1.service dots-queue-worker@2.service
+systemctl start  dots-queue-worker@1.service dots-queue-worker@2.service
+```
+
+Verify: `systemctl status "dots-queue-worker@*.service"` (both should show `active (running)`).
+Logs: `journalctl -u "dots-queue-worker@*.service" -f --no-pager`
+
+### b. Worker sizing — reasoning
+
+**Memory budget:**
+
+| Component | RSS |
+|---|---|
+| MySQL | ~980 MB |
+| All PHP-FPM masters (11 versions) | ~600 MB |
+| nginx (master + 2 workers) | ~160 MB |
+| Varnish + misc system | ~290 MB |
+| Fixed overhead total | ~2,030 MB |
+| Peak FPM budget (30 workers × ~150 MB) | ~4,500 MB |
+| Remaining after peak FPM | **~1,600 MB** |
+
+Two workers × 512 MB = **1,024 MB**, leaving ~576 MB margin above the peak-FPM scenario.
+`free -m` at session start showed 5,919 MB available, confirming the headroom is real.
+
+**Why each parameter:**
+
+- **`--timeout=1800` (30 min):** The heavy job (PhpSpreadsheet parse + Imagick derivatives for a
+  large catalogue) can run for many minutes. A 10-min timeout would kill a real import mid-run. 1800s
+  gives 3× headroom against a worst-case 500-product import. Re-measure in Step 9 and tighten if
+  justified.
+  *Note: `TimeoutStopSec=1900` in the unit file so systemd waits for an in-progress job to finish before
+  sending SIGKILL on `systemctl stop`.*
+
+- **`--memory=512` (MB):** This is a *post-job restart trigger* (not a hard cap): after a job
+  completes, if the worker's RSS exceeds 512 MB the process restarts gracefully. Matches FPM's
+  `memory_limit` for a consistent memory envelope. PhpSpreadsheet + framework during parsing fits
+  in this envelope; any growth from leaks is bounded by `--max-jobs`.
+
+- **`--max-jobs=500`:** Worker recycles after 500 jobs to release any accumulated PHP-internal
+  allocations. 500 lightweight jobs (emails, cache invalidations) complete in minutes; a single heavy
+  import counts as 1.
+
+- **`--tries=3`:** Transient Redis/MySQL glitches get 3 attempts (immediate retry, no backoff by
+  default). After the 3rd failure the job moves to `failed_jobs` for manual inspection. Increase
+  `--backoff` if transient network errors become a problem.
+
+- **2 processes, not 1 or 3+:** On 2 vCPUs, 1 process would block email delivery during a long
+  import; 3+ processes add CPU context-switching and OOM risk if two imports run concurrently.
+  2 processes: one handles lightweight jobs while the other runs the heavy import.
+
+### c. Scheduler
+
+Crontab installed for the `dots` user (`sudo -u dots crontab -e`):
+
+```
+* * * * * /usr/bin/php8.5 /home/dots/htdocs/dots-electric.com/artisan schedule:run >> /home/dots/logs/scheduler.log 2>&1
+```
+
+Log directory: `/home/dots/logs/` (owned `dots:dots`, mode `750`).
+
+**Proof it fires:** after installing, `/home/dots/logs/scheduler.log` accumulated three distinct
+`INFO  No scheduled commands are ready to run.` lines at :39, :40, and :41 UTC — one per cron tick,
+confirmed by the file's mtime and sequential output. The backup schedule (02:30 + 03:00 Cairo) was
+not due at test time; the scheduler correctly reported nothing to run.
+
+To check live: `tail -f /home/dots/logs/scheduler.log`
+
+### d. Queue end-to-end proof
+
+**Success path** — dispatched `App\Jobs\QueueTest(false)` via `artisan tinker`. Worker log:
+
+```
+2026-11-02 17:40:00 App\Jobs\QueueTest  RUNNING
+2026-11-02 17:40:00 App\Jobs\QueueTest  1.41ms DONE
+```
+
+**Failure path** — dispatched `App\Jobs\QueueTest(true)` (throws `RuntimeException`). Worker
+attempted it 3 times (--tries=3), then the job moved to `failed_jobs`:
+
+```
+2026-11-02 17:40:39 App\Jobs\QueueTest  RUNNING → FAIL  (×3)
+```
+
+`artisan queue:failed` output:
+```
+2026-11-02 17:40:39  db0c764a-…  redis@default  App\Jobs\QueueTest
+```
+
+**Inspecting and retrying failed jobs:**
+
+```bash
+# List all failed jobs (UUID, queue, class, timestamp)
+sudo -u dots php8.5 artisan queue:failed
+
+# Retry a single job by its UUID
+sudo -u dots php8.5 artisan queue:retry db0c764a-84e6-471b-af46-c98c14205328
+
+# Retry all failed jobs
+sudo -u dots php8.5 artisan queue:retry all
+
+# Delete a single failed job (if you decide not to retry)
+sudo -u dots php8.5 artisan queue:forget db0c764a-84e6-471b-af46-c98c14205328
+
+# Delete all failed jobs
+sudo -u dots php8.5 artisan queue:flush
+```
+
+*(The test job class `app/Jobs/QueueTest.php` was removed from the server after the drill — it is
+not in the repo.)*
+
+### e. `queue:restart` in the deploy sequence
+
+**Where it belongs:**
+
+```
+git pull origin main
+php8.5 "$(which composer)" install --no-dev --optimize-autoloader
+# (frontend build if CSS/JS changed)
+php8.5 artisan config:cache
+php8.5 artisan route:cache
+php8.5 artisan view:cache
+php8.5 artisan event:cache
+php8.5 artisan queue:restart          ← HERE
+# (php-fpm reload if needed)
+```
+
+**Why after the caches, not before:** `queue:restart` works by writing a timestamp to Redis that
+workers poll after each job. Workers that pick up the signal load fresh code. If you restart *before*
+`config:cache`, the newly-booted worker reads the uncached config — which is fine but unnecessary.
+If you restart *after* `config:cache`, the worker boots with the complete new cache set. More
+importantly: `queue:restart` **before** `git pull` would restart workers onto the old code they
+already have — the new signal would be consumed by old workers, and the freshly-deployed workers
+after the pull would never see it. The caches must be built first for the restart to be meaningful.
+
+**What happens to the currently running job:** `queue:restart` does not kill workers mid-job. It sets
+a Redis flag; each worker sees it after completing its current job, drains its state cleanly, and
+exits. systemd's `Restart=always` immediately relaunches it with the new code.
+
+**What happens if `queue:restart` is skipped:** workers continue running old code indefinitely. New
+jobs are processed by old class definitions. If a deploy changes a job's constructor or adds a
+required property, old workers throw on the new payload format.
+
+---
+
 ## Go-live checklist (blocking — do before launch)
 
 **Infra / deploy:**
@@ -560,7 +758,8 @@ after any CloudPanel upgrade.
 - [ ] **Run `php artisan dots:clean-demo-data`** — removes TEST-/demo products, demo customers, all orders,
   carts, leads, import logs. This also clears every `dots.test` URL left in `order_items`/`quote_requests`/
   `orders` and the `pf-test@dots.test` account.
-- [ ] Step 5 (queue worker) and Step 6 (real mail) completed.
+- [x] Step 5 (queue worker) — done.
+- [ ] Step 6 (real mail) completed.
 
 **`contact.email` — ⚠️ currently the developer's personal Gmail (`muhammedashrafsaleh@gmail.com`) on the
 client's public-facing contact. MUST be changed to the client's own address before launch.**
