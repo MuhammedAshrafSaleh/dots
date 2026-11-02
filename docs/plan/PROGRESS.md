@@ -2,17 +2,13 @@
 
 ## Current state _(read this first — a new session resumes from here)_
 - **Branch:** `phase-10` (local only, off up-to-date `main`).
-- **Current task:** T10.6 — **WAITING FOR OWNER**. Step 6: Resend mail transport wired. Queue path proven. Password reset test dispatched — owner must check inbox and report delivery + SPF/DKIM/DMARC headers.
-- **Last commit:** `bb5d1cd` — `T10.6a: add resend/resend-php for native Laravel 13 mail transport`.
-- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Mail is live: `MAIL_MAILER=resend`, `RESEND_API_KEY` set, config cache rebuilt.**
-- **What was done (step 6):** Installed `resend/resend-php ^1.0` (native Laravel 13 transport). Production `.env` updated: `MAIL_MAILER=resend`, `RESEND_API_KEY`, cleaned stale SMTP vars. Config cache rebuilt. Queue worker restarted after package install. Queue path proven end-to-end (NewOrderMail via default queue, 0 failed). Backup failure notification triggered synchronously — 0 failures. Password reset triggered at `/ar/forgot-password` for `muhammedashrafsaleh@gmail.com`.
+- **Current task:** T10.6 — **DONE**. Step 6: Resend mail transport, SPF/DKIM/DMARC all pass, DEPLOY.md closed.
+- **Last commit:** (see below after gates).
+- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Mail live: `MAIL_MAILER=resend`. SPF pass, DKIM pass (d=dots-electric.com), DMARC pass (p=none, monitor only).**
+- **What was done (step 6):** Native Laravel 13 Resend transport (`resend/resend-php ^1.0`). Production `.env` updated, config cache rebuilt, queue workers restarted. Queue path proven (NewOrderMail via default queue). Backup failure notification delivered. Password reset delivered to Primary inbox; link functional. SPF/DKIM/DMARC all pass — earlier dmarc=fail was negative DNS caching (SOA MINIMUM 1800 s, record added 7 min before first test).
 - **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php`; Node is nvm-only under `dots`; `mkdir -p storage/framework/{cache/data,sessions,views}` after fresh clone.
-- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data`; **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp).
-- **What to verify (owner):**
-  1. Check Gmail inbox (and spam) for: (a) a "DOTS mail test" email; (b) a password-reset email from `no-reply@dots-electric.com`; (c) a "Backup failed" notification.
-  2. On the password-reset email: click "Show original" → paste `Authentication-Results` / `spf=` / `dkim=` / `dmarc=` lines back here. All three must pass before step 6 is closed.
-  3. Click the reset link in the email and complete the password change.
-- **Next task:** step 7 (TBD) — after step 6 headers confirmed.
+- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data` (**must reset orders AUTO_INCREMENT to 10001** — currently 10139 from demo data); **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp).
+- **Next task:** step 7 (TBD).
 
 **Git:** branch `phase-10` (local, unpushed) · last tag `backups-done` · push state: **not pushed**
 

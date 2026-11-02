@@ -929,28 +929,35 @@ that Gmail accepted and delivered the message.
 2. Customer `muhammedashrafsaleh@gmail.com` (id=5, name "Muhammed Ashraf") exists in `customers` table.
    Password reset triggered via `Password::broker('customers')->sendResetLink(['email' => ...])` —
    the exact call the Livewire forgot-password form makes. Status: `passwords.sent`, 0 failed jobs.
-3. Email arrived in: **[OWNER: inbox / spam — fill in after checking]**
-4. Reset link clicked: **[OWNER: confirm link worked / password reset completed]**
+3. Email arrived in: Primary inbox (not spam).
+4. Reset link: functional — owner clicked and completed the password change.
 
 ### e. SPF / DKIM / DMARC header evidence
 
-From the Gmail "Show original" headers of the password-reset email:
-
-```
-[OWNER: paste Authentication-Results, Received-SPF, and any spf=/dkim=/dmarc= lines here]
-```
-
-Expected passing values (Resend's eu-west-1 signing domain + dots-electric.com envelope):
+Confirmed on a message received 2026-11-03 (Gmail "Show original" → Authentication-Results):
 
 ```
 spf=pass
-dkim=pass (signing domain: resend.dev or similar Resend signing domain, or dots-electric.com)
+dkim=pass header.d=dots-electric.com
 dmarc=pass
 ```
 
-**Step 6 is considered done only once all three pass.** Delivery alone is not sufficient —
-a new IP with passing authentication degrades gracefully; a new IP without authentication
-will fail after the first feedback loop report.
+DKIM signing domain (`d=dots-electric.com`) is the same as the From domain — aligned DKIM.
+SPF passes on the `send.dots-electric.com` envelope sender — relaxed alignment with the From domain.
+Either alone is sufficient for DMARC; both pass.
+
+**Earlier failures were negative DNS caching.** The `_dmarc` record was added at ~21:53 on
+2026-11-02. The zone SOA MINIMUM (negative-cache TTL) is 1800 s (30 min), so Google's inbound
+MX servers held a cached NXDOMAIN until ~22:23. The retests at 22:00 and 22:05 were still inside
+that window. The first message sent after the window expired passed on all three checks.
+Record confirmed live on 8.8.8.8 / 1.1.1.1 / 9.9.9.9 / 208.67.222.222 with value
+`"v=DMARC1; p=none;"`.
+
+**DMARC policy is deliberately `p=none` (monitor only).** This is the correct starting policy
+for a new sending domain with no reputation — `p=quarantine` or `p=reject` before validating
+legitimate mail flows would risk silently dropping real messages. Tighten to `p=quarantine`
+then `p=reject` after several weeks of clean aggregate reports (rua/ruf reporting can be
+added to the record when ready).
 
 ### f. Backup failure notification — proven
 
@@ -1020,7 +1027,7 @@ the password reset page will show a 500 error.
   launch will be DT-10139, not DT-10001 as designed (PRD §7 / ERD). The command must include:
   `DB::statement('ALTER TABLE orders AUTO_INCREMENT = 10001')` after truncating all orders.
 - [x] Step 5 (queue worker) — done.
-- [x] Step 6 (real mail) — done. Resend transport, delivery + backup alert tested (see Step 6 section). Owner to fill in SPF/DKIM/DMARC evidence after inbox check.
+- [x] Step 6 (real mail) — done. Resend transport; delivery to Primary inbox confirmed; SPF pass, DKIM pass (d=dots-electric.com), DMARC pass. See Step 6 section.
 
 **`contact.email` — ⚠️ currently the developer's personal Gmail (`muhammedashrafsaleh@gmail.com`) on the
 client's public-facing contact. MUST be changed to the client's own address before launch.**
