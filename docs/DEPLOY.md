@@ -924,9 +924,11 @@ A test-send that reports `HTTP 200` from Resend proves only that the API accepte
 that Gmail accepted and delivered the message.
 
 **How performed:**
-1. `php8.5 artisan mail:test muhammedashrafsaleh@gmail.com` — synchronous send confirmed `HTTP 200` from Resend.
-2. Customer `muhammedashrafsaleh@gmail.com` (id=5) triggered a password reset via
-   `https://dots-electric.com/ar/forgot-password`.
+1. `php8.5 artisan mail:test muhammedashrafsaleh@gmail.com` — synchronous send, confirmed arrived in
+   Primary inbox.
+2. Customer `muhammedashrafsaleh@gmail.com` (id=5, name "Muhammed Ashraf") exists in `customers` table.
+   Password reset triggered via `Password::broker('customers')->sendResetLink(['email' => ...])` —
+   the exact call the Livewire forgot-password form makes. Status: `passwords.sent`, 0 failed jobs.
 3. Email arrived in: **[OWNER: inbox / spam — fill in after checking]**
 4. Reset link clicked: **[OWNER: confirm link worked / password reset completed]**
 
@@ -1013,6 +1015,10 @@ the password reset page will show a 500 error.
 - [ ] **Run `php artisan dots:clean-demo-data`** — removes TEST-/demo products, demo customers, all orders,
   carts, leads, import logs. This also clears every `dots.test` URL left in `order_items`/`quote_requests`/
   `orders` and the `pf-test@dots.test` account.
+  ⚠️ **Must also reset orders AUTO_INCREMENT to 10001.** After the restore drill, the orders table is at
+  `AUTO_INCREMENT=10139` (108 demo orders DT-10001→DT-10138). Without a reset, the first real order after
+  launch will be DT-10139, not DT-10001 as designed (PRD §7 / ERD). The command must include:
+  `DB::statement('ALTER TABLE orders AUTO_INCREMENT = 10001')` after truncating all orders.
 - [x] Step 5 (queue worker) — done.
 - [x] Step 6 (real mail) — done. Resend transport, delivery + backup alert tested (see Step 6 section). Owner to fill in SPF/DKIM/DMARC evidence after inbox check.
 
