@@ -450,6 +450,102 @@ settings editing). Do **not** SQL-edit it.
 - **Step 6 (mail):** `MAIL_MAILER=log` is a placeholder — configure real SMTP.
 - **Step 9 (FPM `max_execution_time`):** measure real Excel parse/preview before raising past 180s.
 - **fail2ban nginx jail** (from step 3) — still deferred to after app deploy.
+- **Re-check the `Laravel 13` vhost template + the per-site vhost `^~ /livewire` blocks after any
+  CloudPanel package upgrade** (same durability caveat as the step-3 `nginx.conf` real-IP edit): a
+  CloudPanel update can overwrite its bundled vhost template and regenerate the vhost. See Step 4.1.
+
+---
+
+## Step 4.1 — Post-deploy hotfix: Livewire assets 404 (admin login did nothing) *(done)*
+
+Executed over SSH (UTC, 2026-11-02), read-only diagnosis first, then fix under a `systemd-run`
+rollback timer. **Symptom:** the admin login form at `https://dots-electric.com/admin/login` did
+nothing on submit — no redirect, no validation error, nothing in `storage/logs`. Same for any other
+Livewire interaction (public catalog, cart).
+
+### Root cause — nginx served Livewire's PHP-rendered JS from the filesystem
+
+Livewire 4 serves its runtime and endpoints at **virtual** paths that do not exist on disk —
+`GET /livewire-<hash>/livewire.min.js` (+ `.map`, per-component `css/js`), `POST /livewire-<hash>/update`,
+`.../upload-file`, `.../preview-file`. `route:list` confirms the app owns them. But the CloudPanel
+**Laravel 13 vhost has a static-asset regex** `location ~* ^.+\.(css|js|…|map)$` in **both** server
+tiers (outer `443`, inner `8080`). That location has no `proxy_pass`/`try_files`, so nginx serves any
+matching path straight from `root` → `livewire.min.js` isn't a file → **nginx 404, request never
+reaches PHP**. Regex locations outrank the `location /` proxy, so the asset route was unreachable.
+With the JS never loading, the login `<form>` posted as a plain request and re-rendered — hence the
+silent "does nothing", no exception, no log. **Measured:** inner tier (`curl 127.0.0.1:8080 …`) 404s it
+too, so an outer-only fix (e.g. in `global_settings`) cannot work — the request must reach PHP in both
+tiers.
+
+**Scope — this killed every Livewire component site-wide, not just login.** The admin login was just
+where it was noticed; the same dead runtime took out the storefront cart, the product filters/listing,
+search, checkout, and any other interactive element. A **page-level check passed** the whole time
+(every page is 200 and fully rendered, because the HTML is server-rendered by Livewire's initial
+mount) — only *interaction* was broken (no JS → no `update` round-trips). **Carry-forward to the Step 9
+smoke test:** test an actual interaction, not just HTTP 200 on page loads — click a filter / add to
+cart / submit the login and confirm the Livewire XHR succeeds. A green page-load sweep would have
+missed this entirely. Not credentials/sessions/cookies/lockout/cache — all verified healthy (admin in `users` table,
+`admin` guard, `is_active`; `SESSION_DOMAIN` resolves to real `null`; no `*login*` RateLimiter keys;
+cached config matches `.env`).
+
+> **Redis session keys on this box look identical to cache keys — do not read their "absence" as a
+> missing session (half-hour trap, hit once already).** With `SESSION_DRIVER=redis`, Laravel's redis
+> session driver is **cache-backed**: it wraps a cache store, so session entries inherit the
+> **`dots-cache-` prefix** — exactly like real cache entries — and are **not** stored under any
+> `session`/`laravel_session` name. Layout on this server:
+> - **DB 0** (`default` redis connection, `SESSION_CONNECTION` unset) — the **sessions**:
+>   `dots-database-dots-cache-<40-char-session-id>`. The 40-char random suffix is a Laravel session id.
+> - **DB 1** (`cache` connection, `REDIS_CACHE_DB=1`) — the **app cache**:
+>   `dots-database-dots-cache-settings:*`, `tag:facets:*`, `cat.*`, etc. (semantic suffixes).
+>
+> So "no session keys in Redis" was wrong: the sessions were the random-suffix `dots-cache-` keys in
+> DB 0 all along. Distinguish sessions from cache by **DB number + suffix shape (40-char id vs
+> semantic)**, never by prefix.
+
+### Fix — `^~ /livewire` bypass in both tiers (outer proxies, inner hits index.php)
+
+A high-priority prefix location (`^~` outranks the `.js` regex) in each server block:
+
+```nginx
+# outer 443 block — proxy Livewire paths to the inner tier (same settings as location /)
+location ^~ /livewire {
+  proxy_pass http://127.0.0.1:8080;   # template uses {{varnish_proxy_pass}}
+  proxy_set_header Host $host;  proxy_set_header X-Forwarded-Host $host;
+  proxy_set_header X-Real-IP $remote_addr;  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_hide_header X-Varnish;  proxy_redirect off;  proxy_max_temp_file_size 0;
+  # + the location / timeouts/buffers (upload-file goes through here)
+}
+# inner 8080 block — route to the front controller, not the static regex
+location ^~ /livewire {
+  try_files $uri $uri/ /index.php?$args;
+}
+```
+
+Applied to the **live** vhost `/etc/nginx/sites-enabled/dots-electric.com.conf` (backup
+`/root/dots-electric.com.conf.pre-livewire.bak`) under a 420 s rollback timer; `nginx -t` → reload →
+verified → cancelled.
+
+### Durability — the CloudPanel `Laravel 13` vhost template was modified (declared)
+
+CloudPanel regenerates the per-site vhost from its template on site-setting changes, so the live-vhost
+edit alone is fragile (same class as the step-h noindex). The durable guard is to patch the template
+CloudPanel renders from. **This edits CloudPanel's own data — declared here deliberately:** the
+`Laravel 13` vhost template (**row `id=133` in `/home/clp/htdocs/app/data/db.sq3`**, table
+`vhost_template`) was updated to include the same two `^~ /livewire` blocks, using the template vars
+`{{varnish_proxy_pass}}` (outer) and the inner `try_files` so it stays correct per-site. Template row
+backup: `/root/laravel13-vhost-template.pre-livewire.bak`. **Carry-forward (see list above):** a
+CloudPanel package upgrade can overwrite this template — re-check both the template and the live vhost
+after any CloudPanel upgrade.
+
+### Verified (real login round-trip, not just the asset)
+
+- `GET /livewire-71a637d2/livewire.min.js` → **200**, `application/javascript`, 261 782 B of real JS.
+- `POST /livewire-71a637d2/update` (bare) → **419** (app CSRF layer), i.e. reaches PHP — not nginx 404.
+- **Full Livewire round-trip through nginx:** fetched the login page, drove the component's `login`
+  method with a wrong password → **HTTP 200** Livewire JSON, component executed (auth attempt ran,
+  `attemptsLeft` 5→4, `errors.email = "بيانات الدخول غير صحيحة."` / `auth.failed`, locale `ar`), CSRF
+  validated via the `XSRF-TOKEN` cookie. Owner logs in with the real password. The one failed attempt
+  was from the server IP; lockout is keyed per-IP, so the owner's IP is unaffected.
 
 ---
 
