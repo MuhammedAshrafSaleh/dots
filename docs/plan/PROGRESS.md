@@ -1,19 +1,19 @@
 # PROGRESS
 
 ## Current state _(read this first — a new session resumes from here)_
-- **Branch:** `backups` (local only, off up-to-date `main`).
-- **Current task:** BK.3 — **DONE** (awaiting owner review). This is the **last task on the `backups` branch** — after owner approval the branch releases like a phase. Plan: `docs/plan/backups.md`.
-- **Last commit:** `55efd49` — `BK.3: real restore drill + dots:backup-download + docs/RESTORE.md`
-- **Gate result:** `composer gates` all green — 724 tests (720 passed, 4 skipped = DriveCheck + backup-download live tests, no Drive creds in test env) · Larastan 0 errors · Pint clean · build clean.
-- **Context:** `payments-hardening` merged to `main` (commit `ca68172`). `backups` is cut from that up-to-date `main`. BK.1/BK.2/BK.3 all done. Next after this branch merges is **Phase 10**. Release: on "approved, push backups" → `git push -u origin backups`, `git checkout main && git merge --no-ff backups -m "Off-site backups complete"`, tag `backups-done`, `git push origin main --tags`.
-- **BK.3 produced:** new command `app/Console/Commands/BackupDownloadCommand.php` (`php artisan dots:backup-download [--dest=]`) — pulls the most-recent `.zip` from the `google-drive` disk's `DOTS/` folder to a local dir and prints path+size; refuses when Drive creds missing; **read-only on Drive, never deletes**. New `docs/RESTORE.md` (full restore runbook with real reference numbers). `docs/BACKUP.md` "Restoring" section now links RESTORE.md + "Verified on 2026-11-01". New `tests/Feature/BackupDownloadTest.php` (fails without creds; live download skips when creds absent). **I actually performed a real restore drill** (download → ZipArchive AES-256 decrypt → import SQL into scratch DB `dots_restore_check` → extract media to `/tmp`); the `dots`/`dots_testing` DBs and `storage/app/public` were never touched; scratch DB + dir + archive all deleted afterwards.
-- **Restore drill result (all matched live exactly):** products 18/18, product_variants 30/30, categories 65/65, brands 8/8, orders 108/108, customers 9/9, pages 6/6, settings 37/37. Media: live 861 files/82,676 KB vs archive 860 files/82,664 KB — the only diff is one `.DS_Store` (macOS artifact, not app data); all 860 real media files present and identical. Archive restored: `DOTS/2026-11-01-19-31-46.zip`, 76.9 MB.
-- **How to verify (owner — BK.3):** (1) `php artisan dots:backup-download --dest=/tmp/dots-restore` → downloads the latest archive, prints path+size; (2) follow `docs/RESTORE.md` (decrypt with `BACKUP_ARCHIVE_PASSWORD`, import into a **scratch** DB, extract media to `/tmp`); (3) run the row-count + media checks in RESTORE.md Step 5 → should match live. Nothing in this flow touches `dots`/`dots_testing` or `storage/app/public`.
-- **Next task:** none on this branch — BK.3 is the last. Await owner's "approved, push backups" to release, then Phase 10.
+- **Branch:** `phase-10` (local only, off up-to-date `main`).
+- **Current task:** T10.7 — **DONE**. Step 7: production backup verified — Drive archive confirmed, schedule proven, retention documented, restore position assessed, storage headroom calculated, client warnings written to DEPLOY.md.
+- **Last commit:** `ab60f91` — T10.7 DEPLOY.md step 7 section.
+- **Server:** `dots-electric.com` · 187.126.20.146 · Ubuntu 24.04 · CloudPanel 6.0.8. **Mail live: `MAIL_MAILER=resend`. Backups live: Drive, encrypted, daily 03:00 Cairo.**
+- **What was done (step 7):** Ran `backup:run` manually from production (correctness test and evidence). Drive has 3 archives: 2026-11-01 (step-4 restore drill), 2026-11-02 ×2 (manual runs). Each ~76.88 MB, 1,204 files (860 media + DB dump). `backup:list` healthy ✅. **Unattended run confirmed:** `scheduler.log` shows `backup:clean` at 00:30 UTC and `backup:run` at 01:00 UTC (02:30 / 03:00 Cairo), new archive in Drive, no failure notification. **Failure notification proven on a real failure** (the /root working-directory trap triggered a genuine `backup:run` error; `BackupHasFailedNotification` email arrived). Retention: keep-7, ~538 MB steady state, no near-term Drive problem. Step-4 restore qualifies as production restore drill. Client warnings in DEPLOY.md §7f.
+- **Operator trap (backup):** `sudo -u dots php8.5 artisan backup:run` must be run from a directory `dots` can access (e.g. `/home/dots` or the app dir) — NOT from `/root`. Scheduled cron runs from `/home/dots`, so this only affects manual runs.
+- **Standing server traps (see DEPLOY.md):** use **`php8.5`** not `php`; Node is nvm-only under `dots`; `mkdir -p storage/framework/{cache/data,sessions,views}` after fresh clone.
+- **Open items before launch (go-live checklist in DEPLOY.md):** remove noindex; fix `settings.brand.logo_url`; run `dots:clean-demo-data` (**must reset orders AUTO_INCREMENT to 10001**); **`contact.email` must become the client's**; placeholder settings (hotline/instapay/socials/maps/og_image/WhatsApp).
+- **Next task:** step 9 (pre-launch smoke test and go-live). Step 8 (Paymob) deferred until client paperwork clears.
 
-**Git:** branch `backups` (local, unpushed) · last commit `55efd49` · last tag `bulk-import-done` · push state: **not pushed**
+**Git:** branch `phase-10` (local, unpushed) · last commit `ab60f91` · last tag `backups-done` · push state: **not pushed**
 
-Current phase: **Off-site backups on branch `backups`** (`docs/plan/backups.md`): BK.1 → BK.2 → BK.3. Phase 10 follows after this branch is merged.
+Current phase: **Phase 10 — deployment** (`phase-10` branch). T10.4 done.
 
 ---
 
@@ -103,7 +103,7 @@ Current phase: **Off-site backups on branch `backups`** (`docs/plan/backups.md`)
 ## Phase 10 — QA and deployment  (`phase-10-qa-deploy.md`)
 - [ ] T10.1 Content coverage report
 - [ ] T10.2 Full test pass and manual QA
-- [ ] T10.3 Deployment guide
+- [x] T10.3 Step 3 — domain re-point + LE cert + real-IP (Cloudflare DNS-only, proxy declined)
 
 ## Phase 11 — Deferred (start only when unblocked)  (`phase-11-deferred.md`)
 - [ ] T11.1 Products Excel import/export
