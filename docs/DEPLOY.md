@@ -1059,20 +1059,21 @@ cd /home/dots && sudo -u dots php8.5 /home/dots/htdocs/dots-electric.com/artisan
 The scheduler cron runs as the `dots` user with home-directory working path, so
 **this issue cannot occur for scheduled runs** — only for manual operator runs.
 
-### b. Scheduled runs — evidence and next fire times
+### b. Scheduled runs — confirmed working unattended
 
-The scheduler has been running since step 5. Evidence: `/home/dots/logs/scheduler.log`
-accumulates one `schedule:run` tick per minute continuously, with dated lines for
-commands that actually fire (e.g. `orders:release-reservations` at `:30` past). The
-scheduler itself is healthy.
+**Confirmed (2026-11-03).** `scheduler.log` shows `backup:clean` firing at 00:30 UTC
+and `backup:run` at 01:00 UTC — which is 02:30 and 03:00 Africa/Cairo exactly as
+configured. A new archive appeared in Drive and no failure notification followed.
+The server runs UTC and the schedule pins the timezone explicitly, so the conversion
+is reliable year-round.
 
-**The three backup commands and when they next fire:**
+**Schedule:**
 
-| Command | Cairo schedule | UTC equivalent | Next run |
-|---------|---------------|----------------|----------|
-| `backup:clean` | daily 02:30 | 00:30 UTC | 2026-11-03 00:30 UTC |
-| `backup:run` | daily 03:00 | 01:00 UTC | 2026-11-03 01:00 UTC |
-| `backup:monitor` | daily 03:30 | 01:30 UTC | 2026-11-03 01:30 UTC |
+| Command | Cairo schedule | UTC equivalent |
+|---------|---------------|----------------|
+| `backup:clean` | daily 02:30 | 00:30 UTC |
+| `backup:run` | daily 03:00 | 01:00 UTC |
+| `backup:monitor` | daily 03:30 | 01:30 UTC |
 
 Egypt is UTC+2 (EET, no DST since 2011). Cairo 03:00 = UTC 01:00 year-round.
 
@@ -1080,7 +1081,7 @@ All three use `->withoutOverlapping()` (backup:clean, backup:run) or run briefly
 enough that overlap is not a concern (backup:monitor). `withoutOverlapping` drops
 the command if a previous run is still in progress — correct for nightly operations.
 
-**To confirm an unattended run happened:**
+**To confirm a run happened:**
 ```bash
 tail -50 /home/dots/logs/scheduler.log
 ```
@@ -1092,6 +1093,13 @@ Look for lines like:
 If `backup:run` fails the scheduler log will still show `DONE` (exit code of the
 artisan process), but `storage/logs/laravel.log` will contain a `[backup]` ERROR
 entry and a `BackupHasFailedNotification` email will arrive at `BACKUP_NOTIFICATION_EMAIL`.
+
+**The failure notification path was proven on a real failure** (not just a simulated
+one). The first manual run in this step was launched from `/root` (the working-directory
+trap described in §a), which caused a genuine `backup:run` failure. A
+`BackupHasFailedNotification` email arrived at `BACKUP_NOTIFICATION_EMAIL` within
+seconds. This incidentally confirmed the entire failure-alert path end-to-end under
+a real error condition rather than a tinker-triggered mock.
 
 ### c. Retention — keep-7 in force
 
