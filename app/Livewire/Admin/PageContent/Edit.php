@@ -239,8 +239,9 @@ class Edit extends Component
 
         foreach ($this->resolveSlotTypes() as $slot => $slotType) {
             if ($slotType === 'video') {
-                $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200',
-                    'mimetypes:video/mp4,video/webm,video/quicktime'];
+                // A closure, not `mimetypes:`, so a .mov upload gets its own
+                // actionable message (convert to MP4) instead of the generic one.
+                $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200', $this->videoMimeRule()];
             } else {
                 $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200',
                     'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/svg+xml'];
@@ -248,6 +249,36 @@ class Edit extends Component
         }
 
         return $rules;
+    }
+
+    /**
+     * Video-slot upload rule: accept only MP4/WebM (formats browsers reliably
+     * play). A QuickTime/.mov file — what an iPhone exports by default — is
+     * rejected with a message telling the uploader to convert to MP4, because
+     * accepting it would reproduce the black-box failure through a format
+     * Chrome often refuses to decode.
+     */
+    private function videoMimeRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (! $value instanceof TemporaryUploadedFile) {
+                return;
+            }
+
+            $mime = (string) $value->getMimeType();
+
+            if (in_array($mime, ['video/mp4', 'video/webm'], true)) {
+                return;
+            }
+
+            if ($mime === 'video/quicktime' || strtolower($value->getClientOriginalExtension()) === 'mov') {
+                $fail(__('admin.widgets.upload_video_mov_error'));
+
+                return;
+            }
+
+            $fail(__('admin.widgets.upload_video_error'));
+        };
     }
 
     /** @return array<string, string> slot key → 'video'|'media' */
@@ -296,12 +327,11 @@ class Edit extends Component
 
         foreach ($this->resolveSlotTypes() as $slot => $slotType) {
             if ($slotType === 'video') {
-                $msg = __('admin.widgets.upload_video_error');
-                $messages["uploads.{$slot}.mimetypes"] = $msg;
-                $messages["uploads.{$slot}.max"] = $msg;
+                // Format failures carry their message from videoMimeRule(); only
+                // the size cap needs one here.
+                $messages["uploads.{$slot}.max"] = __('admin.widgets.upload_video_error');
             } else {
-                $msg = __('admin.widgets.upload_image_error');
-                $messages["uploads.{$slot}.mimetypes"] = $msg;
+                $messages["uploads.{$slot}.mimetypes"] = __('admin.widgets.upload_image_error');
             }
         }
 

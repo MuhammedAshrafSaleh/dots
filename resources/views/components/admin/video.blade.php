@@ -9,7 +9,7 @@
 <div class="d-field">
     @if ($label)<span class="d-label">{{ $label }}</span>@endif
 
-    <input type="file" id="{{ $id }}" accept="video/mp4,video/webm,video/quicktime"
+    <input type="file" id="{{ $id }}" accept="video/mp4,video/webm"
            wire:model="{{ $model }}" tabindex="-1"
            style="position: fixed; top: 0; left: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none;">
 

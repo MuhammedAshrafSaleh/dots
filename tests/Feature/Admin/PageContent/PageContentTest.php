@@ -122,11 +122,34 @@ it('rejects a video file uploaded into an image slot', function () {
         ->assertHasErrors(['uploads.hero__poster']);
 });
 
-it('accepts a valid video file in a video slot', function () {
+it('rejects a .mov file in a video slot with a convert-to-MP4 message', function () {
+    $mov = UploadedFile::fake()->create('iphone.mov', 2000, 'video/quicktime');
+
+    $errors = Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $mov)
+        ->call('save')
+        ->assertHasErrors(['uploads.hero__video'])
+        ->errors();
+
+    // The .mov-specific guidance, not the generic unsupported-format line.
+    expect($errors->first('uploads.hero__video'))->toContain('MOV');
+});
+
+it('accepts a valid MP4 in a video slot', function () {
     $mp4 = UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4');
 
     Livewire::test(Edit::class, ['page' => 'home'])
         ->set('uploads.hero__video', $mp4)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+});
+
+it('accepts a valid WebM in a video slot', function () {
+    $webm = UploadedFile::fake()->create('hero.webm', 1000, 'video/webm');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $webm)
         ->call('save')
         ->assertHasNoErrors()
         ->assertDispatched('toast');
