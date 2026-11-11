@@ -72,7 +72,7 @@ class Edit extends Component
             foreach ($fields as $fieldName => $spec) {
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-                if ($type === 'media') {
+                if ($type === 'media' || $type === 'video') {
                     $this->uploads["{$sectionKey}__{$fieldName}"] = null;
                     $this->removeMedia["{$sectionKey}__{$fieldName}"] = false;
                 } elseif ($type === 'media_many') {
@@ -112,7 +112,7 @@ class Edit extends Component
         foreach ($fields as $fieldName => $spec) {
             $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-            if (in_array($type, ['media', 'media_many'], true)) {
+            if (in_array($type, ['media', 'video', 'media_many'], true)) {
                 continue;
             }
 
@@ -169,7 +169,7 @@ class Edit extends Component
     {
         $this->authorize('page_content.update');
 
-        $this->validate($this->buildRules());
+        $this->validate($this->buildRules(), $this->buildMessages());
 
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
@@ -206,7 +206,7 @@ class Edit extends Component
             foreach ($fields as $fieldName => $spec) {
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-                if (in_array($type, ['media', 'media_many'], true)) {
+                if (in_array($type, ['media', 'video', 'media_many'], true)) {
                     continue;
                 }
 
@@ -237,11 +237,75 @@ class Edit extends Component
             }
         }
 
-        foreach (array_keys($this->uploads) as $slot) {
-            $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200'];
+        foreach ($this->resolveSlotTypes() as $slot => $slotType) {
+            if ($slotType === 'video') {
+                $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200',
+                    'mimetypes:video/mp4,video/webm,video/quicktime'];
+            } else {
+                $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200',
+                    'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/svg+xml'];
+            }
         }
 
         return $rules;
+    }
+
+    /** @return array<string, string> slot key → 'video'|'media' */
+    private function resolveSlotTypes(): array
+    {
+        /** @var array<string, mixed> $schema */
+        $schema = config("page_sections.{$this->page}", []);
+        $types = [];
+
+        foreach ($schema as $sectionKey => $fields) {
+            /** @var array<string, mixed> $fields */
+            foreach ($fields as $fieldName => $spec) {
+                $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
+
+                if ($type === 'video') {
+                    $types["{$sectionKey}__{$fieldName}"] = 'video';
+                } elseif ($type === 'media') {
+                    $types["{$sectionKey}__{$fieldName}"] = 'media';
+                } elseif ($type === 'media_many') {
+                    $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
+                    for ($i = 0; $i < $count; $i++) {
+                        $types["{$sectionKey}__{$fieldName}_{$i}"] = 'media';
+                    }
+                } elseif ($type === 'list') {
+                    $listCount = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                    $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
+                    /** @var array<string, mixed> $listFields */
+                    foreach ($listFields as $sf => $st) {
+                        if ($st === 'media') {
+                            for ($i = 0; $i < $listCount; $i++) {
+                                $types["{$sectionKey}__item_{$sf}_{$i}"] = 'media';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $types;
+    }
+
+    /** @return array<string, string> */
+    private function buildMessages(): array
+    {
+        $messages = [];
+
+        foreach ($this->resolveSlotTypes() as $slot => $slotType) {
+            if ($slotType === 'video') {
+                $msg = __('admin.widgets.upload_video_error');
+                $messages["uploads.{$slot}.mimetypes"] = $msg;
+                $messages["uploads.{$slot}.max"] = $msg;
+            } else {
+                $msg = __('admin.widgets.upload_image_error');
+                $messages["uploads.{$slot}.mimetypes"] = $msg;
+            }
+        }
+
+        return $messages;
     }
 
     /** @param array<string, mixed> $fields */
@@ -250,7 +314,7 @@ class Edit extends Component
         foreach ($fields as $fieldName => $spec) {
             $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-            if ($type === 'media') {
+            if ($type === 'media' || $type === 'video') {
                 $this->syncOneMediaSlot($row, "{$sectionKey}__{$fieldName}", $fieldName);
             } elseif ($type === 'media_many') {
                 $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
@@ -348,7 +412,7 @@ class Edit extends Component
             foreach ($fields as $fieldName => $spec) {
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-                if ($type === 'media') {
+                if ($type === 'media' || $type === 'video') {
                     $slot = "{$sectionKey}__{$fieldName}";
                     $urls[$slot] = $this->resolveMediaSlotUrl($slot, $row, $fieldName);
                 } elseif ($type === 'media_many') {

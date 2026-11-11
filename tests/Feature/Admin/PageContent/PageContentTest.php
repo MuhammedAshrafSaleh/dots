@@ -3,6 +3,7 @@
 use App\Livewire\Admin\PageContent\Edit;
 use App\Models\PageSection;
 use Database\Seeders\SiteSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -99,4 +100,56 @@ it('requires page_content.update to save', function () {
     Livewire::test(Edit::class, ['page' => 'home'])
         ->call('save')
         ->assertForbidden();
+});
+
+// ── MIME-type validation ──────────────────────────────────────────────────────
+
+it('rejects an image file uploaded into a video slot', function () {
+    $webp = UploadedFile::fake()->create('still.webp', 100, 'image/webp');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $webp)
+        ->call('save')
+        ->assertHasErrors(['uploads.hero__video']);
+});
+
+it('rejects a video file uploaded into an image slot', function () {
+    $mp4 = UploadedFile::fake()->create('clip.mp4', 1000, 'video/mp4');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__poster', $mp4)
+        ->call('save')
+        ->assertHasErrors(['uploads.hero__poster']);
+});
+
+it('accepts a valid video file in a video slot', function () {
+    $mp4 = UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $mp4)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+});
+
+it('accepts a valid image file in an image slot', function () {
+    $png = UploadedFile::fake()->image('poster.png', 1920, 1080);
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__poster', $png)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+});
+
+it('carries the Arabic error message on a wrong-type upload', function () {
+    $webp = UploadedFile::fake()->create('still.webp', 100, 'image/webp');
+
+    $errors = Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $webp)
+        ->call('save')
+        ->errors();
+
+    expect($errors->first('uploads.hero__video'))
+        ->toContain('MP4');
 });

@@ -13,8 +13,9 @@
 |   text       translatable {ar, en} string
 |   link       plain string (URL / route)
 |   icon       plain string (Lucide icon name)
-|   media      single media item on the `section` collection
-|   media_many multiple media items (uses `count`)
+|   media      single image media item on the `section` collection (JPEG/PNG/WebP/GIF)
+|   video      single video media item on the `section` collection (MP4/WebM/MOV)
+|   media_many multiple image media items (uses `count`)
 |   list       fixed-length repeatable group (uses `count` + `fields`)
 |
 | Media lives on the row's media-library `section` collection (distinguished
@@ -34,7 +35,7 @@ return [
             'button1_link' => 'link',
             'button2_label' => 'text',
             'button2_link' => 'link',
-            'video' => 'media',
+            'video' => 'video',
             'poster' => 'media',
         ],
         'features' => [
@@ -83,7 +84,7 @@ return [
             'title' => 'text',
             'text' => 'text',
             'image' => 'media',
-            'video' => 'media',
+            'video' => 'video',
             'button1_label' => 'text',
             'button1_link' => 'link',
             'button2_label' => 'text',
