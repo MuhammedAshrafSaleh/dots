@@ -155,6 +155,24 @@ it('accepts a valid WebM in a video slot', function () {
         ->assertDispatched('toast');
 });
 
+it('stores a video larger than Spatie\'s default 10 MB backstop', function () {
+    // ~12 MB — over the vendor default (10 MB), under our 50 MB validation cap.
+    // Guards the AppServiceProvider override that stops FileIsTooBig 500s.
+    $mp4 = UploadedFile::fake()->create('big-hero.mp4', 12 * 1024, 'video/mp4');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $mp4)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+
+    $hasVideo = PageSection::where(['page' => 'home', 'key' => 'hero'])->firstOrFail()
+        ->getMedia('section')
+        ->contains(fn ($m) => $m->getCustomProperty('field') === 'video');
+
+    expect($hasVideo)->toBeTrue();
+});
+
 it('accepts a valid image file in an image slot', function () {
     $png = UploadedFile::fake()->image('poster.png', 1920, 1080);
 

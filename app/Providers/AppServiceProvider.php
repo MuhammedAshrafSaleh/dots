@@ -65,6 +65,14 @@ class AppServiceProvider extends ServiceProvider
             SetAdminLocale::class,
         ]);
 
+        // Spatie's global upload backstop defaults to 10 MB and throws
+        // FileIsTooBig at toMediaCollection() time — AFTER our Livewire
+        // validation has already passed — which surfaces as a 500 rather than a
+        // field error. Align it with the largest size our forms validate (the
+        // 50 MB hero video) so per-field validation stays the user-facing gate;
+        // the per-field rules keep images small. Must stay >= that ceiling.
+        config(['media-library.max_file_size' => 1024 * 1024 * 50]);
+
         // Cache-column maintenance + tagged cache invalidation (observers are
         // resolved from the container, so their dependencies are injected).
         Product::observe(ProductObserver::class);
