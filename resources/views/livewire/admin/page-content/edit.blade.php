@@ -101,6 +101,17 @@
                                     model="uploads.{{ $slot }}"
                                     remove="removeMediaSlot('{{ $slot }}')" />
 
+                            @elseif ($fType === 'video')
+                                @php $slot = "{$sectionKey}__{$fieldName}"; @endphp
+                                <x-admin.video
+                                    :label="$fLabel"
+                                    :url="$mediaUrls[$slot] ?? null"
+                                    model="uploads.{{ $slot }}"
+                                    remove="removeMediaSlot('{{ $slot }}')" />
+                                @if ($posterWarnings[$slot] ?? false)
+                                    <x-admin.alert tone="warning">{{ __('admin.widgets.poster_warning') }}</x-admin.alert>
+                                @endif
+
                             @elseif ($fType === 'media_many')
                                 @php $manyCount = $fieldSpec['count'] ?? 1; @endphp
                                 <div class="d-field">

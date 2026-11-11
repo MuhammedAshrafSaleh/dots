@@ -28,7 +28,7 @@ class PageSection extends Model implements HasMedia
     private const TRANSLATABLE_TYPES = ['text'];
 
     /** Field types that live on the media collection, not in `content`. */
-    private const MEDIA_TYPES = ['media', 'media_many'];
+    private const MEDIA_TYPES = ['media', 'video', 'media_many'];
 
     protected $guarded = ['id'];
 
@@ -48,6 +48,10 @@ class PageSection extends Model implements HasMedia
 
     public function registerMediaConversions(?Media $media = null): void
     {
+        // Skip image conversions for non-image MIME types (e.g. video slots).
+        if ($media !== null && ! str_starts_with($media->mime_type ?? '', 'image/')) {
+            return;
+        }
         $this->registerResponsiveImageConversions();
     }
 

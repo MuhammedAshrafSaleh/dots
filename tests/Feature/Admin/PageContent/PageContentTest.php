@@ -3,6 +3,7 @@
 use App\Livewire\Admin\PageContent\Edit;
 use App\Models\PageSection;
 use Database\Seeders\SiteSeeder;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 
@@ -99,4 +100,144 @@ it('requires page_content.update to save', function () {
     Livewire::test(Edit::class, ['page' => 'home'])
         ->call('save')
         ->assertForbidden();
+});
+
+// ── MIME-type validation ──────────────────────────────────────────────────────
+
+it('rejects an image file uploaded into a video slot', function () {
+    $webp = UploadedFile::fake()->create('still.webp', 100, 'image/webp');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $webp)
+        ->call('save')
+        ->assertHasErrors(['uploads.hero__video']);
+});
+
+it('rejects a video file uploaded into an image slot', function () {
+    $mp4 = UploadedFile::fake()->create('clip.mp4', 1000, 'video/mp4');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__poster', $mp4)
+        ->call('save')
+        ->assertHasErrors(['uploads.hero__poster']);
+});
+
+it('rejects a .mov file in a video slot with a convert-to-MP4 message', function () {
+    $mov = UploadedFile::fake()->create('iphone.mov', 2000, 'video/quicktime');
+
+    $errors = Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $mov)
+        ->call('save')
+        ->assertHasErrors(['uploads.hero__video'])
+        ->errors();
+
+    // The .mov-specific guidance, not the generic unsupported-format line.
+    expect($errors->first('uploads.hero__video'))->toContain('MOV');
+});
+
+it('accepts a valid MP4 in a video slot', function () {
+    $mp4 = UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $mp4)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+});
+
+it('accepts a valid WebM in a video slot', function () {
+    $webm = UploadedFile::fake()->create('hero.webm', 1000, 'video/webm');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $webm)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+});
+
+it('stores a video larger than Spatie\'s default 10 MB backstop', function () {
+    // ~12 MB — over the vendor default (10 MB), under our 50 MB validation cap.
+    // Guards the AppServiceProvider override that stops FileIsTooBig 500s.
+    $mp4 = UploadedFile::fake()->create('big-hero.mp4', 12 * 1024, 'video/mp4');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $mp4)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+
+    $hasVideo = PageSection::where(['page' => 'home', 'key' => 'hero'])->firstOrFail()
+        ->getMedia('section')
+        ->contains(fn ($m) => $m->getCustomProperty('field') === 'video');
+
+    expect($hasVideo)->toBeTrue();
+});
+
+it('accepts a valid image file in an image slot', function () {
+    $png = UploadedFile::fake()->image('poster.png', 1920, 1080);
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__poster', $png)
+        ->call('save')
+        ->assertHasNoErrors()
+        ->assertDispatched('toast');
+});
+
+it('carries the Arabic error message on a wrong-type upload', function () {
+    $webp = UploadedFile::fake()->create('still.webp', 100, 'image/webp');
+
+    $errors = Livewire::test(Edit::class, ['page' => 'home'])
+        ->set('uploads.hero__video', $webp)
+        ->call('save')
+        ->errors();
+
+    expect($errors->first('uploads.hero__video'))
+        ->toContain('MP4');
+});
+
+// ── Poster warning (video set, poster empty) ──────────────────────────────────
+
+/** Attach a file to the home hero's `section` collection under a field property. */
+function attachHeroSectionMedia(string $field, UploadedFile $file): void
+{
+    PageSection::where(['page' => 'home', 'key' => 'hero'])->firstOrFail()
+        ->addMedia($file->getRealPath())
+        ->preservingOriginal()
+        ->usingFileName($file->getClientOriginalName())
+        ->withCustomProperties(['field' => $field])
+        ->toMediaCollection('section');
+}
+
+/** Delete whichever hero `section` media carries the given field property. */
+function clearHeroSectionMedia(string $field): void
+{
+    PageSection::where(['page' => 'home', 'key' => 'hero'])->firstOrFail()
+        ->getMedia('section')
+        ->filter(fn ($m) => $m->getCustomProperty('field') === $field)
+        ->each->delete();
+}
+
+it('warns when the hero video is set but the poster is empty', function () {
+    config(['media-library.queue_connection_name' => 'sync']);
+    clearHeroSectionMedia('poster'); // the seeder attaches one; remove it
+    attachHeroSectionMedia('video', UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4'));
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->assertSee('a-alert--warning', false);
+});
+
+it('does not warn when both the hero video and poster are set', function () {
+    config(['media-library.queue_connection_name' => 'sync']);
+    // The seeder already attaches a poster; add the paired video alongside it.
+    attachHeroSectionMedia('video', UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4'));
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->assertDontSee('a-alert--warning', false);
+});
+
+it('does not warn when the hero video is empty', function () {
+    clearHeroSectionMedia('poster');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->assertDontSee('a-alert--warning', false);
 });

@@ -72,7 +72,7 @@ class Edit extends Component
             foreach ($fields as $fieldName => $spec) {
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-                if ($type === 'media') {
+                if ($type === 'media' || $type === 'video') {
                     $this->uploads["{$sectionKey}__{$fieldName}"] = null;
                     $this->removeMedia["{$sectionKey}__{$fieldName}"] = false;
                 } elseif ($type === 'media_many') {
@@ -112,7 +112,7 @@ class Edit extends Component
         foreach ($fields as $fieldName => $spec) {
             $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-            if (in_array($type, ['media', 'media_many'], true)) {
+            if (in_array($type, ['media', 'video', 'media_many'], true)) {
                 continue;
             }
 
@@ -169,7 +169,7 @@ class Edit extends Component
     {
         $this->authorize('page_content.update');
 
-        $this->validate($this->buildRules());
+        $this->validate($this->buildRules(), $this->buildMessages());
 
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
@@ -206,7 +206,7 @@ class Edit extends Component
             foreach ($fields as $fieldName => $spec) {
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-                if (in_array($type, ['media', 'media_many'], true)) {
+                if (in_array($type, ['media', 'video', 'media_many'], true)) {
                     continue;
                 }
 
@@ -237,11 +237,105 @@ class Edit extends Component
             }
         }
 
-        foreach (array_keys($this->uploads) as $slot) {
-            $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200'];
+        foreach ($this->resolveSlotTypes() as $slot => $slotType) {
+            if ($slotType === 'video') {
+                // A closure, not `mimetypes:`, so a .mov upload gets its own
+                // actionable message (convert to MP4) instead of the generic one.
+                $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200', $this->videoMimeRule()];
+            } else {
+                $rules["uploads.{$slot}"] = ['nullable', 'file', 'max:51200',
+                    'mimetypes:image/jpeg,image/png,image/webp,image/gif,image/svg+xml'];
+            }
         }
 
         return $rules;
+    }
+
+    /**
+     * Video-slot upload rule: accept only MP4/WebM (formats browsers reliably
+     * play). A QuickTime/.mov file — what an iPhone exports by default — is
+     * rejected with a message telling the uploader to convert to MP4, because
+     * accepting it would reproduce the black-box failure through a format
+     * Chrome often refuses to decode.
+     */
+    private function videoMimeRule(): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail): void {
+            if (! $value instanceof TemporaryUploadedFile) {
+                return;
+            }
+
+            $mime = (string) $value->getMimeType();
+
+            if (in_array($mime, ['video/mp4', 'video/webm'], true)) {
+                return;
+            }
+
+            if ($mime === 'video/quicktime' || strtolower($value->getClientOriginalExtension()) === 'mov') {
+                $fail(__('admin.widgets.upload_video_mov_error'));
+
+                return;
+            }
+
+            $fail(__('admin.widgets.upload_video_error'));
+        };
+    }
+
+    /** @return array<string, string> slot key → 'video'|'media' */
+    private function resolveSlotTypes(): array
+    {
+        /** @var array<string, mixed> $schema */
+        $schema = config("page_sections.{$this->page}", []);
+        $types = [];
+
+        foreach ($schema as $sectionKey => $fields) {
+            /** @var array<string, mixed> $fields */
+            foreach ($fields as $fieldName => $spec) {
+                $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
+
+                if ($type === 'video') {
+                    $types["{$sectionKey}__{$fieldName}"] = 'video';
+                } elseif ($type === 'media') {
+                    $types["{$sectionKey}__{$fieldName}"] = 'media';
+                } elseif ($type === 'media_many') {
+                    $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
+                    for ($i = 0; $i < $count; $i++) {
+                        $types["{$sectionKey}__{$fieldName}_{$i}"] = 'media';
+                    }
+                } elseif ($type === 'list') {
+                    $listCount = is_array($spec) ? ($spec['count'] ?? 0) : 0;
+                    $listFields = is_array($spec) ? ($spec['fields'] ?? []) : [];
+                    /** @var array<string, mixed> $listFields */
+                    foreach ($listFields as $sf => $st) {
+                        if ($st === 'media') {
+                            for ($i = 0; $i < $listCount; $i++) {
+                                $types["{$sectionKey}__item_{$sf}_{$i}"] = 'media';
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return $types;
+    }
+
+    /** @return array<string, string> */
+    private function buildMessages(): array
+    {
+        $messages = [];
+
+        foreach ($this->resolveSlotTypes() as $slot => $slotType) {
+            if ($slotType === 'video') {
+                // Format failures carry their message from videoMimeRule(); only
+                // the size cap needs one here.
+                $messages["uploads.{$slot}.max"] = __('admin.widgets.upload_video_error');
+            } else {
+                $messages["uploads.{$slot}.mimetypes"] = __('admin.widgets.upload_image_error');
+            }
+        }
+
+        return $messages;
     }
 
     /** @param array<string, mixed> $fields */
@@ -250,7 +344,7 @@ class Edit extends Component
         foreach ($fields as $fieldName => $spec) {
             $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-            if ($type === 'media') {
+            if ($type === 'media' || $type === 'video') {
                 $this->syncOneMediaSlot($row, "{$sectionKey}__{$fieldName}", $fieldName);
             } elseif ($type === 'media_many') {
                 $count = is_array($spec) ? ($spec['count'] ?? 1) : 1;
@@ -324,12 +418,47 @@ class Edit extends Component
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
         $rows = PageSection::where('page', $this->page)->with('media')->get()->keyBy('key');
+        $mediaUrls = $this->computeMediaUrls($schema, $rows);
 
         return view('livewire.admin.page-content.edit', [
             'pageSchema' => $schema,
             'pages' => $this->pages(),
-            'mediaUrls' => $this->computeMediaUrls($schema, $rows),
+            'mediaUrls' => $mediaUrls,
+            'posterWarnings' => $this->computePosterWarnings($schema, $mediaUrls),
         ]);
+    }
+
+    /**
+     * Video slots whose video is set but whose paired poster image is empty.
+     * A hero in that state shows visitors a black box while the (heavy) video
+     * downloads — the warning in the view explains that impact. Derived from
+     * the live media URLs, so it reflects pending uploads/removals before save.
+     *
+     * @param  array<string, mixed>  $schema
+     * @param  array<string, string|null>  $mediaUrls
+     * @return array<string, true> video slot key => true
+     */
+    private function computePosterWarnings(array $schema, array $mediaUrls): array
+    {
+        $warnings = [];
+
+        foreach ($schema as $sectionKey => $fields) {
+            /** @var array<string, mixed> $fields */
+            foreach ($fields as $fieldName => $spec) {
+                if (! is_array($spec) || ($spec['type'] ?? null) !== 'video' || ! isset($spec['poster'])) {
+                    continue;
+                }
+
+                $videoSlot = "{$sectionKey}__{$fieldName}";
+                $posterSlot = "{$sectionKey}__{$spec['poster']}";
+
+                if (($mediaUrls[$videoSlot] ?? null) !== null && ($mediaUrls[$posterSlot] ?? null) === null) {
+                    $warnings[$videoSlot] = true;
+                }
+            }
+        }
+
+        return $warnings;
     }
 
     /**
@@ -348,7 +477,7 @@ class Edit extends Component
             foreach ($fields as $fieldName => $spec) {
                 $type = is_array($spec) ? ($spec['type'] ?? null) : $spec;
 
-                if ($type === 'media') {
+                if ($type === 'media' || $type === 'video') {
                     $slot = "{$sectionKey}__{$fieldName}";
                     $urls[$slot] = $this->resolveMediaSlotUrl($slot, $row, $fieldName);
                 } elseif ($type === 'media_many') {

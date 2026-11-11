@@ -28,16 +28,18 @@
     >
         {{-- media layer --}}
         <div class="d-hi__media">
+            {{-- Poster image is the static background layer: it paints immediately
+                 (eager + high priority) so a visitor on a slow connection sees it
+                 instead of a black block while the video buffers, and it is what
+                 shows when the player is paused. The <video> below plays on top. --}}
             <x-image-frame
                 :src="$heroPoster"
                 :media="$heroPosterMedia"
                 sizes="100vw"
-                :video="$heroVid"
                 :label="$field('hero', 'eyebrow')"
                 eager
                 priority
                 style="position:absolute;inset:0;"
-                x-bind:style="paused ? 'display:block' : ''"
             />
             @if ($heroVid)
                 <video
