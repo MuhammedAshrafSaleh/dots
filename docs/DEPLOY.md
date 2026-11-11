@@ -830,30 +830,88 @@ sudo -u dots php8.5 artisan queue:flush
 Redis restart flag, and exited). systemd relaunched them within `RestartSec=5`. New PIDs: 88468/88469.
 Both units showed `restart counter is at 1` in `journalctl`.
 
-**Where it belongs in the deploy sequence:**
+**The deploy sequence (run as `dots`, from the app dir; `php8.5`, never `php`):**
 
-```
-git pull origin main
+```bash
+cd /home/dots/htdocs/dots-electric.com
+
+# --- STEP 0: PRE-FLIGHT GUARD — assert a clean checkout at a known commit. ---
+# A deploy must start from a clean tree. If this fails, STOP and reconcile by
+# hand (see "Drift guard" below) — never blindly `git pull` onto a dirty tree:
+# the pull aborts on local modifications, and if forced it silently discards
+# whatever was hand-applied on the box. (See the 2026-11-11 incident note.)
+test -z "$(git status --porcelain | grep -v '?? public/sitemap.xml')" \
+  || { echo 'DIRTY WORKING TREE — stop and reconcile before deploying'; git status --porcelain; exit 1; }
+echo "deploying FROM $(git describe --tags --always) ($(git rev-parse --short HEAD))"   # record rollback target
+
+# --- STEP 1: fetch + FAST-FORWARD ONLY (never a merge commit on prod). ---
+git fetch origin -q
+git merge --ff-only origin/main
+
+# --- STEP 2: dependencies (skip the frontend build unless CSS/JS changed). ---
 php8.5 "$(which composer)" install --no-dev --optimize-autoloader
-# (frontend build if CSS/JS changed)
+# nvm-only node, as dots, ONLY if resources/css|js or vite config changed:
+#   export NVM_DIR="$HOME/.nvm"; . "$NVM_DIR/nvm.sh"; nvm use 22.23.0; npm ci && npm run build
+
+# --- STEP 3: migrations. `--force` is safe/idempotent; "Nothing to migrate" ---
+# is the expected output when a release adds none. If `migrate:status` shows
+# ANY pending migration, take a fresh backup FIRST (php8.5 artisan backup:run)
+# — do not migrate production off a stale backup.
+php8.5 artisan migrate --force
+
+# --- STEP 4: caches (prod only — never run these locally). ---
 php8.5 artisan config:cache
 php8.5 artisan route:cache
 php8.5 artisan view:cache
 php8.5 artisan event:cache
-php8.5 artisan queue:restart          ← HERE
-# (php-fpm reload if needed)
+
+# --- STEP 5: restart workers AFTER the caches, then reload FPM (as root). ---
+php8.5 artisan queue:restart
+# sudo systemctl reload php8.5-fpm   # clears opcache so new PHP classes load in the web tier
 ```
 
-**Why after the caches:** `queue:restart` sets a Redis timestamp; workers check it after completing
-each job, then exit gracefully. Workers boot fresh with the new code and the complete new cache set.
-Running `queue:restart` before `git pull` restarts workers onto the old code — the signal is consumed
-by old workers and the freshly-deployed code never triggers a restart.
+**Why `queue:restart` after the caches:** it sets a Redis timestamp; workers check it after
+completing each job, then exit gracefully and are relaunched by systemd with the new code AND the
+complete new cache set. Running it before `git merge` restarts workers onto the OLD code — the signal
+is consumed by old workers and the freshly-deployed code never triggers a restart.
+
+**Why verify EFFECTIVE config, not the file:** production runs `config:cache`, so a changed
+`config/*.php` has no effect until the cache is rebuilt. Confirm what the app actually sees, e.g.
+`php8.5 artisan tinker --execute='echo config("queue.connections.redis.retry_after");'`.
 
 **What happens to an in-progress job:** workers are not killed mid-job. Each finishes its current
 job, sees the restart flag, and exits. systemd immediately relaunches with new code.
 
-**What happens if skipped:** workers keep running old class definitions indefinitely; a changed job
-constructor throws on the new payload format.
+**What happens if `queue:restart` is skipped:** workers keep running old class definitions
+indefinitely; a changed job constructor throws on the new payload format.
+
+### Drift guard — why STEP 0 exists (2026-11-11 incident)
+
+The first real use of this runbook (deploying the hero-media work) found production **not** where the
+runbook assumed. Its checkout was pinned at `c16e640` (`backups-done`) — **21 commits behind
+`origin/main`** — with **uncommitted working-tree modifications** to `app/Jobs/ApplyProductImport.php`,
+`composer.json` and `composer.lock`, plus a stale `config/queue.php`.
+
+**Root cause.** Most of Phase 10 was *server-side* work — nginx, systemd units, `.env`, DNS, mail,
+backups — none of which required re-pulling the app code, so nobody did. But a few steps also changed
+*committed app code* (T10.5 queue split + `retry_after 90→1800`; T10.6a resend package; the import
+job's queue assignment). Those were applied **by hand on the box** to get the service working, and
+committed to the repo **separately**, but the production checkout was never fast-forwarded to match.
+The result: the repo said one thing, the box ran another, and — critically — the committed
+`retry_after=1800` fix was **never actually live** (effective config still read `90`). Nothing had
+bitten only because no large import had run on production yet.
+
+**The defect was the missing invariant, not any single hand-edit.** The runbook assumed a clean
+checkout that nothing was keeping clean. STEP 0 now asserts it and fails loudly.
+
+**If STEP 0 trips (dirty/behind tree), reconcile deliberately — do not force a pull:**
+1. For each modified file, prove it already equals the target: `git diff --exit-code origin/main -- <file>`.
+   Empty = the hand-edit is already in `main`; discarding it loses nothing.
+   **Any file that does NOT match `main` is a hand-change that was never committed — STOP and capture it
+   (commit it to a branch) before discarding, or the deploy silently reverts deliberate work.**
+2. Confirm `.env` is untracked/gitignored and absent from `git status` (a pull can never touch it).
+3. Only once every modification is accounted for: `git checkout -- <those files>`, then STEP 1's
+   `git merge --ff-only`. This is exactly how the 2026-11-11 reconciliation was done.
 
 ---
 
