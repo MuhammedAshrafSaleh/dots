@@ -14,7 +14,10 @@
 |   link       plain string (URL / route)
 |   icon       plain string (Lucide icon name)
 |   media      single image media item on the `section` collection (JPEG/PNG/WebP/GIF)
-|   video      single video media item on the `section` collection (MP4/WebM/MOV)
+|   video      single video media item on the `section` collection (MP4/WebM).
+|              Declared as ['type' => 'video', 'poster' => '<field>'] so the admin
+|              can warn when the video is set but its poster image is empty — a
+|              hero in that state shows visitors a black box while the video loads.
 |   media_many multiple image media items (uses `count`)
 |   list       fixed-length repeatable group (uses `count` + `fields`)
 |
@@ -35,7 +38,7 @@ return [
             'button1_link' => 'link',
             'button2_label' => 'text',
             'button2_link' => 'link',
-            'video' => 'video',
+            'video' => ['type' => 'video', 'poster' => 'poster'],
             'poster' => 'media',
         ],
         'features' => [
@@ -84,7 +87,7 @@ return [
             'title' => 'text',
             'text' => 'text',
             'image' => 'media',
-            'video' => 'video',
+            'video' => ['type' => 'video', 'poster' => 'image'],
             'button1_label' => 'text',
             'button1_link' => 'link',
             'button2_label' => 'text',

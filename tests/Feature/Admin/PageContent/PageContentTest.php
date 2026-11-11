@@ -176,3 +176,50 @@ it('carries the Arabic error message on a wrong-type upload', function () {
     expect($errors->first('uploads.hero__video'))
         ->toContain('MP4');
 });
+
+// ── Poster warning (video set, poster empty) ──────────────────────────────────
+
+/** Attach a file to the home hero's `section` collection under a field property. */
+function attachHeroSectionMedia(string $field, UploadedFile $file): void
+{
+    PageSection::where(['page' => 'home', 'key' => 'hero'])->firstOrFail()
+        ->addMedia($file->getRealPath())
+        ->preservingOriginal()
+        ->usingFileName($file->getClientOriginalName())
+        ->withCustomProperties(['field' => $field])
+        ->toMediaCollection('section');
+}
+
+/** Delete whichever hero `section` media carries the given field property. */
+function clearHeroSectionMedia(string $field): void
+{
+    PageSection::where(['page' => 'home', 'key' => 'hero'])->firstOrFail()
+        ->getMedia('section')
+        ->filter(fn ($m) => $m->getCustomProperty('field') === $field)
+        ->each->delete();
+}
+
+it('warns when the hero video is set but the poster is empty', function () {
+    config(['media-library.queue_connection_name' => 'sync']);
+    clearHeroSectionMedia('poster'); // the seeder attaches one; remove it
+    attachHeroSectionMedia('video', UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4'));
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->assertSee('a-alert--warning', false);
+});
+
+it('does not warn when both the hero video and poster are set', function () {
+    config(['media-library.queue_connection_name' => 'sync']);
+    // The seeder already attaches a poster; add the paired video alongside it.
+    attachHeroSectionMedia('video', UploadedFile::fake()->create('hero.mp4', 1000, 'video/mp4'));
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->assertDontSee('a-alert--warning', false);
+});
+
+it('does not warn when the hero video is empty', function () {
+    clearHeroSectionMedia('poster');
+
+    Livewire::test(Edit::class, ['page' => 'home'])
+        ->assertDontSee('a-alert--warning', false);
+});

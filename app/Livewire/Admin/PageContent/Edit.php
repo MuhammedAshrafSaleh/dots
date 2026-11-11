@@ -418,12 +418,47 @@ class Edit extends Component
         /** @var array<string, mixed> $schema */
         $schema = config("page_sections.{$this->page}", []);
         $rows = PageSection::where('page', $this->page)->with('media')->get()->keyBy('key');
+        $mediaUrls = $this->computeMediaUrls($schema, $rows);
 
         return view('livewire.admin.page-content.edit', [
             'pageSchema' => $schema,
             'pages' => $this->pages(),
-            'mediaUrls' => $this->computeMediaUrls($schema, $rows),
+            'mediaUrls' => $mediaUrls,
+            'posterWarnings' => $this->computePosterWarnings($schema, $mediaUrls),
         ]);
+    }
+
+    /**
+     * Video slots whose video is set but whose paired poster image is empty.
+     * A hero in that state shows visitors a black box while the (heavy) video
+     * downloads — the warning in the view explains that impact. Derived from
+     * the live media URLs, so it reflects pending uploads/removals before save.
+     *
+     * @param  array<string, mixed>  $schema
+     * @param  array<string, string|null>  $mediaUrls
+     * @return array<string, true> video slot key => true
+     */
+    private function computePosterWarnings(array $schema, array $mediaUrls): array
+    {
+        $warnings = [];
+
+        foreach ($schema as $sectionKey => $fields) {
+            /** @var array<string, mixed> $fields */
+            foreach ($fields as $fieldName => $spec) {
+                if (! is_array($spec) || ($spec['type'] ?? null) !== 'video' || ! isset($spec['poster'])) {
+                    continue;
+                }
+
+                $videoSlot = "{$sectionKey}__{$fieldName}";
+                $posterSlot = "{$sectionKey}__{$spec['poster']}";
+
+                if (($mediaUrls[$videoSlot] ?? null) !== null && ($mediaUrls[$posterSlot] ?? null) === null) {
+                    $warnings[$videoSlot] = true;
+                }
+            }
+        }
+
+        return $warnings;
     }
 
     /**

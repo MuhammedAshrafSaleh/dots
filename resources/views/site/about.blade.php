@@ -36,12 +36,15 @@
     {{-- ========== 1. HERO ========== --}}
     <section class="d-hi" aria-label="{{ $field('hero', 'eyebrow') }}">
         <div class="d-hi__media">
+            {{-- Poster image is the static background layer (paints immediately on
+                 slow connections instead of a black block); the <video> plays on top. --}}
             <x-image-frame
                 :src="$heroImg"
                 :media="$heroMedia"
                 sizes="100vw"
-                :video="$heroVid"
                 :label="$field('hero', 'title')"
+                eager
+                priority
                 style="position:absolute;inset:0;"
             />
             @if ($heroVid)

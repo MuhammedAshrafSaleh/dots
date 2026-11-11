@@ -786,6 +786,7 @@ return [
         'upload_video_error' => 'This field accepts MP4 or WebM video only — max 50 MB',
         'upload_video_mov_error' => 'This is a MOV file (iPhone video), which browsers do not play reliably. Convert it to MP4, then upload again.',
         'upload_image_error' => 'This field accepts images only (JPG, PNG, WebP, GIF)',
+        'poster_warning' => 'Video uploaded, but no poster image. The video is heavy on mobile networks and takes seconds to arrive — during that time visitors see a black box until playback starts. Upload a poster image so it shows immediately in its place while the video loads.',
         'up_to_25mb' => 'Up to 25 MB',
         'gallery_hint' => 'Drag to reorder · first is the cover',
         'cover' => 'Cover',
